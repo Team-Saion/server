@@ -1,0 +1,42 @@
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+  # DB driver memo
+  # H2: org.h2.Driver / jdbc:h2:mem:...
+  # MySQL: com.mysql.cj.jdbc.Driver / jdbc:mysql://host:3306/db
+  # PostgreSQL: org.postgresql.Driver / jdbc:postgresql://host:5432/db
+  # MariaDB: org.mariadb.jdbc.Driver / jdbc:mariadb://host:3306/db
+
+  h2:
+    console:
+      enabled: false
+      path: /h2-console
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+        highlight_sql: true
+    open-in-view: false
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password:
+
+logging:
+  level:
+    com.unicorn.server: debug
+    org.hibernate.SQL: debug
+    org.hibernate.orm.jdbc.bind: trace
