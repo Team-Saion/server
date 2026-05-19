@@ -1,7 +1,10 @@
 package com.unicorn.server.domain.user.service
 
+import com.unicorn.server.common.domain.Event
+import com.unicorn.server.common.port.out.event.EventPublisher
 import com.unicorn.server.domain.user.User
 import com.unicorn.server.domain.user.event.UserSignedUpEvent
+import com.unicorn.server.domain.user.event.UserWithdrawnEvent
 import com.unicorn.server.domain.user.exception.DuplicateEmailException
 import com.unicorn.server.domain.user.exception.UserNotFoundException
 import com.unicorn.server.domain.user.port.dto.CreateUserRequest
@@ -13,7 +16,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
-import org.springframework.context.ApplicationEventPublisher
 
 @DisplayName("UserService 단위 테스트")
 class UserServiceTest {
@@ -73,6 +75,16 @@ class UserServiceTest {
 		assertThat(userService.getById(user.id).isActive()).isTrue()
 	}
 
+	@Test
+	@DisplayName("delete 호출 시 UserWithdrawnEvent가 발행된다")
+	fun delete_publishesUserWithdrawnEvent() {
+		val user = userService.register(CreateUserRequest("test@example.com", "testuser", "password123"))
+
+		userService.delete(user.id.toString())
+
+		assertThat(eventPublisher.events).anyMatch { it is UserWithdrawnEvent }
+	}
+
 	private class FakeUserOutPort : UserOutPort {
 		private val users = linkedMapOf<UserId, User>()
 
@@ -88,10 +100,10 @@ class UserServiceTest {
 		override fun existsByEmail(email: Email): Boolean = findByEmail(email) != null
 	}
 
-	private class RecordingEventPublisher : ApplicationEventPublisher {
-		val events = mutableListOf<Any>()
+	private class RecordingEventPublisher : EventPublisher {
+		val events = mutableListOf<Event>()
 
-		override fun publishEvent(event: Any) {
+		override fun publish(event: Event) {
 			events += event
 		}
 	}
