@@ -1,6 +1,7 @@
 package com.unicorn.server.domain.user.service
 
 import com.unicorn.server.common.annotation.UseCase
+import com.unicorn.server.common.port.out.event.EventPublisher
 import com.unicorn.server.domain.user.User
 import com.unicorn.server.domain.user.event.UserSignedUpEvent
 import com.unicorn.server.domain.user.event.UserWithdrawnEvent
@@ -14,12 +15,11 @@ import com.unicorn.server.domain.user.port.`in`.RegisterUserInPort
 import com.unicorn.server.domain.user.port.out.UserOutPort
 import com.unicorn.server.domain.user.vo.Email
 import com.unicorn.server.domain.user.vo.UserId
-import org.springframework.context.ApplicationEventPublisher
 
 @UseCase
 class UserService(
 	private val userOutPort: UserOutPort,
-	private val eventPublisher: ApplicationEventPublisher,
+	private val eventPublisher: EventPublisher,
 ) : RegisterUserInPort, GetUserInPort, ManageUserInPort {
 
 	override fun register(request: CreateUserRequest): User {
@@ -32,7 +32,7 @@ class UserService(
 		val passwordHash = "{noop}${request.password}"
 		val user = User.create(email, request.username, passwordHash)
 		val savedUser = userOutPort.save(user)
-		eventPublisher.publishEvent(UserSignedUpEvent(savedUser.id.toString(), savedUser.email.value))
+		eventPublisher.publish(UserSignedUpEvent(savedUser.id.toString(), savedUser.email.value))
 		return savedUser
 	}
 
@@ -63,7 +63,7 @@ class UserService(
 		val user = userOutPort.findById(UserId.of(userId)) ?: throw UserNotFoundException(userId)
 		user.delete()
 		val savedUser = userOutPort.save(user)
-		eventPublisher.publishEvent(UserWithdrawnEvent(savedUser.id.toString()))
+		eventPublisher.publish(UserWithdrawnEvent(savedUser.id.toString()))
 	}
 
 	override fun activate(userId: String) {
