@@ -3,3 +3,19 @@ spring:
     name: server
   profiles:
     default: dev
+
+app:
+  server:
+    url: ${SERVER_URL}
+
+springdoc:
+  api-docs:
+    path: /api-specs
+  use-fqn: false
+  default-consumes-media-type: application/json;charset=UTF-8
+  default-produces-media-type: application/json;charset=UTF-8
+  swagger-ui:
+    tags-sorter: alpha
+    operations-sorter: alpha
+    display-request-duration: true
+    urls-primary-name: general
