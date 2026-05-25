@@ -25,22 +25,22 @@ class UserController(
 	private val registerUserInPort: RegisterUserInPort,
 	private val getUserInPort: GetUserInPort,
 	private val manageUserInPort: ManageUserInPort,
-) {
+) : UserApiDoc {
 
 	@PostMapping
-	fun register(@RequestBody @Valid request: CreateUserRequest): ApiResponse<UserResponse> {
+	override fun register(@RequestBody @Valid request: CreateUserRequest): ApiResponse<UserResponse> {
 		val user = registerUserInPort.register(request)
 		return ApiResponse.created(UserResponse.from(user))
 	}
 
 	@GetMapping("/{userId}")
-	fun getUser(@PathVariable userId: String): ApiResponse<UserResponse> {
+	override fun getUser(@PathVariable userId: String): ApiResponse<UserResponse> {
 		val user = getUserInPort.getById(UserId.of(userId))
 		return ApiResponse.success(UserResponse.from(user))
 	}
 
 	@PutMapping("/{userId}")
-	fun updateUser(
+	override fun updateUser(
 		@PathVariable userId: String,
 		@RequestBody @Valid request: UpdateUserRequest,
 	): ApiResponse<UserResponse> {
@@ -49,19 +49,19 @@ class UserController(
 	}
 
 	@DeleteMapping("/{userId}")
-	fun deleteUser(@PathVariable userId: String): ApiResponse<Unit> {
+	override fun deleteUser(@PathVariable userId: String): ApiResponse<Unit> {
 		manageUserInPort.delete(userId)
 		return ApiResponse.success()
 	}
 
 	@PatchMapping("/{userId}/activate")
-	fun activateUser(@PathVariable userId: String): ApiResponse<Unit> {
+	override fun activateUser(@PathVariable userId: String): ApiResponse<Unit> {
 		manageUserInPort.activate(userId)
 		return ApiResponse.success()
 	}
 
 	@PatchMapping("/{userId}/deactivate")
-	fun deactivateUser(@PathVariable userId: String): ApiResponse<Unit> {
+	override fun deactivateUser(@PathVariable userId: String): ApiResponse<Unit> {
 		manageUserInPort.deactivate(userId)
 		return ApiResponse.success()
 	}
