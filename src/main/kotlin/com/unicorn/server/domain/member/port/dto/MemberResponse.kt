@@ -12,7 +12,7 @@ data class MemberResponse(
 	val name: String,
 	val nickname: String,
 	val role: Role,
-	val profileImageUrl: String?,
+	val profileImageKey: String?,
 	val status: MemberStatus,
 	val createdAt: LocalDateTime,
 ) {
@@ -24,7 +24,7 @@ data class MemberResponse(
 			name = member.name,
 			nickname = member.nickname,
 			role = member.role,
-			profileImageUrl = member.profileImageUrl,
+			profileImageKey = member.profileImageKey,
 			status = member.status,
 			createdAt = member.createdAt,
 		)

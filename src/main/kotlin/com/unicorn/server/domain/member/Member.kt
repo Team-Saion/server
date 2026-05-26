@@ -15,7 +15,7 @@ class Member private constructor(
 	val name: String,
 	nickname: String,
 	val role: Role,
-	profileImageUrl: String?,
+	profileImageKey: String?,
 	status: MemberStatus,
 	deletedAt: LocalDateTime?,
 	val createdAt: LocalDateTime,
@@ -24,7 +24,7 @@ class Member private constructor(
 	var nickname: String = nickname
 		private set
 
-	var profileImageUrl: String? = profileImageUrl
+	var profileImageKey: String? = profileImageKey
 		private set
 
 	var status: MemberStatus = status
@@ -78,7 +78,7 @@ class Member private constructor(
 				name = name,
 				nickname = nickname,
 				role = role,
-				profileImageUrl = null,
+				profileImageKey = null,
 				status = MemberStatus.ACTIVE,
 				deletedAt = null,
 				createdAt = now,
@@ -93,12 +93,12 @@ class Member private constructor(
 			name: String,
 			nickname: String,
 			role: Role,
-			profileImageUrl: String?,
+			profileImageKey: String?,
 			status: MemberStatus,
 			deletedAt: LocalDateTime?,
 			createdAt: LocalDateTime,
 			updatedAt: LocalDateTime,
-		): Member = Member(id, email, name, nickname, role, profileImageUrl, status, deletedAt, createdAt, updatedAt)
+		): Member = Member(id, email, name, nickname, role, profileImageKey, status, deletedAt, createdAt, updatedAt)
 
 		// 실명 또는 소셜 제공 이름의 최소 유효성을 검증한다.
 		private fun validateName(name: String) {
