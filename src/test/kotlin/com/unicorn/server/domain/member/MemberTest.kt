@@ -95,6 +95,15 @@ class MemberTest {
 	}
 
 	@Test
+	@DisplayName("닉네임 앞뒤에 공백이 있으면 예외가 발생한다")
+	fun updateProfile_withLeadingOrTrailingWhitespace_throwsException() {
+		val member = Member.create(Email("test@example.com"), "홍길동", "길동이")
+
+		assertThatThrownBy { member.updateProfile(" 새닉네임 ") }
+			.isInstanceOf(IllegalArgumentException::class.java)
+	}
+
+	@Test
 	@DisplayName("잘못된 이메일 형식으로 Email 생성 시 예외가 발생한다")
 	fun email_withInvalidFormat_throwsException() {
 		assertThatThrownBy { Email("not-an-email") }

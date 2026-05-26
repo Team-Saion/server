@@ -20,4 +20,5 @@ enum class MemberErrorCode(
 
 	// Gone
 	MEMBER_ALREADY_DELETED("M410_1", "Member is already deleted", HttpStatus.GONE),
+	WITHDRAWN_MEMBER("M410_2", "Member has withdrawn", HttpStatus.GONE),
 }

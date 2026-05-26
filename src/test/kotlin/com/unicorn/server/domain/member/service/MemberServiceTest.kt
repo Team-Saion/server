@@ -11,6 +11,8 @@ import com.unicorn.server.domain.member.enums.SocialProvider
 import com.unicorn.server.domain.member.event.MemberWithdrawnEvent
 import com.unicorn.server.domain.member.exception.DuplicateEmailException
 import com.unicorn.server.domain.member.exception.MemberNotFoundException
+import com.unicorn.server.domain.member.exception.WithdrawnMemberException
+import com.unicorn.server.domain.member.port.`in`.SocialLoginInPort
 import com.unicorn.server.domain.member.port.dto.KakaoUserInfo
 import com.unicorn.server.domain.member.port.dto.SocialLoginCommand
 import com.unicorn.server.domain.member.port.dto.TokenPair
@@ -36,6 +38,7 @@ class MemberServiceTest {
 	private val tokenIssuer = FakeTokenIssuer()
 	private val tokenStore = FakeTokenStore()
 	private val eventPublisher = RecordingEventPublisher()
+	private val selfLoginInPort = DelegatingSocialLoginInPort()
 	private val memberService = MemberService(
 		memberOutPort,
 		socialAccountOutPort,
@@ -43,7 +46,8 @@ class MemberServiceTest {
 		tokenIssuer,
 		tokenStore,
 		eventPublisher,
-	)
+		selfLoginInPort,
+	).also { selfLoginInPort.delegate = it }
 
 	@Test
 	@DisplayName("getById 호출 시 저장된 멤버를 반환한다")
@@ -62,6 +66,17 @@ class MemberServiceTest {
 
 		assertThatThrownBy { memberService.getById(unknownId) }
 			.isInstanceOf(MemberNotFoundException::class.java)
+	}
+
+	@Test
+	@DisplayName("탈퇴한 멤버 ID로 getById 호출 시 WithdrawnMemberException이 발생한다")
+	fun getById_whenWithdrawn_throwsWithdrawnMemberException() {
+		val member = memberOutPort.save(Member.create(Email("withdrawn@example.com"), "홍길동", "길동이"))
+		member.withdraw()
+		memberOutPort.save(member)
+
+		assertThatThrownBy { memberService.getById(member.id.toString()) }
+			.isInstanceOf(WithdrawnMemberException::class.java)
 	}
 
 	@Test
@@ -136,6 +151,21 @@ class MemberServiceTest {
 		val result = memberService.login(command)
 
 		assertThat(result.accessToken).isNotBlank()
+	}
+
+	@Test
+	@DisplayName("login 호출 시 기존 소셜 계정의 멤버가 탈퇴 상태이면 WithdrawnMemberException이 발생한다")
+	fun login_existingWithdrawnMember_throwsWithdrawnMemberException() {
+		val member = memberOutPort.save(Member.create(Email("withdrawn-login@example.com"), "홍길동", "길동이"))
+		member.withdraw()
+		memberOutPort.save(member)
+		socialAccountOutPort.save(
+			SocialAccount.create(member.id, SocialProvider.KAKAO, "kakao-withdrawn", "withdrawn-login@example.com"),
+		)
+		val command = SocialLoginCommand(SocialProvider.KAKAO, "kakao-withdrawn", "withdrawn-login@example.com", "홍길동")
+
+		assertThatThrownBy { memberService.login(command) }
+			.isInstanceOf(WithdrawnMemberException::class.java)
 	}
 
 	@Test
@@ -275,6 +305,13 @@ class MemberServiceTest {
 				email = "fake@example.com",
 				name = "가짜유저",
 			)
+	}
+
+	private class DelegatingSocialLoginInPort : SocialLoginInPort {
+		lateinit var delegate: SocialLoginInPort
+
+		override fun login(command: SocialLoginCommand): TokenPair =
+			delegate.login(command)
 	}
 
 	private class FakeTokenIssuer : TokenIssuer {

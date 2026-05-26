@@ -8,6 +8,7 @@ import com.unicorn.server.domain.member.enums.SocialProvider
 import com.unicorn.server.domain.member.event.MemberWithdrawnEvent
 import com.unicorn.server.domain.member.exception.DuplicateEmailException
 import com.unicorn.server.domain.member.exception.MemberNotFoundException
+import com.unicorn.server.domain.member.exception.WithdrawnMemberException
 import com.unicorn.server.domain.member.port.`in`.GetMemberInPort
 import com.unicorn.server.domain.member.port.`in`.KakaoLoginInPort
 import com.unicorn.server.domain.member.port.`in`.LogoutInPort
@@ -23,6 +24,7 @@ import com.unicorn.server.domain.member.port.out.SocialAccountOutPort
 import com.unicorn.server.domain.member.port.out.TokenIssuer
 import com.unicorn.server.domain.member.port.out.TokenStore
 import com.unicorn.server.domain.member.vo.MemberId
+import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -36,13 +38,13 @@ class MemberService(
 	private val tokenIssuer: TokenIssuer,
 	private val tokenStore: TokenStore,
 	private val eventPublisher: EventPublisher,
+	@param:Lazy private val self: SocialLoginInPort,
 ) : KakaoLoginInPort, SocialLoginInPort, GetMemberInPort, UpdateProfileInPort, LogoutInPort, WithdrawMemberInPort {
 
 	// 카카오 ID Token을 검증하고 소셜 로그인을 처리한다.
-	@Transactional
 	override fun kakaoLogin(idToken: String): TokenPair {
 		val userInfo = kakaoAuthPort.verify(idToken)
-		return login(
+		return self.login(
 			SocialLoginCommand(
 				provider = SocialProvider.KAKAO,
 				providerId = userInfo.providerId,
@@ -56,10 +58,6 @@ class MemberService(
 	@Transactional
 	override fun login(command: SocialLoginCommand): TokenPair {
 		val member = findOrCreateMember(command)
-
-		if (member.isDeleted()) {
-			throw MemberNotFoundException(member.id.toString())
-		}
 
 		val tokenPair = tokenIssuer.issue(member.id.toString(), member.role)
 		tokenStore.save(member.id.toString(), tokenPair.refreshToken)
@@ -120,8 +118,7 @@ class MemberService(
 		)
 
 		if (existingSocialAccount != null) {
-			return memberOutPort.findById(existingSocialAccount.memberId)
-				?: throw MemberNotFoundException(existingSocialAccount.memberId.toString())
+			return findMemberOrThrow(existingSocialAccount.memberId.toString())
 		}
 
 		// 이메일 중복 검증
@@ -161,8 +158,13 @@ class MemberService(
 	}
 
 	// 멤버 식별자로 도메인을 조회하고 없으면 도메인 예외를 던진다.
-	private fun findMemberOrThrow(memberId: String): Member =
-		memberOutPort.findById(MemberId.of(memberId)) ?: throw MemberNotFoundException(memberId)
+	private fun findMemberOrThrow(memberId: String): Member {
+		val member = memberOutPort.findById(MemberId.of(memberId)) ?: throw MemberNotFoundException(memberId)
+		if (member.isDeleted()) {
+			throw WithdrawnMemberException(memberId)
+		}
+		return member
+	}
 
 	companion object {
 		private const val MIN_NICKNAME_LENGTH = 2
