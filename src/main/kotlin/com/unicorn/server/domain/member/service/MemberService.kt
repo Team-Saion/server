@@ -14,6 +14,8 @@ import com.unicorn.server.domain.member.port.dto.TokenPair
 import com.unicorn.server.domain.member.port.dto.UpdateProfileCommand
 import com.unicorn.server.domain.member.port.out.MemberOutPort
 import com.unicorn.server.domain.member.port.out.SocialAccountOutPort
+import com.unicorn.server.domain.member.port.out.TokenIssuer
+import com.unicorn.server.domain.member.port.out.TokenStore
 import com.unicorn.server.domain.member.vo.MemberId
 import org.springframework.stereotype.Service
 
@@ -22,6 +24,8 @@ import org.springframework.stereotype.Service
 class MemberService(
 	private val memberOutPort: MemberOutPort,
 	private val socialAccountOutPort: SocialAccountOutPort,
+	private val tokenIssuer: TokenIssuer,
+	private val tokenStore: TokenStore,
 	private val eventPublisher: EventPublisher,
 ) : SocialLoginInPort, GetMemberInPort, UpdateProfileInPort, LogoutInPort, WithdrawMemberInPort {
 
@@ -49,8 +53,11 @@ class MemberService(
 
 	// 멤버 로그아웃 요청을 처리한다.
 	override fun logout(memberId: String) {
-		// TODO: Step 3 - TokenStore 구현 후 토큰 무효화 로직 추가
-		TODO("로그아웃은 Step 3(TokenStore) 구현 후 채움")
+		// 데이터 조회
+		findMemberOrThrow(memberId)
+
+		// refresh token 삭제
+		tokenStore.deleteByMemberId(memberId)
 	}
 
 	// 멤버를 soft delete 처리한다.

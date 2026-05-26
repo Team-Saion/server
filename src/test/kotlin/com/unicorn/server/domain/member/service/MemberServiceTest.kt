@@ -6,12 +6,16 @@ import com.unicorn.server.common.vo.Email
 import com.unicorn.server.domain.member.Member
 import com.unicorn.server.domain.member.SocialAccount
 import com.unicorn.server.domain.member.enums.MemberStatus
+import com.unicorn.server.domain.member.enums.Role
 import com.unicorn.server.domain.member.enums.SocialProvider
 import com.unicorn.server.domain.member.event.MemberWithdrawnEvent
 import com.unicorn.server.domain.member.exception.MemberNotFoundException
+import com.unicorn.server.domain.member.port.dto.TokenPair
 import com.unicorn.server.domain.member.port.dto.UpdateProfileCommand
 import com.unicorn.server.domain.member.port.out.MemberOutPort
 import com.unicorn.server.domain.member.port.out.SocialAccountOutPort
+import com.unicorn.server.domain.member.port.out.TokenIssuer
+import com.unicorn.server.domain.member.port.out.TokenStore
 import com.unicorn.server.domain.member.vo.MemberId
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -24,8 +28,16 @@ class MemberServiceTest {
 
 	private val memberOutPort = FakeMemberOutPort()
 	private val socialAccountOutPort = FakeSocialAccountOutPort()
+	private val tokenIssuer = FakeTokenIssuer()
+	private val tokenStore = FakeTokenStore()
 	private val eventPublisher = RecordingEventPublisher()
-	private val memberService = MemberService(memberOutPort, socialAccountOutPort, eventPublisher)
+	private val memberService = MemberService(
+		memberOutPort,
+		socialAccountOutPort,
+		tokenIssuer,
+		tokenStore,
+		eventPublisher,
+	)
 
 	// TODO: Step 4 - 소셜 로그인 테스트 추가
 	//   login_newMember_createsMemberAndSocialAccount()
@@ -109,6 +121,26 @@ class MemberServiceTest {
 			.isInstanceOf(MemberNotFoundException::class.java)
 	}
 
+	@Test
+	@DisplayName("logout 호출 시 TokenStore에서 refresh token을 삭제한다")
+	fun logout_deletesRefreshTokenFromTokenStore() {
+		val member = memberOutPort.save(Member.create(Email("test@example.com"), "홍길동", "길동이"))
+		tokenStore.save(member.id.toString(), "some-refresh-token")
+
+		memberService.logout(member.id.toString())
+
+		assertThat(tokenStore.findMemberIdByRefreshToken("some-refresh-token")).isNull()
+	}
+
+	@Test
+	@DisplayName("존재하지 않는 ID로 logout 호출 시 MemberNotFoundException이 발생한다")
+	fun logout_whenNotFound_throwsMemberNotFoundException() {
+		val unknownId = MemberId.generate().toString()
+
+		assertThatThrownBy { memberService.logout(unknownId) }
+			.isInstanceOf(MemberNotFoundException::class.java)
+	}
+
 	private class FakeMemberOutPort : MemberOutPort {
 		private val store = linkedMapOf<MemberId, Member>()
 
@@ -138,6 +170,29 @@ class MemberServiceTest {
 
 		override fun findByProviderAndProviderId(provider: SocialProvider, providerId: String): SocialAccount? =
 			store[provider to providerId]
+	}
+
+	private class FakeTokenIssuer : TokenIssuer {
+		override fun issue(memberId: String, role: Role): TokenPair =
+			TokenPair("access-$memberId", "refresh-$memberId")
+	}
+
+	private class FakeTokenStore : TokenStore {
+		private val memberToToken = mutableMapOf<String, String>()
+		private val tokenToMember = mutableMapOf<String, String>()
+
+		override fun save(memberId: String, refreshToken: String) {
+			deleteByMemberId(memberId)
+			memberToToken[memberId] = refreshToken
+			tokenToMember[refreshToken] = memberId
+		}
+
+		override fun findMemberIdByRefreshToken(refreshToken: String): String? =
+			tokenToMember[refreshToken]
+
+		override fun deleteByMemberId(memberId: String) {
+			memberToToken.remove(memberId)?.let { tokenToMember.remove(it) }
+		}
 	}
 
 	private class RecordingEventPublisher : EventPublisher {
