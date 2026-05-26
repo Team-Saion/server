@@ -67,6 +67,8 @@ class MemberEntity protected constructor() : AuditableJpaEntity() {
 		profileImageKey = member.profileImageKey
 		status = member.status
 		deletedAt = member.deletedAt
+		createdAt = member.createdAt
+		updatedAt = member.updatedAt
 	}
 
 	// 도메인 변경사항을 기존 영속성 객체에 반영한다.
@@ -78,6 +80,7 @@ class MemberEntity protected constructor() : AuditableJpaEntity() {
 		profileImageKey = member.profileImageKey
 		status = member.status
 		deletedAt = member.deletedAt
+		updatedAt = member.updatedAt
 	}
 
 	// 영속성 객체를 순수 도메인 객체로 복원한다.

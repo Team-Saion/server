@@ -18,9 +18,11 @@ import com.unicorn.server.domain.member.port.out.TokenIssuer
 import com.unicorn.server.domain.member.port.out.TokenStore
 import com.unicorn.server.domain.member.vo.MemberId
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 // MemberService - 멤버 관련 유스케이스를 조율하는 애플리케이션 서비스다.
 @Service
+@Transactional
 class MemberService(
 	private val memberOutPort: MemberOutPort,
 	private val socialAccountOutPort: SocialAccountOutPort,
