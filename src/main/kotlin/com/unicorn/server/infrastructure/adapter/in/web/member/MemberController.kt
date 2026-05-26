@@ -26,11 +26,11 @@ class MemberController(
 	private val updateProfileInPort: UpdateProfileInPort,
 	private val logoutInPort: LogoutInPort,
 	private val withdrawMemberInPort: WithdrawMemberInPort,
-) {
+) : MemberApiDoc {
 
 	// GET /api/v1/members/me - 내 프로필을 조회한다.
 	@GetMapping("/me")
-	fun getMyProfile(
+	override fun getMyProfile(
 		@AuthenticationPrincipal memberId: String,
 	): ApiResponse<MemberResponse> {
 		val member = getMemberInPort.getById(memberId)
@@ -39,7 +39,7 @@ class MemberController(
 
 	// PATCH /api/v1/members/me/profile - 닉네임을 변경한다.
 	@PatchMapping("/me/profile")
-	fun updateProfile(
+	override fun updateProfile(
 		@AuthenticationPrincipal memberId: String,
 		@RequestBody @Valid request: UpdateProfileRequest,
 	): ApiResponse<MemberResponse> {
@@ -49,7 +49,7 @@ class MemberController(
 
 	// POST /api/v1/members/me/logout - 리프레시 토큰을 무효화하고 로그아웃한다.
 	@PostMapping("/me/logout")
-	fun logout(
+	override fun logout(
 		@AuthenticationPrincipal memberId: String,
 	): ApiResponse<Unit> {
 		logoutInPort.logout(memberId)
@@ -58,7 +58,7 @@ class MemberController(
 
 	// DELETE /api/v1/members/me - 계정을 소프트 삭제한다.
 	@DeleteMapping("/me")
-	fun withdraw(
+	override fun withdraw(
 		@AuthenticationPrincipal memberId: String,
 	): ApiResponse<Unit> {
 		withdrawMemberInPort.withdraw(memberId)

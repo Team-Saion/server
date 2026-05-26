@@ -15,9 +15,9 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/v1/auth")
 class AuthController(
 	private val kakaoLoginInPort: KakaoLoginInPort,
-) {
+) : AuthApiDoc {
 	@PostMapping("/kakao")
-	fun kakaoLogin(@RequestBody @Valid request: KakaoLoginRequest): ApiResponse<TokenResponse> {
+	override fun kakaoLogin(@RequestBody @Valid request: KakaoLoginRequest): ApiResponse<TokenResponse> {
 		val tokenPair = kakaoLoginInPort.kakaoLogin(request.idToken)
 		return ApiResponse.success(TokenResponse.from(tokenPair))
 	}
