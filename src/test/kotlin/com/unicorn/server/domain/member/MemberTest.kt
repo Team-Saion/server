@@ -29,11 +29,11 @@ class MemberTest {
 	}
 
 	@Test
-	@DisplayName("Member 생성 시 profileImageUrl은 null이다")
-	fun create_profileImageUrlIsNull() {
+	@DisplayName("Member 생성 시 profileImageKey는 null이다")
+	fun create_profileImageKeyIsNull() {
 		val member = Member.create(Email("test@example.com"), "홍길동", "길동이")
 
-		assertThat(member.profileImageUrl).isNull()
+		assertThat(member.profileImageKey).isNull()
 	}
 
 	@Test
