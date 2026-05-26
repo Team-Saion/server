@@ -12,6 +12,9 @@ enum class MemberErrorCode(
 	// Not Found
 	MEMBER_NOT_FOUND("M404_1", "Member not found", HttpStatus.NOT_FOUND),
 
+	// Unauthorized
+	INVALID_SOCIAL_TOKEN("M401_1", "Invalid social login token", HttpStatus.UNAUTHORIZED),
+
 	// Conflict
 	DUPLICATE_EMAIL("M409_1", "Email already exists", HttpStatus.CONFLICT),
 
