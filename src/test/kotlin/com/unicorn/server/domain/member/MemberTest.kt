@@ -102,6 +102,13 @@ class MemberTest {
 	}
 
 	@Test
+	@DisplayName("앞뒤 공백이 포함된 이메일로 Email 생성 시 예외가 발생한다")
+	fun email_withLeadingOrTrailingWhitespace_throwsException() {
+		assertThatThrownBy { Email(" test@example.com ") }
+			.isInstanceOf(IllegalArgumentException::class.java)
+	}
+
+	@Test
 	@DisplayName("isDeleted는 DELETED 상태일 때만 true를 반환한다")
 	fun isDeleted_returnsTrueOnlyWhenDeleted() {
 		val member = Member.create(Email("test@example.com"), "홍길동", "길동이")

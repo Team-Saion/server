@@ -5,7 +5,8 @@ package com.unicorn.server.common.vo
 value class Email(val value: String) {
 	init {
 		require(value.isNotBlank()) { "Email cannot be blank" }
-		require(EMAIL_PATTERN.matches(value.trim())) { "Invalid email format: $value" }
+		require(value == value.trim()) { "Email cannot contain leading or trailing whitespace" }
+		require(EMAIL_PATTERN.matches(value)) { "Invalid email format: $value" }
 	}
 
 	// 이메일 값을 문자열로 노출한다.

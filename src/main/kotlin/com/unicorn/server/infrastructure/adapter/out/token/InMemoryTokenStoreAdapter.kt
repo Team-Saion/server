@@ -16,6 +16,7 @@ class InMemoryTokenStoreAdapter : TokenStore {
 	private val tokenToMember = ConcurrentHashMap<String, String>()
 
 	// 멤버의 refresh token을 저장하고 기존 토큰 인덱스를 정리한다.
+	@Synchronized
 	override fun save(memberId: String, refreshToken: String) {
 		deleteByMemberId(memberId)
 		memberToToken[memberId] = refreshToken
@@ -27,6 +28,7 @@ class InMemoryTokenStoreAdapter : TokenStore {
 		tokenToMember[refreshToken]
 
 	// 멤버 식별자로 저장된 refresh token을 삭제한다.
+	@Synchronized
 	override fun deleteByMemberId(memberId: String) {
 		memberToToken.remove(memberId)?.let { tokenToMember.remove(it) }
 	}
