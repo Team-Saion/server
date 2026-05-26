@@ -1,8 +1,6 @@
 package com.unicorn.server.infrastructure.config
 
-import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.databind.json.JsonMapper
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.unicorn.server.common.exception.CommonErrorCode
 import com.unicorn.server.infrastructure.adapter.`in`.web.common.dto.ApiResponse
 import com.unicorn.server.infrastructure.security.JwtAuthenticationFilter
@@ -21,11 +19,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 class SecurityConfig(
 	private val jwtAuthenticationFilter: JwtAuthenticationFilter,
+	private val objectMapper: ObjectMapper,
 ) {
-	private val objectMapper = JsonMapper.builder()
-		.addModule(JavaTimeModule())
-		.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-		.build()
 
 	@Bean
 	fun securityFilterChain(http: HttpSecurity): SecurityFilterChain =
