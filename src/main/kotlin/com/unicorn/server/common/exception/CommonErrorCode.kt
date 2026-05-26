@@ -7,6 +7,10 @@ enum class CommonErrorCode(
 	override val message: String,
 	override val httpStatus: HttpStatus,
 ) : ErrorCode {
+	// Auth
+	UNAUTHORIZED("G401_1", "Authentication is required", HttpStatus.UNAUTHORIZED),
+	FORBIDDEN("G403_1", "Access is denied", HttpStatus.FORBIDDEN),
+
 	// Bad Request
 	INVALID_INPUT("G400_1", "Invalid input", HttpStatus.BAD_REQUEST),
 
