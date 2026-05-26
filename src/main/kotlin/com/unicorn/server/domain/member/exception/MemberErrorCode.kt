@@ -1,0 +1,20 @@
+package com.unicorn.server.domain.member.exception
+
+import com.unicorn.server.common.exception.ErrorCode
+import org.springframework.http.HttpStatus
+
+// MemberErrorCode - 멤버 도메인에서 발생하는 비즈니스 오류 코드를 정의한다.
+enum class MemberErrorCode(
+	override val code: String,
+	override val message: String,
+	override val httpStatus: HttpStatus,
+) : ErrorCode {
+	// Not Found
+	MEMBER_NOT_FOUND("M404_1", "Member not found", HttpStatus.NOT_FOUND),
+
+	// Conflict
+	DUPLICATE_EMAIL("M409_1", "Email already exists", HttpStatus.CONFLICT),
+
+	// Gone
+	MEMBER_ALREADY_DELETED("M410_1", "Member is already deleted", HttpStatus.GONE),
+}
