@@ -1,23 +1,15 @@
 package com.unicorn.server.domain.member.service
 
-import com.unicorn.server.common.domain.Event
-import com.unicorn.server.common.port.out.event.EventPublisher
 import com.unicorn.server.common.vo.Email
 import com.unicorn.server.domain.member.Member
 import com.unicorn.server.domain.member.SocialAccount
-import com.unicorn.server.domain.member.enums.MemberStatus
 import com.unicorn.server.domain.member.enums.Role
 import com.unicorn.server.domain.member.enums.SocialProvider
-import com.unicorn.server.domain.member.event.MemberWithdrawnEvent
 import com.unicorn.server.domain.member.exception.DuplicateEmailException
 import com.unicorn.server.domain.member.exception.MemberNotFoundException
 import com.unicorn.server.domain.member.exception.WithdrawnMemberException
-import com.unicorn.server.domain.member.port.`in`.SocialLoginInPort
-import com.unicorn.server.domain.member.port.dto.KakaoUserInfo
 import com.unicorn.server.domain.member.port.dto.SocialLoginCommand
 import com.unicorn.server.domain.member.port.dto.TokenPair
-import com.unicorn.server.domain.member.port.dto.UpdateProfileCommand
-import com.unicorn.server.domain.member.port.out.KakaoAuthPort
 import com.unicorn.server.domain.member.port.out.MemberOutPort
 import com.unicorn.server.domain.member.port.out.SocialAccountOutPort
 import com.unicorn.server.domain.member.port.out.TokenIssuer
@@ -29,64 +21,19 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 
-@DisplayName("MemberService 단위 테스트")
-class MemberServiceTest {
+@DisplayName("MemberAuthService 단위 테스트")
+class MemberAuthServiceTest {
 
 	private val memberOutPort = FakeMemberOutPort()
 	private val socialAccountOutPort = FakeSocialAccountOutPort()
-	private val kakaoAuthPort = FakeKakaoAuthPort()
 	private val tokenIssuer = FakeTokenIssuer()
 	private val tokenStore = FakeTokenStore()
-	private val eventPublisher = RecordingEventPublisher()
-	private val selfLoginInPort = DelegatingSocialLoginInPort()
-	private val memberService = MemberService(
+	private val memberAuthService = MemberAuthService(
 		memberOutPort,
 		socialAccountOutPort,
-		kakaoAuthPort,
 		tokenIssuer,
 		tokenStore,
-		eventPublisher,
-		selfLoginInPort,
-	).also { selfLoginInPort.delegate = it }
-
-	@Test
-	@DisplayName("getById 호출 시 저장된 멤버를 반환한다")
-	fun getById_returnsSavedMember() {
-		val member = memberOutPort.save(Member.create(Email("test@example.com"), "홍길동", "길동이"))
-
-		val result = memberService.getById(member.id.toString())
-
-		assertThat(result.id).isEqualTo(member.id)
-	}
-
-	@Test
-	@DisplayName("존재하지 않는 ID로 getById 호출 시 MemberNotFoundException이 발생한다")
-	fun getById_whenNotFound_throwsMemberNotFoundException() {
-		val unknownId = MemberId.generate().toString()
-
-		assertThatThrownBy { memberService.getById(unknownId) }
-			.isInstanceOf(MemberNotFoundException::class.java)
-	}
-
-	@Test
-	@DisplayName("탈퇴한 멤버 ID로 getById 호출 시 WithdrawnMemberException이 발생한다")
-	fun getById_whenWithdrawn_throwsWithdrawnMemberException() {
-		val member = memberOutPort.save(Member.create(Email("withdrawn@example.com"), "홍길동", "길동이"))
-		member.withdraw()
-		memberOutPort.save(member)
-
-		assertThatThrownBy { memberService.getById(member.id.toString()) }
-			.isInstanceOf(WithdrawnMemberException::class.java)
-	}
-
-	@Test
-	@DisplayName("kakaoLogin 호출 시 카카오 토큰 검증 후 토큰이 발급된다")
-	fun kakaoLogin_returnsTokenPair() {
-		val result = memberService.kakaoLogin("id-token")
-
-		assertThat(result.accessToken).isNotBlank()
-		assertThat(result.refreshToken).isNotBlank()
-	}
+	)
 
 	@Test
 	@DisplayName("login 호출 시 신규 멤버는 Member와 SocialAccount가 생성되고 토큰이 발급된다")
@@ -98,12 +45,13 @@ class MemberServiceTest {
 			name = "신규유저",
 		)
 
-		val result = memberService.login(command)
+		val result = memberAuthService.login(command)
 
 		assertThat(result.accessToken).isNotBlank()
 		assertThat(result.refreshToken).isNotBlank()
 		assertThat(memberOutPort.existsByEmail(Email("new@example.com"))).isTrue()
 		assertThat(socialAccountOutPort.findByProviderAndProviderId(SocialProvider.KAKAO, "kakao-123")).isNotNull()
+		assertThat(tokenStore.findMemberIdByRefreshToken(result.refreshToken)).isNotNull()
 	}
 
 	@Test
@@ -116,7 +64,7 @@ class MemberServiceTest {
 			name = "김",
 		)
 
-		memberService.login(command)
+		memberAuthService.login(command)
 
 		val member = memberOutPort.findByEmail(Email("short@example.com"))!!
 		assertThat(member.nickname).isEqualTo("김_")
@@ -133,7 +81,7 @@ class MemberServiceTest {
 			name = longName,
 		)
 
-		memberService.login(command)
+		memberAuthService.login(command)
 
 		val member = memberOutPort.findByEmail(Email("long@example.com"))!!
 		assertThat(member.nickname).isEqualTo("가".repeat(30))
@@ -148,7 +96,7 @@ class MemberServiceTest {
 		)
 		val command = SocialLoginCommand(SocialProvider.KAKAO, "kakao-456", "existing@example.com", "홍길동")
 
-		val result = memberService.login(command)
+		val result = memberAuthService.login(command)
 
 		assertThat(result.accessToken).isNotBlank()
 	}
@@ -164,7 +112,7 @@ class MemberServiceTest {
 		)
 		val command = SocialLoginCommand(SocialProvider.KAKAO, "kakao-withdrawn", "withdrawn-login@example.com", "홍길동")
 
-		assertThatThrownBy { memberService.login(command) }
+		assertThatThrownBy { memberAuthService.login(command) }
 			.isInstanceOf(WithdrawnMemberException::class.java)
 	}
 
@@ -174,77 +122,8 @@ class MemberServiceTest {
 		memberOutPort.save(Member.create(Email("dup@example.com"), "기존유저", "기존"))
 		val command = SocialLoginCommand(SocialProvider.KAKAO, "kakao-new-id", "dup@example.com", "신규")
 
-		assertThatThrownBy { memberService.login(command) }
+		assertThatThrownBy { memberAuthService.login(command) }
 			.isInstanceOf(DuplicateEmailException::class.java)
-	}
-
-	@Test
-	@DisplayName("updateProfile 호출 시 닉네임이 변경된다")
-	fun updateProfile_nicknameIsUpdated() {
-		val member = memberOutPort.save(Member.create(Email("test@example.com"), "홍길동", "길동이"))
-
-		val result = memberService.updateProfile(member.id.toString(), UpdateProfileCommand("새닉네임"))
-
-		assertThat(result.nickname).isEqualTo("새닉네임")
-	}
-
-	@Test
-	@DisplayName("존재하지 않는 ID로 updateProfile 호출 시 MemberNotFoundException이 발생한다")
-	fun updateProfile_whenNotFound_throwsMemberNotFoundException() {
-		val unknownId = MemberId.generate().toString()
-
-		assertThatThrownBy { memberService.updateProfile(unknownId, UpdateProfileCommand("닉네임")) }
-			.isInstanceOf(MemberNotFoundException::class.java)
-	}
-
-	@Test
-	@DisplayName("withdraw 호출 시 상태가 DELETED로 변경된다")
-	fun withdraw_statusBecomesDeleted() {
-		val member = memberOutPort.save(Member.create(Email("test@example.com"), "홍길동", "길동이"))
-
-		memberService.withdraw(member.id.toString())
-
-		assertThat(memberOutPort.findById(member.id)!!.status).isEqualTo(MemberStatus.DELETED)
-	}
-
-	@Test
-	@DisplayName("withdraw 호출 시 deletedAt이 세팅된다")
-	fun withdraw_deletedAtIsSet() {
-		val member = memberOutPort.save(Member.create(Email("test@example.com"), "홍길동", "길동이"))
-
-		memberService.withdraw(member.id.toString())
-
-		assertThat(memberOutPort.findById(member.id)!!.deletedAt).isNotNull()
-	}
-
-	@Test
-	@DisplayName("withdraw 호출 시 MemberWithdrawnEvent가 발행된다")
-	fun withdraw_publishesMemberWithdrawnEvent() {
-		val member = memberOutPort.save(Member.create(Email("test@example.com"), "홍길동", "길동이"))
-
-		memberService.withdraw(member.id.toString())
-
-		assertThat(eventPublisher.events).anyMatch { it is MemberWithdrawnEvent }
-	}
-
-	@Test
-	@DisplayName("존재하지 않는 ID로 withdraw 호출 시 MemberNotFoundException이 발생한다")
-	fun withdraw_whenNotFound_throwsMemberNotFoundException() {
-		val unknownId = MemberId.generate().toString()
-
-		assertThatThrownBy { memberService.withdraw(unknownId) }
-			.isInstanceOf(MemberNotFoundException::class.java)
-	}
-
-	@Test
-	@DisplayName("withdraw 호출 시 TokenStore에서 refresh token이 삭제된다")
-	fun withdraw_deletesRefreshTokenFromTokenStore() {
-		val member = memberOutPort.save(Member.create(Email("test@example.com"), "홍길동", "길동이"))
-		tokenStore.save(member.id.toString(), "some-refresh-token")
-
-		memberService.withdraw(member.id.toString())
-
-		assertThat(tokenStore.findMemberIdByRefreshToken("some-refresh-token")).isNull()
 	}
 
 	@Test
@@ -253,7 +132,7 @@ class MemberServiceTest {
 		val member = memberOutPort.save(Member.create(Email("test@example.com"), "홍길동", "길동이"))
 		tokenStore.save(member.id.toString(), "some-refresh-token")
 
-		memberService.logout(member.id.toString())
+		memberAuthService.logout(member.id.toString())
 
 		assertThat(tokenStore.findMemberIdByRefreshToken("some-refresh-token")).isNull()
 	}
@@ -263,7 +142,7 @@ class MemberServiceTest {
 	fun logout_whenNotFound_throwsMemberNotFoundException() {
 		val unknownId = MemberId.generate().toString()
 
-		assertThatThrownBy { memberService.logout(unknownId) }
+		assertThatThrownBy { memberAuthService.logout(unknownId) }
 			.isInstanceOf(MemberNotFoundException::class.java)
 	}
 
@@ -298,22 +177,6 @@ class MemberServiceTest {
 			store[provider to providerId]
 	}
 
-	private class FakeKakaoAuthPort : KakaoAuthPort {
-		override fun verify(idToken: String): KakaoUserInfo =
-			KakaoUserInfo(
-				providerId = "fake-kakao-id",
-				email = "fake@example.com",
-				name = "가짜유저",
-			)
-	}
-
-	private class DelegatingSocialLoginInPort : SocialLoginInPort {
-		lateinit var delegate: SocialLoginInPort
-
-		override fun login(command: SocialLoginCommand): TokenPair =
-			delegate.login(command)
-	}
-
 	private class FakeTokenIssuer : TokenIssuer {
 		override fun issue(memberId: String, role: Role): TokenPair =
 			TokenPair("access-$memberId", "refresh-$memberId")
@@ -334,14 +197,6 @@ class MemberServiceTest {
 
 		override fun deleteByMemberId(memberId: String) {
 			memberToToken.remove(memberId)?.let { tokenToMember.remove(it) }
-		}
-	}
-
-	private class RecordingEventPublisher : EventPublisher {
-		val events = mutableListOf<Event>()
-
-		override fun publish(event: Event) {
-			events += event
 		}
 	}
 }
