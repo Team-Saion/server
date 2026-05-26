@@ -9,9 +9,13 @@ import com.unicorn.server.domain.member.enums.MemberStatus
 import com.unicorn.server.domain.member.enums.Role
 import com.unicorn.server.domain.member.enums.SocialProvider
 import com.unicorn.server.domain.member.event.MemberWithdrawnEvent
+import com.unicorn.server.domain.member.exception.DuplicateEmailException
 import com.unicorn.server.domain.member.exception.MemberNotFoundException
+import com.unicorn.server.domain.member.port.dto.KakaoUserInfo
+import com.unicorn.server.domain.member.port.dto.SocialLoginCommand
 import com.unicorn.server.domain.member.port.dto.TokenPair
 import com.unicorn.server.domain.member.port.dto.UpdateProfileCommand
+import com.unicorn.server.domain.member.port.out.KakaoAuthPort
 import com.unicorn.server.domain.member.port.out.MemberOutPort
 import com.unicorn.server.domain.member.port.out.SocialAccountOutPort
 import com.unicorn.server.domain.member.port.out.TokenIssuer
@@ -28,21 +32,18 @@ class MemberServiceTest {
 
 	private val memberOutPort = FakeMemberOutPort()
 	private val socialAccountOutPort = FakeSocialAccountOutPort()
+	private val kakaoAuthPort = FakeKakaoAuthPort()
 	private val tokenIssuer = FakeTokenIssuer()
 	private val tokenStore = FakeTokenStore()
 	private val eventPublisher = RecordingEventPublisher()
 	private val memberService = MemberService(
 		memberOutPort,
 		socialAccountOutPort,
+		kakaoAuthPort,
 		tokenIssuer,
 		tokenStore,
 		eventPublisher,
 	)
-
-	// TODO: Step 4 - 소셜 로그인 테스트 추가
-	//   login_newMember_createsMemberAndSocialAccount()
-	//   login_existingMember_returnsTokenPair()
-	//   login_duplicateEmail_differentProvider_throwsDuplicateEmailException()
 
 	@Test
 	@DisplayName("getById 호출 시 저장된 멤버를 반환한다")
@@ -61,6 +62,90 @@ class MemberServiceTest {
 
 		assertThatThrownBy { memberService.getById(unknownId) }
 			.isInstanceOf(MemberNotFoundException::class.java)
+	}
+
+	@Test
+	@DisplayName("kakaoLogin 호출 시 카카오 토큰 검증 후 토큰이 발급된다")
+	fun kakaoLogin_returnsTokenPair() {
+		val result = memberService.kakaoLogin("id-token")
+
+		assertThat(result.accessToken).isNotBlank()
+		assertThat(result.refreshToken).isNotBlank()
+	}
+
+	@Test
+	@DisplayName("login 호출 시 신규 멤버는 Member와 SocialAccount가 생성되고 토큰이 발급된다")
+	fun login_newMember_createsMemberAndSocialAccountAndReturnsTokenPair() {
+		val command = SocialLoginCommand(
+			provider = SocialProvider.KAKAO,
+			providerId = "kakao-123",
+			email = "new@example.com",
+			name = "신규유저",
+		)
+
+		val result = memberService.login(command)
+
+		assertThat(result.accessToken).isNotBlank()
+		assertThat(result.refreshToken).isNotBlank()
+		assertThat(memberOutPort.existsByEmail(Email("new@example.com"))).isTrue()
+		assertThat(socialAccountOutPort.findByProviderAndProviderId(SocialProvider.KAKAO, "kakao-123")).isNotNull()
+	}
+
+	@Test
+	@DisplayName("login 호출 시 카카오 이름이 1자이면 닉네임을 2자로 보정한다")
+	fun login_withOneCharacterName_padsNickname() {
+		val command = SocialLoginCommand(
+			provider = SocialProvider.KAKAO,
+			providerId = "kakao-short-name",
+			email = "short@example.com",
+			name = "김",
+		)
+
+		memberService.login(command)
+
+		val member = memberOutPort.findByEmail(Email("short@example.com"))!!
+		assertThat(member.nickname).isEqualTo("김_")
+	}
+
+	@Test
+	@DisplayName("login 호출 시 카카오 이름이 30자 초과이면 닉네임을 30자로 자른다")
+	fun login_withTooLongName_truncatesNickname() {
+		val longName = "가".repeat(31)
+		val command = SocialLoginCommand(
+			provider = SocialProvider.KAKAO,
+			providerId = "kakao-long-name",
+			email = "long@example.com",
+			name = longName,
+		)
+
+		memberService.login(command)
+
+		val member = memberOutPort.findByEmail(Email("long@example.com"))!!
+		assertThat(member.nickname).isEqualTo("가".repeat(30))
+	}
+
+	@Test
+	@DisplayName("login 호출 시 기존 멤버는 SocialAccount로 조회되고 토큰이 발급된다")
+	fun login_existingMember_returnsTokenPair() {
+		val member = memberOutPort.save(Member.create(Email("existing@example.com"), "홍길동", "길동이"))
+		socialAccountOutPort.save(
+			SocialAccount.create(member.id, SocialProvider.KAKAO, "kakao-456", "existing@example.com"),
+		)
+		val command = SocialLoginCommand(SocialProvider.KAKAO, "kakao-456", "existing@example.com", "홍길동")
+
+		val result = memberService.login(command)
+
+		assertThat(result.accessToken).isNotBlank()
+	}
+
+	@Test
+	@DisplayName("login 호출 시 다른 providerId로 동일 이메일 가입하면 DuplicateEmailException이 발생한다")
+	fun login_duplicateEmail_throwsDuplicateEmailException() {
+		memberOutPort.save(Member.create(Email("dup@example.com"), "기존유저", "기존"))
+		val command = SocialLoginCommand(SocialProvider.KAKAO, "kakao-new-id", "dup@example.com", "신규")
+
+		assertThatThrownBy { memberService.login(command) }
+			.isInstanceOf(DuplicateEmailException::class.java)
 	}
 
 	@Test
@@ -122,6 +207,17 @@ class MemberServiceTest {
 	}
 
 	@Test
+	@DisplayName("withdraw 호출 시 TokenStore에서 refresh token이 삭제된다")
+	fun withdraw_deletesRefreshTokenFromTokenStore() {
+		val member = memberOutPort.save(Member.create(Email("test@example.com"), "홍길동", "길동이"))
+		tokenStore.save(member.id.toString(), "some-refresh-token")
+
+		memberService.withdraw(member.id.toString())
+
+		assertThat(tokenStore.findMemberIdByRefreshToken("some-refresh-token")).isNull()
+	}
+
+	@Test
 	@DisplayName("logout 호출 시 TokenStore에서 refresh token을 삭제한다")
 	fun logout_deletesRefreshTokenFromTokenStore() {
 		val member = memberOutPort.save(Member.create(Email("test@example.com"), "홍길동", "길동이"))
@@ -170,6 +266,15 @@ class MemberServiceTest {
 
 		override fun findByProviderAndProviderId(provider: SocialProvider, providerId: String): SocialAccount? =
 			store[provider to providerId]
+	}
+
+	private class FakeKakaoAuthPort : KakaoAuthPort {
+		override fun verify(idToken: String): KakaoUserInfo =
+			KakaoUserInfo(
+				providerId = "fake-kakao-id",
+				email = "fake@example.com",
+				name = "가짜유저",
+			)
 	}
 
 	private class FakeTokenIssuer : TokenIssuer {
