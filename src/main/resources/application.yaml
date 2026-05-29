@@ -6,7 +6,7 @@ spring:
 
 app:
   server:
-    url: ${SERVER_URL}
+    url: ${SERVER_URL:http://localhost:8080}
   kakao:
     jwks-uri: ${KAKAO_JWKS_URI:https://kauth.kakao.com/.well-known/jwks.json}
     issuer: ${KAKAO_ISSUER:https://kauth.kakao.com}

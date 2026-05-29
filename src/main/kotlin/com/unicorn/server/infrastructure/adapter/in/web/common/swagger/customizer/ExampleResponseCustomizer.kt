@@ -15,9 +15,16 @@ import org.springdoc.core.customizers.OperationCustomizer
 import org.springframework.core.annotation.AnnotatedElementUtils
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
+import org.springframework.util.ClassUtils
 import org.springframework.web.method.HandlerMethod
+import java.math.BigDecimal
+import java.math.BigInteger
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.OffsetDateTime
+import java.time.ZonedDateTime
 import java.util.UUID
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
@@ -76,7 +83,9 @@ class ExampleResponseCustomizer : OperationCustomizer {
 			val errorCode = example.codeType.java.enumConstants
 				.orEmpty()
 				.firstOrNull { it.name == example.code } as? ErrorCode
-				?: return null
+				?: throw IllegalArgumentException(
+					"Invalid API error code example: ${example.codeType.simpleName}.${example.code}",
+				)
 
 			return ErrorEntry(
 				status = errorCode.httpStatus.value(),
@@ -151,8 +160,14 @@ class ExampleResponseCustomizer : OperationCustomizer {
 			Double::class -> 1.0
 			Float::class -> 1.0f
 			Boolean::class -> true
+			BigDecimal::class -> BigDecimal("1000.00")
+			BigInteger::class -> BigInteger("1000")
 			LocalDate::class -> LocalDate.parse(EXAMPLE_DATE)
 			LocalDateTime::class -> LocalDateTime.parse(EXAMPLE_TIMESTAMP)
+			LocalTime::class -> LocalTime.parse(EXAMPLE_TIME)
+			Instant::class -> Instant.parse("${EXAMPLE_TIMESTAMP}Z")
+			OffsetDateTime::class -> OffsetDateTime.parse("${EXAMPLE_TIMESTAMP}+09:00")
+			ZonedDateTime::class -> ZonedDateTime.parse("${EXAMPLE_TIMESTAMP}+09:00[Asia/Seoul]")
 			UUID::class -> UUID.fromString("00000000-0000-0000-0000-000000000001")
 			List::class, Collection::class, Set::class -> sampleCollection(type, name, depth)
 			Map::class -> emptyMap<String, Any?>()
@@ -216,7 +231,7 @@ class ExampleResponseCustomizer : OperationCustomizer {
 	private fun <A : Annotation> findAnnotation(handlerMethod: HandlerMethod, annotationType: Class<A>): A? {
 		AnnotatedElementUtils.findMergedAnnotation(handlerMethod.method, annotationType)?.let { return it }
 
-		return handlerMethod.beanType.interfaces.firstNotNullOfOrNull { interfaceType ->
+		return ClassUtils.getAllInterfacesForClass(handlerMethod.beanType).firstNotNullOfOrNull { interfaceType ->
 			findAnnotationOnInterface(interfaceType, handlerMethod, annotationType)
 		}
 	}
@@ -240,6 +255,7 @@ class ExampleResponseCustomizer : OperationCustomizer {
 	private companion object {
 		private const val APPLICATION_JSON_VALUE = "application/json"
 		private const val EXAMPLE_DATE = "2024-01-01"
+		private const val EXAMPLE_TIME = "00:00:00"
 		private const val EXAMPLE_TIMESTAMP = "2024-01-01T00:00:00"
 		private const val MAX_SAMPLE_DEPTH = 2
 	}
