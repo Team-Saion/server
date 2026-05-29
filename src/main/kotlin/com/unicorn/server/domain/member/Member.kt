@@ -108,6 +108,7 @@ class Member private constructor(
 		// 서비스 내 노출 닉네임의 최소/최대 길이를 검증한다.
 		private fun validateNickname(nickname: String) {
 			require(nickname.isNotBlank()) { "Nickname cannot be blank" }
+			require(nickname == nickname.trim()) { "Nickname must not have leading or trailing whitespace" }
 			require(nickname.length in 2..30) { "Nickname must be between 2 and 30 characters" }
 		}
 	}

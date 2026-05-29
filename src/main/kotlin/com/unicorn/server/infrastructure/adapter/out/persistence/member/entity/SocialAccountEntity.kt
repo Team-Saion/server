@@ -56,6 +56,7 @@ class SocialAccountEntity protected constructor() : AuditableJpaEntity() {
 		provider = socialAccount.provider
 		providerId = socialAccount.providerId
 		email = socialAccount.email
+		createdAt = socialAccount.createdAt
 	}
 
 	// 영속성 객체를 순수 도메인 객체로 복원한다.
