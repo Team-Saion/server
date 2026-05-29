@@ -1,8 +1,11 @@
 package com.unicorn.server.infrastructure.config
 
 import com.unicorn.server.infrastructure.adapter.`in`.web.common.swagger.customizer.ExampleResponseCustomizer
+import io.swagger.v3.oas.models.Components
 import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.info.Info
+import io.swagger.v3.oas.models.security.SecurityRequirement
+import io.swagger.v3.oas.models.security.SecurityScheme
 import io.swagger.v3.oas.models.servers.Server
 import org.springdoc.core.models.GroupedOpenApi
 import org.springframework.beans.factory.annotation.Value
@@ -23,6 +26,8 @@ class SwaggerConfig(
 	fun openAPI(): OpenAPI =
 		OpenAPI()
 			.addServersItem(Server().url(serverUrl))
+			.components(securityComponents())
+			.addSecurityItem(SecurityRequirement().addList(BEARER_AUTH_SECURITY_SCHEME))
 			.info(apiInfo())
 
 	@Bean
@@ -42,4 +47,17 @@ class SwaggerConfig(
 	private fun loadDescription(): String =
 		swaggerDescription.inputStream.bufferedReader(StandardCharsets.UTF_8).use { it.readText() }
 
+	private fun securityComponents(): Components =
+		Components()
+			.addSecuritySchemes(
+				BEARER_AUTH_SECURITY_SCHEME,
+				SecurityScheme()
+					.type(SecurityScheme.Type.HTTP)
+					.scheme("bearer")
+					.bearerFormat("JWT"),
+			)
+
+	private companion object {
+		private const val BEARER_AUTH_SECURITY_SCHEME = "access-token"
+	}
 }
