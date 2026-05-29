@@ -15,15 +15,17 @@ import org.springframework.stereotype.Component
 @Component
 class KakaoAuthAdapter(
 	@param:Value("\${app.kakao.app-key}") private val appKey: String,
+	@param:Value("\${app.kakao.jwks-uri}") private val jwksUri: String,
+	@param:Value("\${app.kakao.issuer}") private val issuer: String,
 ) : KakaoAuthPort {
 
 	private val jwtDecoder: NimbusJwtDecoder = NimbusJwtDecoder
-		.withJwkSetUri(JWKS_URI)
+		.withJwkSetUri(jwksUri)
 		.build()
 		.also { decoder ->
 			decoder.setJwtValidator(
 				DelegatingOAuth2TokenValidator(
-					JwtValidators.createDefaultWithIssuer(ISSUER),
+					JwtValidators.createDefaultWithIssuer(issuer),
 					JwtClaimValidator<String>("aud") { it == appKey },
 				),
 			)
@@ -45,10 +47,5 @@ class KakaoAuthAdapter(
 			?: throw InvalidSocialTokenException("Missing nickname claim")
 
 		return KakaoUserInfo(providerId = providerId, email = email, name = name)
-	}
-
-	companion object {
-		private const val JWKS_URI = "https://kauth.kakao.com/.well-known/jwks.json"
-		private const val ISSUER = "https://kauth.kakao.com"
 	}
 }

@@ -7,6 +7,9 @@ spring:
 app:
   server:
     url: ${SERVER_URL}
+  kakao:
+    jwks-uri: ${KAKAO_JWKS_URI:https://kauth.kakao.com/.well-known/jwks.json}
+    issuer: ${KAKAO_ISSUER:https://kauth.kakao.com}
 
 springdoc:
   api-docs:
