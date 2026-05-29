@@ -3,3 +3,22 @@ spring:
     name: server
   profiles:
     default: dev
+
+app:
+  server:
+    url: ${SERVER_URL:http://localhost:8080}
+  kakao:
+    jwks-uri: ${KAKAO_JWKS_URI:https://kauth.kakao.com/.well-known/jwks.json}
+    issuer: ${KAKAO_ISSUER:https://kauth.kakao.com}
+
+springdoc:
+  api-docs:
+    path: /api-specs
+  use-fqn: false
+  default-consumes-media-type: application/json;charset=UTF-8
+  default-produces-media-type: application/json;charset=UTF-8
+  swagger-ui:
+    tags-sorter: alpha
+    operations-sorter: alpha
+    display-request-duration: true
+    urls-primary-name: general
