@@ -2,7 +2,7 @@
 
 echo "[DEV] Health Check Start"
 
-PID=$(pgrep -f 'app.jar')
+PID=$(pgrep -f 'java.*app.jar' | head -n 1)
 
 if [ -z "$PID" ]; then
   echo "Application process not found"
