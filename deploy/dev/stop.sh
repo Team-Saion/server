@@ -2,7 +2,7 @@
 
 echo "[DEV] Stopping application"
 
-PID=$(pgrep -f 'app.jar')
+PID=$(pgrep -f 'java.*app.jar' | head -n 1)
 
 if [ -n "$PID" ]; then
   kill -15 "$PID"
