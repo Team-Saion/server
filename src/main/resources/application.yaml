@@ -3,7 +3,6 @@ spring:
     name: server
   profiles:
     default: dev
-
 app:
   server:
     url: ${SERVER_URL:http://localhost:8080}

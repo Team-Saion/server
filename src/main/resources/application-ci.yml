@@ -1,0 +1,23 @@
+spring:
+  config:
+    activate:
+      on-profile: ci
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:testdb
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+  data:
+    redis:
+      repositories:
+        enabled: false
+app:
+  jwt:
+    secret: 7f2d9a6c4b8e1z3x5v7n9m2q4w6r8t0y
+    access-token-expiration: 3600
+    refresh-token-expiration: 2592000
+  kakao:
+    app-key: test-key
