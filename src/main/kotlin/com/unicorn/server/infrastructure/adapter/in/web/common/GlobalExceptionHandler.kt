@@ -31,7 +31,7 @@ class GlobalExceptionHandler {
 
 	@ExceptionHandler(ResponseStatusException::class)
 	fun handleResponseStatusException(e: ResponseStatusException): ApiResponse<Unit> =
-		ApiResponse.error(e.statusCode.value().toString(), e.reason ?: e.message, e.statusCode)
+		ApiResponse.error(e.statusCode.value().toString(), e.reason ?: e.statusCode.toString(), e.statusCode)
 
 	@ExceptionHandler(Exception::class)
 	fun handleException(e: Exception): ApiResponse<Unit> =
