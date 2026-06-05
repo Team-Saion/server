@@ -70,8 +70,7 @@ jobs:
             | head -n 1) package/app.jar
 
           cd package
-
-          zip -r deploy-${GITHUB_SHA}.zip .
+          zip -r ../deploy-${GITHUB_SHA}.zip .
 
       # S3 업로드
       - name: Upload Artifact To S3
