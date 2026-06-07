@@ -58,10 +58,9 @@ class SecurityConfig(
 	companion object {
 		private val PERMIT_ALL_ENDPOINTS = arrayOf(
 			"/api/v1/auth/**",
-			"/swagger-ui/**",
-			"/swagger-ui.html",
-			"/v3/api-docs/**",
-			"/api-specs/**",
+			"/api/swagger-ui/**",
+			"/api/swagger-ui.html",
+			"/api/api-specs/**",
 			"/actuator/**",
 			"/error",
 		)
