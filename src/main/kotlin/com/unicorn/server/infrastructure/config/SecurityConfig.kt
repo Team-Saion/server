@@ -59,6 +59,7 @@ class SecurityConfig(
 		private val PERMIT_ALL_ENDPOINTS = arrayOf(
 			"/api/v1/auth/**",
 			"/api/swagger-ui/**",
+			"/swagger-ui/**",
 			"/api/swagger-ui.html",
 			"/api/api-specs/**",
 			"/actuator/**",
