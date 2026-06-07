@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController
 
 // AuthController - 소셜 로그인 HTTP 요청을 수신하고 토큰을 발급한다.
 @RestController
-@RequestMapping("/v1/auth")
+@RequestMapping("/api/v1/auth")
 class AuthController(
 	private val kakaoLoginInPort: KakaoLoginInPort,
 ) : AuthApiDoc {
