@@ -14,6 +14,9 @@ enum class CommonErrorCode(
 	// Bad Request
 	INVALID_INPUT("G400", "Invalid input", HttpStatus.BAD_REQUEST),
 
+	// Not Found
+	NOT_FOUND("G404", "Resource not found", HttpStatus.NOT_FOUND),
+
 	// Server Error
 	INTERNAL_SERVER_ERROR("G500", "Internal server error", HttpStatus.INTERNAL_SERVER_ERROR),
 }

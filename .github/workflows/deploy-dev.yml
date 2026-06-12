@@ -1,0 +1,89 @@
+name: Deploy Dev
+
+on:
+  push:
+    branches:
+      - dev
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: ap-northeast-2
+  S3_BUCKET: saion-codedeploy-artifacts
+
+  CODEDEPLOY_APPLICATION: saion-codedeploy
+  CODEDEPLOY_DEPLOYMENT_GROUP: dev
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # Repository Checkout
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # JDK 21 설치
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      # Gradle Cache
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # 실행 권한 부여
+      - name: Grant Execute Permission
+        run: |
+          chmod +x gradlew
+          chmod +x deploy/dev/*.sh
+
+      # 테스트 + 빌드
+      - name: Test & Build
+        run: |
+          ./gradlew clean build \
+          -Dspring.profiles.active=ci
+
+      # AWS OIDC 인증
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::601644127531:role/saion-iam-github-oidc
+          aws-region: ap-northeast-2
+
+      # 배포 패키지 생성
+      - name: Create Deploy Package
+        run: |
+
+          mkdir package
+
+          cp appspec.yml package/
+
+          cp -r deploy package/
+
+          cp $(find build/libs \
+            -name "*.jar" \
+            | grep -v plain \
+            | head -n 1) package/app.jar
+
+          cd package
+          zip -r ../deploy-${GITHUB_SHA}.zip .
+
+      # S3 업로드
+      - name: Upload Artifact To S3
+        run: |
+          aws s3 cp \
+            deploy-${GITHUB_SHA}.zip \
+            s3://${S3_BUCKET}/dev/deploy-${GITHUB_SHA}.zip
+
+      # CodeDeploy 배포
+      - name: Create CodeDeploy Deployment
+        run: |
+          aws deploy create-deployment \
+            --application-name ${CODEDEPLOY_APPLICATION} \
+            --deployment-group-name ${CODEDEPLOY_DEPLOYMENT_GROUP} \
+            --s3-location \
+            bucket=${S3_BUCKET},key=dev/deploy-${GITHUB_SHA}.zip,bundleType=zip

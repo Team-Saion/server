@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController
 
 // MemberController - 인증된 멤버의 프로필 조회/변경, 로그아웃, 회원탈퇴 엔드포인트를 처리한다.
 @RestController
-@RequestMapping("/v1/members")
+@RequestMapping("/api/v1/members")
 class MemberController(
 	private val getMemberInPort: GetMemberInPort,
 	private val updateProfileInPort: UpdateProfileInPort,
