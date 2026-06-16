@@ -67,7 +67,7 @@ class SecurityConfig(
 		)
 
 		private val ADMIN_ENDPOINTS = arrayOf(
-			"/api/v1/admin/**",
+			"/v1/admin/**",
 		)
 	}
 }
