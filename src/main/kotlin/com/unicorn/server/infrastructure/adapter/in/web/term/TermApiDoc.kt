@@ -1,6 +1,10 @@
 package com.unicorn.server.infrastructure.adapter.`in`.web.term
 
+import com.unicorn.server.common.exception.CommonErrorCode
+import com.unicorn.server.domain.term.exception.TermErrorCode
 import com.unicorn.server.infrastructure.adapter.`in`.web.common.dto.ApiResponse
+import com.unicorn.server.infrastructure.adapter.`in`.web.common.swagger.annotation.ApiErrorCodeExample
+import com.unicorn.server.infrastructure.adapter.`in`.web.common.swagger.annotation.ApiErrorCodeExamples
 import com.unicorn.server.infrastructure.adapter.`in`.web.common.swagger.annotation.ApiSuccessCodeExample
 import com.unicorn.server.infrastructure.adapter.`in`.web.term.dto.TermResponse
 import io.swagger.v3.oas.annotations.Operation
@@ -32,7 +36,16 @@ interface TermApiDoc {
 			- `required`가 true인 항목은 모두 동의해야 가입이 가능합니다.
 			- 등록된 약관이 없거나 아직 발효된 버전이 없으면 빈 배열(`[]`)을 반환합니다. 이는 오류가
 			  아니라 정상적인 200 응답입니다.
+
+			**실패 응답**
+			- 이 API는 요청 파라미터가 없어 입력 검증 오류(400)는 발생하지 않습니다.
+			- 저장된 약관 데이터가 손상되었거나(`term_code`가 알 수 없는 값 등) DB 조회 자체가
+			  실패하면 500 응답을 반환합니다. 아래 에러 코드 예시를 참고하세요.
 		""",
+	)
+	@ApiErrorCodeExamples(
+		ApiErrorCodeExample(codeType = TermErrorCode::class, code = "INVALID_TERM_DATA"),
+		ApiErrorCodeExample(codeType = CommonErrorCode::class, code = "INTERNAL_SERVER_ERROR"),
 	)
 	@ApiSuccessCodeExample(TermResponse::class)
 	fun getActiveTerms(): ApiResponse<List<TermResponse>>
