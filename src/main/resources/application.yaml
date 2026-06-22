@@ -10,6 +10,8 @@ app:
   kakao:
     jwks-uri: ${KAKAO_JWKS_URI:https://kauth.kakao.com/.well-known/jwks.json}
     issuer: ${KAKAO_ISSUER:https://kauth.kakao.com}
+  s3:
+    region: ${AWS_REGION:ap-northeast-2}
 
 springdoc:
   api-docs:

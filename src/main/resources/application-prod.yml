@@ -29,6 +29,11 @@ spring:
       port: ${REDIS_PORT}
       password: ${REDIS_PASSWORD:}
 
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
+
 logging:
   level:
     org.hibernate.SQL: info
@@ -40,3 +45,5 @@ app:
     refresh-token-expiration: 2592000
   kakao:
     app-key: ${KAKAO_APP_KEY}
+  s3:
+    bucket: ${S3_BUCKET}
