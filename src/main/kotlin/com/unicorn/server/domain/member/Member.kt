@@ -55,6 +55,14 @@ class Member private constructor(
 		updatedAt = LocalDateTime.now()
 	}
 
+	// 프로필 이미지 키를 교체한다. 업로드 검증/스토리지 연동은 use-case 책임이다.
+	fun changeProfileImage(objectKey: String) {
+		require(objectKey.isNotBlank()) { "Profile image key cannot be blank" }
+
+		profileImageKey = objectKey
+		updatedAt = LocalDateTime.now()
+	}
+
 	// 멤버가 탈퇴 상태인지 확인한다.
 	fun isDeleted(): Boolean = status == MemberStatus.DELETED
 
