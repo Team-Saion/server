@@ -1,4 +1,4 @@
-package com.unicorn.server.infrastructure.adapter.out.storage.exception
+package com.unicorn.server.common.port.out.storage.exception
 
 import com.unicorn.server.common.exception.BusinessException
 
