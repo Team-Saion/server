@@ -4,9 +4,11 @@ import com.unicorn.server.common.vo.Email
 import com.unicorn.server.domain.member.Member
 import com.unicorn.server.domain.member.SocialAccount
 import com.unicorn.server.domain.member.exception.DuplicateEmailException
+import com.unicorn.server.domain.member.exception.InvalidRefreshTokenException
 import com.unicorn.server.domain.member.exception.MemberNotFoundException
 import com.unicorn.server.domain.member.exception.WithdrawnMemberException
 import com.unicorn.server.domain.member.port.`in`.LogoutInPort
+import com.unicorn.server.domain.member.port.`in`.ReissueTokenInPort
 import com.unicorn.server.domain.member.port.`in`.SocialLoginInPort
 import com.unicorn.server.domain.member.port.dto.SocialLoginCommand
 import com.unicorn.server.domain.member.port.dto.TokenPair
@@ -26,7 +28,7 @@ class MemberAuthService(
 	private val socialAccountOutPort: SocialAccountOutPort,
 	private val tokenIssuer: TokenIssuer,
 	private val tokenStore: TokenStore,
-) : SocialLoginInPort, LogoutInPort {
+) : SocialLoginInPort, LogoutInPort, ReissueTokenInPort {
 
 	// 검증된 소셜 사용자 정보로 신규 가입 또는 기존 로그인을 처리하고 토큰을 발급한다.
 	override fun login(command: SocialLoginCommand): TokenPair {
@@ -44,6 +46,21 @@ class MemberAuthService(
 
 		// refresh token 삭제
 		tokenStore.deleteByMemberId(memberId)
+	}
+
+	// 유효하고 현재 활성 상태인 refresh token을 회전해 새 토큰 쌍을 발급한다.
+	override fun reissue(refreshToken: String): TokenPair {
+		val memberId = tokenIssuer.parseRefreshToken(refreshToken)
+			?: throw InvalidRefreshTokenException()
+
+		if (tokenStore.findMemberIdByRefreshToken(refreshToken) != memberId) {
+			throw InvalidRefreshTokenException()
+		}
+
+		val member = findMemberOrThrow(memberId)
+		val tokenPair = tokenIssuer.issue(member.id.toString(), member.role)
+		tokenStore.save(member.id.toString(), tokenPair.refreshToken)
+		return tokenPair
 	}
 
 	// 소셜 계정으로 기존 멤버를 찾거나 신규 멤버와 소셜 계정을 생성한다.
