@@ -40,7 +40,7 @@ class SecurityConfigTest(
 	@DisplayName("카카오 로그인 API는 인증 없이 접근할 수 있다")
 	fun kakaoLogin_withoutAuthentication_passesSecurityFilterChain() {
 		mockMvc.perform(
-			post("/v1/auth/kakao")
+			post("/api/v1/auth/kakao")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content("""{"idToken":""}"""),
 		)
@@ -51,7 +51,7 @@ class SecurityConfigTest(
 	@DisplayName("토큰 재발급 API는 인증 없이 접근할 수 있다")
 	fun refresh_withoutAuthentication_passesSecurityFilterChain() {
 		mockMvc.perform(
-			post("/v1/auth/refresh")
+			post("/api/v1/auth/refresh")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content("""{"refreshToken":""}"""),
 		)
