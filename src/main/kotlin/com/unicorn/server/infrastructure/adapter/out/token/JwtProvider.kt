@@ -28,6 +28,15 @@ class JwtProvider(
 		return TokenPair(accessToken, refreshToken)
 	}
 
+	// refresh token의 서명, 만료, 타입을 검증하고 멤버 식별자를 반환한다.
+	override fun parseRefreshToken(refreshToken: String): String? =
+		runCatching {
+			val claims = getClaims(refreshToken)
+			claims.subject.takeIf {
+				claims.get(TOKEN_TYPE_CLAIM, String::class.java) == REFRESH_TOKEN_TYPE
+			}
+		}.getOrNull()
+
 	// 토큰 서명, 만료, access token 타입을 검증한다.
 	fun validate(token: String): Boolean =
 		runCatching { getClaims(token).get(TOKEN_TYPE_CLAIM, String::class.java) == ACCESS_TOKEN_TYPE }

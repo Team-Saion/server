@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.multipart.MaxUploadSizeExceededException
 import org.springframework.web.multipart.support.MissingServletRequestPartException
+import org.springframework.web.server.ResponseStatusException
+import org.springframework.web.servlet.resource.NoResourceFoundException
 
 @RestControllerAdvice
 class GlobalExceptionHandler {
@@ -33,6 +35,13 @@ class GlobalExceptionHandler {
 	@ExceptionHandler(MissingServletRequestPartException::class)
 	fun handleMissingRequestPart(e: MissingServletRequestPartException): ApiResponse<Unit> =
 		ApiResponse.error(CommonErrorCode.INVALID_INPUT, "${e.requestPartName} part is required")
+	@ExceptionHandler(NoResourceFoundException::class)
+	fun handleNoResourceFoundException(e: NoResourceFoundException): ApiResponse<Unit> =
+		ApiResponse.error(CommonErrorCode.NOT_FOUND, e.message ?: CommonErrorCode.NOT_FOUND.message)
+
+	@ExceptionHandler(ResponseStatusException::class)
+	fun handleResponseStatusException(e: ResponseStatusException): ApiResponse<Unit> =
+		ApiResponse.error(e.statusCode.value().toString(), e.reason ?: e.statusCode.toString(), e.statusCode)
 
 	@ExceptionHandler(Exception::class)
 	fun handleException(e: Exception): ApiResponse<Unit> =

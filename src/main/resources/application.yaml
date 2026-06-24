@@ -3,7 +3,6 @@ spring:
     name: server
   profiles:
     default: dev
-
 app:
   server:
     url: ${SERVER_URL:http://localhost:8080}
@@ -13,13 +12,24 @@ app:
   s3:
     region: ${AWS_REGION:ap-northeast-2}
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+
 springdoc:
   api-docs:
-    path: /api-specs
+    path: /api/api-specs
   use-fqn: false
   default-consumes-media-type: application/json;charset=UTF-8
   default-produces-media-type: application/json;charset=UTF-8
   swagger-ui:
+    path: /api/swagger-ui.html
     tags-sorter: alpha
     operations-sorter: alpha
     display-request-duration: true

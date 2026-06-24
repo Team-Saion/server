@@ -14,6 +14,7 @@ enum class MemberErrorCode(
 
 	// Unauthorized
 	INVALID_SOCIAL_TOKEN("M401_1", "Invalid social login token", HttpStatus.UNAUTHORIZED),
+	INVALID_REFRESH_TOKEN("M401_2", "Invalid or expired refresh token", HttpStatus.UNAUTHORIZED),
 
 	// Conflict
 	DUPLICATE_EMAIL("M409_1", "Email already exists", HttpStatus.CONFLICT),

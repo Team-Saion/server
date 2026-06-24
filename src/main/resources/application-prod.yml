@@ -2,19 +2,11 @@ spring:
   config:
     activate:
       on-profile: prod
-
   datasource:
     driver-class-name: org.postgresql.Driver
     url: ${DB_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
-
-  # DB driver 메모
-  # H2: org.h2.Driver / jdbc:h2:mem:...
-  # MySQL: com.mysql.cj.jdbc.Driver / jdbc:mysql://host:3306/db
-  # PostgreSQL: org.postgresql.Driver / jdbc:postgresql://host:5432/db
-  # MariaDB: org.mariadb.jdbc.Driver / jdbc:mariadb://host:3306/db
-
   jpa:
     hibernate:
       ddl-auto: none
@@ -22,12 +14,6 @@ spring:
       hibernate:
         format_sql: false
     open-in-view: false
-
-  data:
-    redis:
-      host: ${REDIS_HOST}
-      port: ${REDIS_PORT}
-      password: ${REDIS_PASSWORD:}
 
   servlet:
     multipart:
@@ -37,7 +23,6 @@ spring:
 logging:
   level:
     org.hibernate.SQL: info
-
 app:
   jwt:
     secret: ${JWT_SECRET}
