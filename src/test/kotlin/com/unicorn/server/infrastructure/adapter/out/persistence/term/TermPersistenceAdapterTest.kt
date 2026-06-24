@@ -7,6 +7,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
+import org.springframework.dao.InvalidDataAccessApiUsageException
 import java.time.LocalDateTime
 
 /**
@@ -33,5 +34,30 @@ class TermPersistenceAdapterTest {
 			.isInstanceOf(BusinessException::class.java)
 			.extracting { (it as BusinessException).errorCode }
 			.isEqualTo(TermErrorCode.INVALID_TERM_DATA)
+	}
+
+	@Test
+	@DisplayName("Spring이 래핑한 enum 매핑 예외도 INVALID_TERM_DATA로 변환한다")
+	fun findAllEffectiveAsOf_wrappedUnmappableTermCode_throwsBusinessException() {
+		val now = LocalDateTime.now()
+		val mappingException = IllegalArgumentException("No enum constant TermCode.UNKNOWN")
+		`when`(termJpaRepository.findAllByEffectiveAtLessThanEqual(now))
+			.thenThrow(InvalidDataAccessApiUsageException("Invalid enum value", mappingException))
+
+		assertThatThrownBy { termPersistenceAdapter.findAllEffectiveAsOf(now) }
+			.isInstanceOf(BusinessException::class.java)
+			.extracting { (it as BusinessException).errorCode }
+			.isEqualTo(TermErrorCode.INVALID_TERM_DATA)
+	}
+
+	@Test
+	@DisplayName("enum 매핑과 무관한 런타임 예외는 그대로 전파한다")
+	fun findAllEffectiveAsOf_unrelatedRuntimeException_rethrowsOriginalException() {
+		val now = LocalDateTime.now()
+		val repositoryException = IllegalStateException("Database unavailable")
+		`when`(termJpaRepository.findAllByEffectiveAtLessThanEqual(now)).thenThrow(repositoryException)
+
+		assertThatThrownBy { termPersistenceAdapter.findAllEffectiveAsOf(now) }
+			.isSameAs(repositoryException)
 	}
 }

@@ -26,5 +26,5 @@ class TermQueryService(
 	override fun getActiveTerms(): List<Term> =
 		termOutPort.findAllEffectiveAsOf(LocalDateTime.now())
 			.groupBy { it.termCode }
-			.map { (_, versions) -> versions.maxBy { it.version } }
+			.mapNotNull { (_, versions) -> versions.maxByOrNull { it.version } }
 }

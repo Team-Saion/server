@@ -19,6 +19,8 @@ import com.unicorn.server.domain.member.vo.MemberId
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.transaction.support.TransactionSynchronization
+import org.springframework.transaction.support.TransactionSynchronizationManager
 
 // MemberProfileService - 멤버 조회, 프로필/프로필 이미지 변경, 회원탈퇴 유스케이스를 처리한다.
 @Service
@@ -54,9 +56,11 @@ class MemberProfileService(
 		// 업로드 정책 검증 및 스토리지 업로드
 		ObjectType.PROFILE_IMAGE.validate(command.contentType, command.contentLength)
 		val objectKey = ObjectType.PROFILE_IMAGE.generateObjectKey(command.originalFilename)
-		val stored = objectStorage.upload(
-			ObjectUploadCommand(objectKey, command.contentType, command.contentLength, command.inputStream),
-		)
+		val stored = command.inputStream.use { inputStream ->
+			objectStorage.upload(
+				ObjectUploadCommand(objectKey, command.contentType, command.contentLength, inputStream),
+			)
+		}
 
 		// 도메인 상태 변경 및 저장
 		val previousImageKey = member.profileImageKey
@@ -64,7 +68,7 @@ class MemberProfileService(
 		val savedMember = memberOutPort.save(member)
 
 		// 기존 이미지 정리 (best-effort, 실패해도 업로드 응답은 성공 유지)
-		previousImageKey?.let { deleteQuietly(it) }
+		previousImageKey?.let { deleteAfterCommit(it) }
 
 		return savedMember
 	}
@@ -95,6 +99,21 @@ class MemberProfileService(
 	}
 
 	// 새 이미지 저장 성공 후 기존 이미지를 삭제한다. 실패해도 업로드 응답은 성공으로 유지한다.
+	private fun deleteAfterCommit(objectKey: String) {
+		if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+			deleteQuietly(objectKey)
+			return
+		}
+
+		TransactionSynchronizationManager.registerSynchronization(
+			object : TransactionSynchronization {
+				override fun afterCommit() {
+					deleteQuietly(objectKey)
+				}
+			},
+		)
+	}
+
 	private fun deleteQuietly(objectKey: String) {
 		runCatching { objectStorage.delete(objectKey) }
 			.onFailure { e -> log.warn("Failed to delete stale profile image - objectKey={}", objectKey, e) }

@@ -25,10 +25,15 @@ class TermPersistenceAdapter(
 	override fun findAllEffectiveAsOf(now: LocalDateTime): List<Term> {
 		val entities = try {
 			termJpaRepository.findAllByEffectiveAtLessThanEqual(now)
-		} catch (e: IllegalArgumentException) {
+		} catch (e: RuntimeException) {
+			if (!e.isCausedByIllegalArgumentException()) throw e
 			throw BusinessException(TermErrorCode.INVALID_TERM_DATA, "term_code를 TermCode enum으로 매핑할 수 없습니다", e)
 		}
 
 		return entities.map { it.toDomain() }
 	}
+
+	private fun RuntimeException.isCausedByIllegalArgumentException(): Boolean =
+		generateSequence<Throwable>(this) { it.cause }
+			.any { it is IllegalArgumentException }
 }

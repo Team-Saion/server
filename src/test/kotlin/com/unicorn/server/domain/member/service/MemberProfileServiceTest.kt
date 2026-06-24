@@ -21,6 +21,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.springframework.transaction.support.TransactionSynchronizationManager
 import java.io.ByteArrayInputStream
 import java.time.LocalDateTime
 
@@ -189,8 +190,51 @@ class MemberProfileServiceTest {
 			.isInstanceOf(MemberNotFoundException::class.java)
 	}
 
+	@Test
+	@DisplayName("기존 프로필 이미지는 트랜잭션 커밋 후에만 삭제한다")
+	fun uploadProfileImage_withActiveTransaction_deletesPreviousImageAfterCommit() {
+		val member = memberOutPort.save(Member.create(Email("commit@example.com"), "member", "nickname"))
+		val first = memberProfileService.uploadProfileImage(member.id.toString(), uploadCommand("first.png"))
+		val previousKey = first.profileImageKey
+
+		TransactionSynchronizationManager.initSynchronization()
+		try {
+			memberProfileService.uploadProfileImage(member.id.toString(), uploadCommand("second.png"))
+
+			assertThat(objectStorage.deleted).doesNotContain(previousKey)
+
+			TransactionSynchronizationManager.getSynchronizations().forEach { it.afterCommit() }
+
+			assertThat(objectStorage.deleted).contains(previousKey)
+		} finally {
+			TransactionSynchronizationManager.clearSynchronization()
+		}
+	}
+
+	@Test
+	@DisplayName("프로필 이미지 업로드 후 입력 스트림을 닫는다")
+	fun uploadProfileImage_afterUpload_closesInputStream() {
+		val member = memberOutPort.save(Member.create(Email("stream@example.com"), "member", "nickname"))
+		val inputStream = CloseTrackingInputStream(ByteArray(0))
+		val command = UploadProfileImageCommand("profile.png", "image/png", 0L, inputStream)
+
+		memberProfileService.uploadProfileImage(member.id.toString(), command)
+
+		assertThat(inputStream.closed).isTrue()
+	}
+
 	private fun uploadCommand(filename: String): UploadProfileImageCommand =
 		UploadProfileImageCommand(filename, "image/png", 100L, ByteArrayInputStream(ByteArray(0)))
+
+	private class CloseTrackingInputStream(bytes: ByteArray) : ByteArrayInputStream(bytes) {
+		var closed = false
+			private set
+
+		override fun close() {
+			closed = true
+			super.close()
+		}
+	}
 
 	private class FakeMemberOutPort : MemberOutPort {
 		private val store = linkedMapOf<MemberId, Member>()
