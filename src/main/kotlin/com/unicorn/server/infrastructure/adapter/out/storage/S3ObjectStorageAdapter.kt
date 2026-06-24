@@ -36,7 +36,9 @@ class S3ObjectStorageAdapter(
             .build()
 
         try {
-            s3Client.putObject(request, RequestBody.fromInputStream(command.inputStream, command.contentLength))
+            command.inputStream.use { inputStream ->
+                s3Client.putObject(request, RequestBody.fromInputStream(inputStream, command.contentLength))
+            }
         } catch (e: SdkException) {
             throw BusinessException(ObjectStorageErrorCode.UPLOAD_FAILED, command.objectKey, e)
         }

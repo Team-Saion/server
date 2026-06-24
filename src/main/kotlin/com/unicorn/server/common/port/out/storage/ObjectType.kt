@@ -30,6 +30,7 @@ enum class ObjectType(
 
 	// 허용된 contentType/최대 용량을 벗어나면 예외를 던진다. S3 등 실제 업로드 호출 전에 실행되어야 한다.
 	fun validate(contentType: String, contentLength: Long) {
+		require(contentLength >= 0) { "Content length must be non-negative" }
 		if (contentType !in allowedContentTypes) throw UnsupportedContentTypeException(contentType, this)
 		if (contentLength > maxSizeBytes) throw ObjectSizeExceededException(contentLength, this)
 	}
@@ -37,6 +38,7 @@ enum class ObjectType(
 	// keyPrefix + UUID + 원본 파일 확장자를 조합해 충돌 없는 objectKey를 만든다.
 	fun generateObjectKey(originalFilename: String): String {
 		val extension = originalFilename.substringAfterLast('.', missingDelimiterValue = "")
+			.filter { it.isLetterOrDigit() }
 		val suffix = if (extension.isBlank()) "" else ".$extension"
 		return "$keyPrefix/${UUID.randomUUID()}$suffix"
 	}
