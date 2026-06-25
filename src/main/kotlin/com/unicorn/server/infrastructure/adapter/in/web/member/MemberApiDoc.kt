@@ -1,6 +1,7 @@
 package com.unicorn.server.infrastructure.adapter.`in`.web.member
 
 import com.unicorn.server.common.exception.CommonErrorCode
+import com.unicorn.server.common.port.out.storage.exception.ObjectStorageErrorCode
 import com.unicorn.server.domain.member.exception.MemberErrorCode
 import com.unicorn.server.infrastructure.adapter.`in`.web.common.dto.ApiResponse
 import com.unicorn.server.infrastructure.adapter.`in`.web.common.swagger.annotation.ApiErrorCodeExample
@@ -14,6 +15,8 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestPart
+import org.springframework.web.multipart.MultipartFile
 
 @Tag(name = "Member API", description = "인증된 멤버의 프로필, 로그아웃, 회원탈퇴 API")
 interface MemberApiDoc {
@@ -59,6 +62,35 @@ interface MemberApiDoc {
 		@Parameter(hidden = true)
 		@AuthenticationPrincipal memberId: String,
 		@RequestBody @Valid request: UpdateProfileRequest,
+	): ApiResponse<MemberResponse>
+
+	@Operation(
+		summary = "내 프로필 이미지 업로드",
+		description = """
+			현재 인증된 멤버의 프로필 이미지를 업로드합니다.
+
+			- Authorization 헤더의 Bearer access token이 필요합니다.
+			- multipart/form-data 요청이며 파일은 `image` 파트로 전송합니다.
+			- 허용 포맷: image/jpeg, image/png, image/webp
+			- 최대 용량: 20MB
+			- 기존에 등록된 이미지가 있으면 새 이미지로 교체된 뒤 기존 이미지는 스토리지에서 삭제됩니다.
+		""",
+	)
+	@ApiErrorCodeExamples(
+		ApiErrorCodeExample(codeType = CommonErrorCode::class, code = "UNAUTHORIZED"),
+		ApiErrorCodeExample(codeType = CommonErrorCode::class, code = "INVALID_INPUT"),
+		ApiErrorCodeExample(codeType = MemberErrorCode::class, code = "MEMBER_NOT_FOUND"),
+		ApiErrorCodeExample(codeType = MemberErrorCode::class, code = "WITHDRAWN_MEMBER"),
+		ApiErrorCodeExample(codeType = ObjectStorageErrorCode::class, code = "UNSUPPORTED_CONTENT_TYPE"),
+		ApiErrorCodeExample(codeType = ObjectStorageErrorCode::class, code = "OBJECT_SIZE_EXCEEDED"),
+		ApiErrorCodeExample(codeType = ObjectStorageErrorCode::class, code = "UPLOAD_FAILED"),
+	)
+	@ApiSuccessCodeExample(MemberResponse::class)
+	fun uploadProfileImage(
+		@Parameter(hidden = true)
+		@AuthenticationPrincipal memberId: String,
+		@Parameter(description = "업로드할 프로필 이미지 파일 (jpeg/png/webp, 최대 20MB)")
+		@RequestPart("image") image: MultipartFile,
 	): ApiResponse<MemberResponse>
 
 	@Operation(

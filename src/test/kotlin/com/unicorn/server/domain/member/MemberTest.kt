@@ -104,6 +104,25 @@ class MemberTest {
 	}
 
 	@Test
+	@DisplayName("changeProfileImage 호출 시 profileImageKey가 변경된다")
+	fun changeProfileImage_keyIsUpdated() {
+		val member = Member.create(Email("test@example.com"), "홍길동", "길동이")
+
+		member.changeProfileImage("images/profile/new-key.png")
+
+		assertThat(member.profileImageKey).isEqualTo("images/profile/new-key.png")
+	}
+
+	@Test
+	@DisplayName("빈 objectKey로 changeProfileImage 호출 시 예외가 발생한다")
+	fun changeProfileImage_withBlankKey_throwsException() {
+		val member = Member.create(Email("test@example.com"), "홍길동", "길동이")
+
+		assertThatThrownBy { member.changeProfileImage(" ") }
+			.isInstanceOf(IllegalArgumentException::class.java)
+	}
+
+	@Test
 	@DisplayName("잘못된 이메일 형식으로 Email 생성 시 예외가 발생한다")
 	fun email_withInvalidFormat_throwsException() {
 		assertThatThrownBy { Email("not-an-email") }
