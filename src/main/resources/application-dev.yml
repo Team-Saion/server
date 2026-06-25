@@ -19,6 +19,12 @@ spring:
         format_sql: true
         highlight_sql: true
     open-in-view: false
+
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
+
 logging:
   level:
     com.unicorn.server: debug
@@ -31,3 +37,5 @@ app:
     refresh-token-expiration: 2592000
   kakao:
     app-key: ${KAKAO_APP_KEY}
+  s3:
+    bucket: ${S3_BUCKET}

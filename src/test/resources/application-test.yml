@@ -42,3 +42,5 @@ app:
     refresh-token-expiration: 2592000
   kakao:
     app-key: test-kakao-app-key
+  s3:
+    bucket: test-bucket
