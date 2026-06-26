@@ -41,8 +41,9 @@ class SecurityConfig(
 			.authorizeHttpRequests { auth ->
 				auth
 					.requestMatchers(*PERMIT_ALL_ENDPOINTS).permitAll()
+					.requestMatchers(*PENDING_ENDPOINTS).hasAnyRole("PENDING", "MEMBER", "ADMIN")
 					.requestMatchers(*ADMIN_ENDPOINTS).hasRole("ADMIN")
-					.anyRequest().authenticated()
+					.anyRequest().hasAnyRole("MEMBER", "ADMIN")
 			}
 			.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
 			.build()
@@ -69,6 +70,10 @@ class SecurityConfig(
 
 		private val ADMIN_ENDPOINTS = arrayOf(
 			"/v1/admin/**",
+		)
+
+		private val PENDING_ENDPOINTS = arrayOf<String>(
+			// 온보딩/약관 API 경로가 추가될 자리
 		)
 	}
 }
