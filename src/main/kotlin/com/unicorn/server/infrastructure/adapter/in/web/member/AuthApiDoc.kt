@@ -7,6 +7,7 @@ import com.unicorn.server.infrastructure.adapter.`in`.web.common.swagger.annotat
 import com.unicorn.server.infrastructure.adapter.`in`.web.common.swagger.annotation.ApiErrorCodeExamples
 import com.unicorn.server.infrastructure.adapter.`in`.web.common.swagger.annotation.ApiSuccessCodeExample
 import com.unicorn.server.infrastructure.adapter.`in`.web.member.dto.KakaoLoginRequest
+import com.unicorn.server.infrastructure.adapter.`in`.web.member.dto.KakaoLoginResponse
 import com.unicorn.server.infrastructure.adapter.`in`.web.member.dto.RefreshTokenRequest
 import com.unicorn.server.infrastructure.adapter.`in`.web.member.dto.TokenResponse
 import io.swagger.v3.oas.annotations.Operation
@@ -25,6 +26,7 @@ interface AuthApiDoc {
 			- 요청 바디: `idToken`
 			- ID Token은 카카오 SDK 또는 카카오 로그인 플로우에서 발급받은 토큰입니다.
 			- 서버는 카카오 JWKS로 서명, 만료, issuer, audience를 검증합니다.
+			- 신규 회원이면 `isNewMember`가 `true`로 응답됩니다.
 		""",
 	)
 	@ApiErrorCodeExamples(
@@ -33,10 +35,10 @@ interface AuthApiDoc {
 		ApiErrorCodeExample(codeType = MemberErrorCode::class, code = "DUPLICATE_EMAIL"),
 		ApiErrorCodeExample(codeType = MemberErrorCode::class, code = "WITHDRAWN_MEMBER"),
 	)
-	@ApiSuccessCodeExample(TokenResponse::class)
+	@ApiSuccessCodeExample(KakaoLoginResponse::class)
 	fun kakaoLogin(
 		@RequestBody @Valid request: KakaoLoginRequest,
-	): ApiResponse<TokenResponse>
+	): ApiResponse<KakaoLoginResponse>
 
 	@Operation(
 		summary = "인증 토큰 재발급",
