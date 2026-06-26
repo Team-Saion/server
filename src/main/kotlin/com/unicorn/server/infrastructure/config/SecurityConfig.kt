@@ -73,6 +73,8 @@ class SecurityConfig(
 
 		private val PENDING_ENDPOINTS = arrayOf<String>(
 			"/api/v1/terms/agree",
+			"/api/v1/members/me/onboarding-info",
+			"/api/v1/members/me/onboarding",
 		)
 	}
 }

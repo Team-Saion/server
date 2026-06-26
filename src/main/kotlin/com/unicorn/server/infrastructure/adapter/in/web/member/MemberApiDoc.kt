@@ -7,7 +7,10 @@ import com.unicorn.server.infrastructure.adapter.`in`.web.common.dto.ApiResponse
 import com.unicorn.server.infrastructure.adapter.`in`.web.common.swagger.annotation.ApiErrorCodeExample
 import com.unicorn.server.infrastructure.adapter.`in`.web.common.swagger.annotation.ApiErrorCodeExamples
 import com.unicorn.server.infrastructure.adapter.`in`.web.common.swagger.annotation.ApiSuccessCodeExample
+import com.unicorn.server.infrastructure.adapter.`in`.web.member.dto.CompleteOnboardingRequest
 import com.unicorn.server.infrastructure.adapter.`in`.web.member.dto.MemberResponse
+import com.unicorn.server.infrastructure.adapter.`in`.web.member.dto.OnboardingInfoResponse
+import com.unicorn.server.infrastructure.adapter.`in`.web.member.dto.TokenResponse
 import com.unicorn.server.infrastructure.adapter.`in`.web.member.dto.UpdateProfileRequest
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
@@ -42,18 +45,65 @@ interface MemberApiDoc {
 	): ApiResponse<MemberResponse>
 
 	@Operation(
+		summary = "온보딩 사전정보 조회",
+		description = """
+			온보딩 화면에 필요한 카카오 프로필 정보와 멤버 아바타 색상을 조회합니다.
+
+			- Authorization 헤더의 Bearer access token이 필요합니다.
+			- PENDING, MEMBER 역할 모두 접근할 수 있습니다.
+		""",
+	)
+	@ApiErrorCodeExamples(
+		ApiErrorCodeExample(codeType = CommonErrorCode::class, code = "UNAUTHORIZED"),
+		ApiErrorCodeExample(codeType = MemberErrorCode::class, code = "MEMBER_NOT_FOUND"),
+		ApiErrorCodeExample(codeType = MemberErrorCode::class, code = "WITHDRAWN_MEMBER"),
+	)
+	@ApiSuccessCodeExample(OnboardingInfoResponse::class)
+	fun getOnboardingInfo(
+		@Parameter(hidden = true)
+		@AuthenticationPrincipal memberId: String,
+	): ApiResponse<OnboardingInfoResponse>
+
+	@Operation(
+		summary = "온보딩 완료",
+		description = """
+			온보딩에서 입력한 닉네임을 저장하고 PENDING 역할을 MEMBER로 전환한 뒤 새 토큰을 발급합니다.
+
+			- 요청 바디: `nickname`
+			- 닉네임은 앞뒤 공백 제거 후 2자 이상 10자 이하입니다.
+			- 닉네임은 한글, 영문, 숫자만 허용합니다.
+			- PENDING, MEMBER 역할 모두 접근할 수 있습니다.
+		""",
+	)
+	@ApiErrorCodeExamples(
+		ApiErrorCodeExample(codeType = CommonErrorCode::class, code = "UNAUTHORIZED"),
+		ApiErrorCodeExample(codeType = CommonErrorCode::class, code = "INVALID_INPUT"),
+		ApiErrorCodeExample(codeType = MemberErrorCode::class, code = "INVALID_NICKNAME"),
+		ApiErrorCodeExample(codeType = MemberErrorCode::class, code = "MEMBER_NOT_FOUND"),
+		ApiErrorCodeExample(codeType = MemberErrorCode::class, code = "WITHDRAWN_MEMBER"),
+	)
+	@ApiSuccessCodeExample(TokenResponse::class)
+	fun completeOnboarding(
+		@Parameter(hidden = true)
+		@AuthenticationPrincipal memberId: String,
+		@RequestBody @Valid request: CompleteOnboardingRequest,
+	): ApiResponse<TokenResponse>
+
+	@Operation(
 		summary = "내 프로필 수정",
 		description = """
 			현재 인증된 멤버의 닉네임을 변경합니다.
 
 			- 요청 바디: `nickname`
-			- 닉네임은 2자 이상 30자 이하입니다.
+			- 닉네임은 2자 이상 10자 이하입니다.
+			- 닉네임은 한글, 영문, 숫자만 허용합니다.
 			- 앞뒤 공백이 포함된 닉네임은 허용하지 않습니다.
 		""",
 	)
 	@ApiErrorCodeExamples(
 		ApiErrorCodeExample(codeType = CommonErrorCode::class, code = "UNAUTHORIZED"),
 		ApiErrorCodeExample(codeType = CommonErrorCode::class, code = "INVALID_INPUT"),
+		ApiErrorCodeExample(codeType = MemberErrorCode::class, code = "INVALID_NICKNAME"),
 		ApiErrorCodeExample(codeType = MemberErrorCode::class, code = "MEMBER_NOT_FOUND"),
 		ApiErrorCodeExample(codeType = MemberErrorCode::class, code = "WITHDRAWN_MEMBER"),
 	)
