@@ -7,6 +7,7 @@ import com.unicorn.server.domain.member.enums.Role
 import com.unicorn.server.domain.member.exception.MemberErrorCode
 import com.unicorn.server.domain.member.vo.MemberId
 import java.time.LocalDateTime
+import kotlin.random.Random
 
 // Member 도메인 - 서비스 관점의 멤버 프로필과 탈퇴 생명주기 규칙을 담당한다.
 class Member private constructor(
@@ -14,6 +15,7 @@ class Member private constructor(
 	val email: Email,
 	val name: String,
 	nickname: String,
+	val avatarColor: String,
 	val role: Role,
 	profileImageKey: String?,
 	status: MemberStatus,
@@ -85,6 +87,7 @@ class Member private constructor(
 				email = email,
 				name = name,
 				nickname = nickname,
+				avatarColor = randomAvatarColor(),
 				role = role,
 				profileImageKey = null,
 				status = MemberStatus.ACTIVE,
@@ -100,13 +103,28 @@ class Member private constructor(
 			email: Email,
 			name: String,
 			nickname: String,
+			avatarColor: String,
 			role: Role,
 			profileImageKey: String?,
 			status: MemberStatus,
 			deletedAt: LocalDateTime?,
 			createdAt: LocalDateTime,
 			updatedAt: LocalDateTime,
-		): Member = Member(id, email, name, nickname, role, profileImageKey, status, deletedAt, createdAt, updatedAt)
+		): Member = Member(
+			id,
+			email,
+			name,
+			nickname,
+			avatarColor,
+			role,
+			profileImageKey,
+			status,
+			deletedAt,
+			createdAt,
+			updatedAt,
+		)
+
+		private fun randomAvatarColor(): String = "#%06X".format(Random.nextInt(0x1000000))
 
 		// 실명 또는 소셜 제공 이름의 최소 유효성을 검증한다.
 		private fun validateName(name: String) {

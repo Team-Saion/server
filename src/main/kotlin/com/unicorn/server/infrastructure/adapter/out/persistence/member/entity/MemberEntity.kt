@@ -40,6 +40,10 @@ class MemberEntity protected constructor() : AuditableJpaEntity() {
 	var nickname: String = ""
 		protected set
 
+	@Column(name = "avatar_color", nullable = false, length = 7)
+	var avatarColor: String = ""
+		protected set
+
 	@Enumerated(EnumType.STRING)
 	@Column(name = "role", nullable = false, length = 20)
 	lateinit var role: Role
@@ -63,6 +67,7 @@ class MemberEntity protected constructor() : AuditableJpaEntity() {
 		email = member.email.value
 		name = member.name
 		nickname = member.nickname
+		avatarColor = member.avatarColor
 		role = member.role
 		profileImageKey = member.profileImageKey
 		status = member.status
@@ -76,6 +81,7 @@ class MemberEntity protected constructor() : AuditableJpaEntity() {
 		email = member.email.value
 		name = member.name
 		nickname = member.nickname
+		avatarColor = member.avatarColor
 		role = member.role
 		profileImageKey = member.profileImageKey
 		status = member.status
@@ -89,6 +95,7 @@ class MemberEntity protected constructor() : AuditableJpaEntity() {
 		email = Email(email),
 		name = name,
 		nickname = nickname,
+		avatarColor = avatarColor,
 		role = role,
 		profileImageKey = profileImageKey,
 		status = status,

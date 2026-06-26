@@ -37,6 +37,14 @@ class MemberTest {
 	}
 
 	@Test
+	@DisplayName("Member 생성 시 avatarColor가 할당된다")
+	fun create_avatarColorIsAssigned() {
+		val member = Member.create(Email("test@example.com"), "홍길동", "길동이")
+
+		assertThat(member.avatarColor).matches("^#[0-9A-F]{6}$")
+	}
+
+	@Test
 	@DisplayName("withdraw 호출 시 상태가 DELETED가 된다")
 	fun withdraw_statusBecomesDeleted() {
 		val member = Member.create(Email("test@example.com"), "홍길동", "길동이")
