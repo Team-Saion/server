@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestPart
 import org.springframework.web.multipart.MultipartFile
 
-@Tag(name = "Member API", description = "인증된 멤버의 프로필, 로그아웃, 회원탈퇴 API")
+@Tag(name = "Member API", description = "인증된 멤버의 온보딩, 프로필 조회/변경, 로그아웃, 회원탈퇴 API")
 interface MemberApiDoc {
 
 	@Operation(
@@ -30,11 +30,13 @@ interface MemberApiDoc {
 			현재 인증된 멤버의 프로필 정보를 조회합니다.
 
 			- Authorization 헤더의 Bearer access token이 필요합니다.
+			- MEMBER, ADMIN 역할만 접근할 수 있습니다. PENDING 역할은 403을 반환합니다.
 			- 탈퇴한 멤버는 접근할 수 없습니다.
 		""",
 	)
 	@ApiErrorCodeExamples(
 		ApiErrorCodeExample(codeType = CommonErrorCode::class, code = "UNAUTHORIZED"),
+		ApiErrorCodeExample(codeType = CommonErrorCode::class, code = "FORBIDDEN"),
 		ApiErrorCodeExample(codeType = MemberErrorCode::class, code = "MEMBER_NOT_FOUND"),
 		ApiErrorCodeExample(codeType = MemberErrorCode::class, code = "WITHDRAWN_MEMBER"),
 	)
@@ -95,6 +97,7 @@ interface MemberApiDoc {
 			현재 인증된 멤버의 닉네임을 변경합니다.
 
 			- 요청 바디: `nickname`
+			- MEMBER, ADMIN 역할만 접근할 수 있습니다. PENDING 역할은 403을 반환합니다.
 			- 닉네임은 2자 이상 10자 이하입니다.
 			- 닉네임은 한글, 영문, 숫자만 허용합니다.
 			- 앞뒤 공백이 포함된 닉네임은 허용하지 않습니다.
@@ -102,6 +105,7 @@ interface MemberApiDoc {
 	)
 	@ApiErrorCodeExamples(
 		ApiErrorCodeExample(codeType = CommonErrorCode::class, code = "UNAUTHORIZED"),
+		ApiErrorCodeExample(codeType = CommonErrorCode::class, code = "FORBIDDEN"),
 		ApiErrorCodeExample(codeType = CommonErrorCode::class, code = "INVALID_INPUT"),
 		ApiErrorCodeExample(codeType = MemberErrorCode::class, code = "INVALID_NICKNAME"),
 		ApiErrorCodeExample(codeType = MemberErrorCode::class, code = "MEMBER_NOT_FOUND"),
@@ -120,6 +124,7 @@ interface MemberApiDoc {
 			현재 인증된 멤버의 프로필 이미지를 업로드합니다.
 
 			- Authorization 헤더의 Bearer access token이 필요합니다.
+			- PENDING, MEMBER, ADMIN 역할 모두 접근할 수 있습니다.
 			- multipart/form-data 요청이며 파일은 `image` 파트로 전송합니다.
 			- 허용 포맷: image/jpeg, image/png, image/webp
 			- 최대 용량: 20MB
@@ -149,11 +154,13 @@ interface MemberApiDoc {
 			현재 인증된 멤버의 refresh token을 무효화합니다.
 
 			- Authorization 헤더의 Bearer access token이 필요합니다.
+			- MEMBER, ADMIN 역할만 접근할 수 있습니다. PENDING 역할은 403을 반환합니다.
 			- access token 자체는 stateless JWT이므로 서버 저장소에서 삭제하지 않습니다.
 		""",
 	)
 	@ApiErrorCodeExamples(
 		ApiErrorCodeExample(codeType = CommonErrorCode::class, code = "UNAUTHORIZED"),
+		ApiErrorCodeExample(codeType = CommonErrorCode::class, code = "FORBIDDEN"),
 		ApiErrorCodeExample(codeType = MemberErrorCode::class, code = "MEMBER_NOT_FOUND"),
 		ApiErrorCodeExample(codeType = MemberErrorCode::class, code = "WITHDRAWN_MEMBER"),
 	)
@@ -168,12 +175,14 @@ interface MemberApiDoc {
 		description = """
 			현재 인증된 멤버를 소프트 삭제 처리합니다.
 
+			- MEMBER, ADMIN 역할만 접근할 수 있습니다. PENDING 역할은 403을 반환합니다.
 			- 복구 정책과 보관 기간을 고려해 즉시 물리 삭제하지 않습니다.
 			- 탈퇴 시 refresh token도 무효화합니다.
 		""",
 	)
 	@ApiErrorCodeExamples(
 		ApiErrorCodeExample(codeType = CommonErrorCode::class, code = "UNAUTHORIZED"),
+		ApiErrorCodeExample(codeType = CommonErrorCode::class, code = "FORBIDDEN"),
 		ApiErrorCodeExample(codeType = MemberErrorCode::class, code = "MEMBER_NOT_FOUND"),
 		ApiErrorCodeExample(codeType = MemberErrorCode::class, code = "WITHDRAWN_MEMBER"),
 	)
