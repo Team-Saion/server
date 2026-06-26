@@ -26,7 +26,7 @@ class TermAgreementService(
 			.mapNotNull { (_, versions) -> versions.maxByOrNull { it.version } }
 
 		val activeTermIds = activeTerms.map { it.id }.toSet()
-		val agreedTermIds = command.termIds.map { TermId.of(it) }
+		val agreedTermIds = command.termIds.map { TermId.of(it) }.distinct()
 
 		if (!activeTermIds.containsAll(agreedTermIds)) {
 			throw BusinessException(TermErrorCode.INVALID_TERM_ID)
@@ -38,7 +38,12 @@ class TermAgreementService(
 		}
 
 		val memberId = MemberId.of(command.memberId)
-		val memberTerms = agreedTermIds.map { termId -> MemberTerm.create(memberId, termId) }
-		memberTermOutPort.saveAll(memberTerms)
+		val alreadyAgreedTermIds = memberTermOutPort.findAllByMemberId(memberId).map { it.termId }.toSet()
+		val newTerms = agreedTermIds
+			.filterNot { it in alreadyAgreedTermIds }
+			.map { termId -> MemberTerm.create(memberId, termId) }
+		if (newTerms.isNotEmpty()) {
+			memberTermOutPort.saveAll(newTerms)
+		}
 	}
 }

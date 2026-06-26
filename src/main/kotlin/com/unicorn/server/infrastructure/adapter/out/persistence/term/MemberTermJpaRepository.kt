@@ -3,4 +3,6 @@ package com.unicorn.server.infrastructure.adapter.out.persistence.term
 import com.unicorn.server.infrastructure.adapter.out.persistence.term.entity.MemberTermEntity
 import org.springframework.data.jpa.repository.JpaRepository
 
-interface MemberTermJpaRepository : JpaRepository<MemberTermEntity, Long>
+interface MemberTermJpaRepository : JpaRepository<MemberTermEntity, Long> {
+	fun findAllByMemberId(memberId: String): List<MemberTermEntity>
+}
