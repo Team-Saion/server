@@ -15,6 +15,9 @@ enum class TermErrorCode(
 	override val message: String,
 	override val httpStatus: HttpStatus,
 ) : ErrorCode {
+	// Client Error
+	REQUIRED_TERMS_NOT_AGREED("T400_1", "Required terms must be agreed", HttpStatus.BAD_REQUEST),
+
 	// Server Error
 	INVALID_TERM_DATA("T500_1", "Stored term data is invalid or corrupted", HttpStatus.INTERNAL_SERVER_ERROR),
 }
