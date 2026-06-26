@@ -75,6 +75,7 @@ class SecurityConfig(
 			"/api/v1/terms/agree",
 			"/api/v1/members/me/onboarding-info",
 			"/api/v1/members/me/onboarding",
+			"/api/v1/members/me/profile-image"
 		)
 	}
 }
