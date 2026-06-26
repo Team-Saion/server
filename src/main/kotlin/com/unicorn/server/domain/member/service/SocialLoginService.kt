@@ -22,8 +22,8 @@ class SocialLoginService(
 			SocialLoginCommand(
 				provider = SocialProvider.KAKAO,
 				providerId = userInfo.providerId,
-				email = requireNotNull(userInfo.email) { "Kakao email cannot be null" },
-				name = requireNotNull(userInfo.name) { "Kakao nickname cannot be null" },
+				email = userInfo.email,
+				name = userInfo.name,
 				kakaoNickname = userInfo.name,
 				kakaoProfileImageUrl = userInfo.profileImageUrl,
 			),

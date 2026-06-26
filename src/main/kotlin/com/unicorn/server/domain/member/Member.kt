@@ -12,8 +12,8 @@ import kotlin.random.Random
 // Member 도메인 - 서비스 관점의 멤버 프로필과 탈퇴 생명주기 규칙을 담당한다.
 class Member private constructor(
 	val id: MemberId,
-	val email: Email,
-	val name: String,
+	val email: Email?,
+	val name: String?,
 	nickname: String,
 	val avatarColor: String,
 	val role: Role,
@@ -73,8 +73,8 @@ class Member private constructor(
 
 		// 신규 멤버를 기본 역할과 활성 상태로 생성한다.
 		fun create(
-			email: Email,
-			name: String,
+			email: Email?,
+			name: String?,
 			nickname: String,
 			role: Role = Role.MEMBER,
 		): Member {
@@ -100,8 +100,8 @@ class Member private constructor(
 		// 저장소의 원시 상태를 도메인 멤버로 복원한다.
 		fun reconstitute(
 			id: MemberId,
-			email: Email,
-			name: String,
+			email: Email?,
+			name: String?,
 			nickname: String,
 			avatarColor: String,
 			role: Role,
@@ -127,8 +127,8 @@ class Member private constructor(
 		private fun randomAvatarColor(): String = "#%06X".format(Random.nextInt(0x1000000))
 
 		// 실명 또는 소셜 제공 이름의 최소 유효성을 검증한다.
-		private fun validateName(name: String) {
-			require(name.isNotBlank()) { "Name cannot be blank" }
+		private fun validateName(name: String?) {
+			if (name != null) require(name.isNotBlank()) { "Name cannot be blank" }
 		}
 
 		// 서비스 내 노출 닉네임의 최소/최대 길이를 검증한다.

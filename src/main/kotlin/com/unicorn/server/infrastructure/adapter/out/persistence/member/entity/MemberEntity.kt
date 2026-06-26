@@ -28,12 +28,12 @@ class MemberEntity protected constructor() : AuditableJpaEntity() {
 	var id: String = ""
 		protected set
 
-	@Column(name = "email", nullable = false, length = 255)
-	var email: String = ""
+	@Column(name = "email", nullable = true, length = 255)
+	var email: String? = null
 		protected set
 
-	@Column(name = "name", nullable = false, length = 100)
-	var name: String = ""
+	@Column(name = "name", nullable = true, length = 100)
+	var name: String? = null
 		protected set
 
 	@Column(name = "nickname", nullable = false, length = 30)
@@ -64,7 +64,7 @@ class MemberEntity protected constructor() : AuditableJpaEntity() {
 
 	constructor(member: Member) : this() {
 		id = member.id.toString()
-		email = member.email.value
+		email = member.email?.value
 		name = member.name
 		nickname = member.nickname
 		avatarColor = member.avatarColor
@@ -78,7 +78,7 @@ class MemberEntity protected constructor() : AuditableJpaEntity() {
 
 	// 도메인 변경사항을 기존 영속성 객체에 반영한다.
 	fun update(member: Member) {
-		email = member.email.value
+		email = member.email?.value
 		name = member.name
 		nickname = member.nickname
 		avatarColor = member.avatarColor
@@ -92,7 +92,7 @@ class MemberEntity protected constructor() : AuditableJpaEntity() {
 	// 영속성 객체를 순수 도메인 객체로 복원한다.
 	fun toDomain(): Member = Member.reconstitute(
 		id = MemberId.of(id),
-		email = Email(email),
+		email = email?.let { Email(it) },
 		name = name,
 		nickname = nickname,
 		avatarColor = avatarColor,

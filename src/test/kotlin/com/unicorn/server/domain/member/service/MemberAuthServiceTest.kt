@@ -77,6 +77,24 @@ class MemberAuthServiceTest {
 	}
 
 	@Test
+	@DisplayName("login 호출 시 email이 null이어도 이메일 없는 멤버를 생성한다")
+	fun login_withNullEmail_createsMemberWithoutEmail() {
+		val command = SocialLoginCommand(
+			provider = SocialProvider.KAKAO,
+			providerId = "kakao-null-email",
+			email = null,
+			name = "이메일없음",
+		)
+
+		val result = memberAuthService.login(command)
+
+		assertThat(result.accessToken).isNotBlank()
+		val socialAccount = socialAccountOutPort.findByProviderAndProviderId(SocialProvider.KAKAO, "kakao-null-email")!!
+		val member = memberOutPort.findById(socialAccount.memberId)!!
+		assertThat(member.email).isNull()
+	}
+
+	@Test
 	@DisplayName("login 호출 시 카카오 이름이 30자 초과이면 닉네임을 30자로 자른다")
 	fun login_withTooLongName_truncatesNickname() {
 		val longName = "가".repeat(31)

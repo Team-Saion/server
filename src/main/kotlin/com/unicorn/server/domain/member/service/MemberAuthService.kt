@@ -76,16 +76,17 @@ class MemberAuthService(
 		}
 
 		// 이메일 중복 검증
-		if (memberOutPort.existsByEmail(Email(command.email))) {
-			throw DuplicateEmailException(command.email)
+		val emailVo = command.email?.let { Email(it) }
+		if (emailVo != null && memberOutPort.existsByEmail(emailVo)) {
+			throw DuplicateEmailException(command.email!!)
 		}
 
 		// 멤버 및 소셜 계정 생성
 		val newMember = memberOutPort.save(
 			Member.create(
-				email = Email(command.email),
+				email = emailVo,
 				name = command.name,
-				nickname = toSafeNickname(command.name),
+				nickname = toSafeNickname(command.name ?: ""),
 			),
 		)
 

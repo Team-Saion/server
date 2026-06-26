@@ -18,14 +18,16 @@ data class MemberResponse(
 	@field:Schema(
 		description = "서비스 내 고유 이메일",
 		example = "user@example.com",
+		nullable = true,
 	)
-	val email: String,
+	val email: String?,
 
 	@field:Schema(
 		description = "소셜 플랫폼에서 제공한 이름",
 		example = "홍길동",
+		nullable = true,
 	)
-	val name: String,
+	val name: String?,
 
 	@field:Schema(
 		description = "서비스 내 노출 닉네임",
@@ -64,7 +66,7 @@ data class MemberResponse(
 		// 도메인 멤버를 응답 DTO로 변환한다.
 		fun from(member: Member): MemberResponse = MemberResponse(
 			id = member.id.toString(),
-			email = member.email.value,
+			email = member.email?.value,
 			name = member.name,
 			nickname = member.nickname,
 			role = member.role,

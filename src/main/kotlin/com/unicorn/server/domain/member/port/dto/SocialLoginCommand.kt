@@ -7,8 +7,8 @@ import com.unicorn.server.domain.member.enums.SocialProvider
 data class SocialLoginCommand(
 	val provider: SocialProvider,
 	val providerId: String,
-	val email: String,
-	val name: String,
+	val email: String?,
+	val name: String?,
 	val kakaoNickname: String? = null,
 	val kakaoProfileImageUrl: String? = null,
 )
