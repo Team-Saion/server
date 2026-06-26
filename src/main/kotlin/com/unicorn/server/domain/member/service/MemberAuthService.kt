@@ -95,6 +95,8 @@ class MemberAuthService(
 				provider = command.provider,
 				providerId = command.providerId,
 				email = command.email,
+				kakaoNickname = command.kakaoNickname,
+				kakaoProfileImageUrl = command.kakaoProfileImageUrl,
 			),
 		)
 

@@ -50,12 +50,22 @@ class SocialAccountEntity protected constructor() : AuditableJpaEntity() {
 	var email: String? = null
 		protected set
 
+	@Column(name = "kakao_nickname", nullable = true, length = 100)
+	var kakaoNickname: String? = null
+		protected set
+
+	@Column(name = "kakao_profile_image_url", nullable = true, length = 512)
+	var kakaoProfileImageUrl: String? = null
+		protected set
+
 	constructor(socialAccount: SocialAccount) : this() {
 		id = socialAccount.id.toString()
 		memberId = socialAccount.memberId.toString()
 		provider = socialAccount.provider
 		providerId = socialAccount.providerId
 		email = socialAccount.email
+		kakaoNickname = socialAccount.kakaoNickname
+		kakaoProfileImageUrl = socialAccount.kakaoProfileImageUrl
 		createdAt = socialAccount.createdAt
 	}
 
@@ -66,6 +76,8 @@ class SocialAccountEntity protected constructor() : AuditableJpaEntity() {
 		provider = provider,
 		providerId = providerId,
 		email = email,
+		kakaoNickname = kakaoNickname,
+		kakaoProfileImageUrl = kakaoProfileImageUrl,
 		createdAt = requireNotNull(createdAt) { "createdAt must not be null" },
 	)
 }

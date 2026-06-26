@@ -44,6 +44,8 @@ class MemberAuthServiceTest {
 			providerId = "kakao-123",
 			email = "new@example.com",
 			name = "신규유저",
+			kakaoNickname = "카카오닉네임",
+			kakaoProfileImageUrl = "https://example.com/profile.png",
 		)
 
 		val result = memberAuthService.login(command)
@@ -51,7 +53,10 @@ class MemberAuthServiceTest {
 		assertThat(result.accessToken).isNotBlank()
 		assertThat(result.refreshToken).isNotBlank()
 		assertThat(memberOutPort.existsByEmail(Email("new@example.com"))).isTrue()
-		assertThat(socialAccountOutPort.findByProviderAndProviderId(SocialProvider.KAKAO, "kakao-123")).isNotNull()
+		val socialAccount = socialAccountOutPort.findByProviderAndProviderId(SocialProvider.KAKAO, "kakao-123")
+		assertThat(socialAccount).isNotNull()
+		assertThat(socialAccount!!.kakaoNickname).isEqualTo("카카오닉네임")
+		assertThat(socialAccount.kakaoProfileImageUrl).isEqualTo("https://example.com/profile.png")
 		assertThat(tokenStore.findMemberIdByRefreshToken(result.refreshToken)).isNotNull()
 	}
 
@@ -93,7 +98,14 @@ class MemberAuthServiceTest {
 	fun login_existingMember_returnsTokenPair() {
 		val member = memberOutPort.save(Member.create(Email("existing@example.com"), "홍길동", "길동이"))
 		socialAccountOutPort.save(
-			SocialAccount.create(member.id, SocialProvider.KAKAO, "kakao-456", "existing@example.com"),
+			SocialAccount.create(
+				member.id,
+				SocialProvider.KAKAO,
+				"kakao-456",
+				"existing@example.com",
+				"홍길동",
+				"https://example.com/existing.png",
+			),
 		)
 		val command = SocialLoginCommand(SocialProvider.KAKAO, "kakao-456", "existing@example.com", "홍길동")
 
@@ -109,7 +121,14 @@ class MemberAuthServiceTest {
 		member.withdraw()
 		memberOutPort.save(member)
 		socialAccountOutPort.save(
-			SocialAccount.create(member.id, SocialProvider.KAKAO, "kakao-withdrawn", "withdrawn-login@example.com"),
+			SocialAccount.create(
+				member.id,
+				SocialProvider.KAKAO,
+				"kakao-withdrawn",
+				"withdrawn-login@example.com",
+				"홍길동",
+				"https://example.com/withdrawn.png",
+			),
 		)
 		val command = SocialLoginCommand(SocialProvider.KAKAO, "kakao-withdrawn", "withdrawn-login@example.com", "홍길동")
 

@@ -9,4 +9,6 @@ data class SocialLoginCommand(
 	val providerId: String,
 	val email: String,
 	val name: String,
+	val kakaoNickname: String? = null,
+	val kakaoProfileImageUrl: String? = null,
 )

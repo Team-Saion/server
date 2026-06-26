@@ -30,6 +30,8 @@ class SocialLoginServiceTest {
 				providerId = "fake-kakao-id",
 				email = "fake@example.com",
 				name = "가짜유저",
+				kakaoNickname = "가짜유저",
+				kakaoProfileImageUrl = "https://example.com/profile.png",
 			),
 		)
 	}
@@ -40,6 +42,7 @@ class SocialLoginServiceTest {
 				providerId = "fake-kakao-id",
 				email = "fake@example.com",
 				name = "가짜유저",
+				profileImageUrl = "https://example.com/profile.png",
 			)
 	}
 
