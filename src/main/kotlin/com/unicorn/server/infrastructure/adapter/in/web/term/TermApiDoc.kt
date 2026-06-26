@@ -6,9 +6,13 @@ import com.unicorn.server.infrastructure.adapter.`in`.web.common.dto.ApiResponse
 import com.unicorn.server.infrastructure.adapter.`in`.web.common.swagger.annotation.ApiErrorCodeExample
 import com.unicorn.server.infrastructure.adapter.`in`.web.common.swagger.annotation.ApiErrorCodeExamples
 import com.unicorn.server.infrastructure.adapter.`in`.web.common.swagger.annotation.ApiSuccessCodeExample
+import com.unicorn.server.infrastructure.adapter.`in`.web.term.dto.AgreeTermsRequest
 import com.unicorn.server.infrastructure.adapter.`in`.web.term.dto.TermResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
+import jakarta.validation.Valid
+import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.web.bind.annotation.RequestBody
 
 /**
 약관 조회 API의 Swagger 문서를 정의하는 인터페이스다.
@@ -49,4 +53,25 @@ interface TermApiDoc {
 	)
 	@ApiSuccessCodeExample(TermResponse::class)
 	fun getActiveTerms(): ApiResponse<List<TermResponse>>
+
+	@Operation(
+		summary = "약관 동의",
+		description = """
+			인증된 멤버가 가입/온보딩에 필요한 약관 동의 내역을 저장합니다.
+
+			- `termIds`에는 현재 활성 필수 약관 ID가 모두 포함되어야 합니다.
+			- PENDING, MEMBER, ADMIN 권한의 access token으로 호출할 수 있습니다.
+			- 필수 약관이 누락되면 400 응답을 반환합니다.
+		""",
+	)
+	@ApiErrorCodeExamples(
+		ApiErrorCodeExample(codeType = CommonErrorCode::class, code = "INVALID_INPUT"),
+		ApiErrorCodeExample(codeType = CommonErrorCode::class, code = "UNAUTHORIZED"),
+		ApiErrorCodeExample(codeType = CommonErrorCode::class, code = "FORBIDDEN"),
+		ApiErrorCodeExample(codeType = TermErrorCode::class, code = "REQUIRED_TERMS_NOT_AGREED"),
+	)
+	fun agreeTerms(
+		@AuthenticationPrincipal memberId: String,
+		@RequestBody @Valid request: AgreeTermsRequest,
+	): ApiResponse<Unit>
 }

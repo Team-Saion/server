@@ -59,6 +59,7 @@ class SecurityConfig(
 	companion object {
 		private val PERMIT_ALL_ENDPOINTS = arrayOf(
 			"/api/v1/auth/**",
+			"/api/v1/terms",
 			"/v1/terms/**",
 			"/api/swagger-ui/**",
 			"/swagger-ui/**",
@@ -73,7 +74,7 @@ class SecurityConfig(
 		)
 
 		private val PENDING_ENDPOINTS = arrayOf<String>(
-			// 온보딩/약관 API 경로가 추가될 자리
+			"/api/v1/terms/agree",
 		)
 	}
 }
