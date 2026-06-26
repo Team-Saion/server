@@ -2,12 +2,12 @@ package com.unicorn.server.domain.member
 
 import com.unicorn.server.common.exception.BusinessException
 import com.unicorn.server.common.vo.Email
+import com.unicorn.server.domain.member.enums.AvatarColor
 import com.unicorn.server.domain.member.enums.MemberStatus
 import com.unicorn.server.domain.member.enums.Role
 import com.unicorn.server.domain.member.exception.MemberErrorCode
 import com.unicorn.server.domain.member.vo.MemberId
 import java.time.LocalDateTime
-import kotlin.random.Random
 
 // Member 도메인 - 서비스 관점의 멤버 프로필과 탈퇴 생명주기 규칙을 담당한다.
 class Member private constructor(
@@ -15,7 +15,7 @@ class Member private constructor(
 	val email: Email?,
 	val name: String?,
 	nickname: String,
-	val avatarColor: String,
+	val avatarColor: AvatarColor,
 	role: Role,
 	profileImageKey: String?,
 	status: MemberStatus,
@@ -62,9 +62,11 @@ class Member private constructor(
 
 	// 온보딩을 완료하고 정식 멤버 역할로 전환한다.
 	fun completeOnboarding(nickname: String) {
-		updateProfile(nickname.trim())
-		role = Role.MEMBER
-		updatedAt = LocalDateTime.now()
+		val trimmed = nickname.trim()
+		validateNickname(trimmed)
+		this.nickname = trimmed
+		this.role = Role.MEMBER
+		this.updatedAt = LocalDateTime.now()
 	}
 
 	// 프로필 이미지 키를 교체한다. 업로드 검증/스토리지 연동은 use-case 책임이다.
@@ -100,7 +102,7 @@ class Member private constructor(
 				email = email,
 				name = name,
 				nickname = nickname,
-				avatarColor = randomAvatarColor(),
+				avatarColor = AvatarColor.random(),
 				role = role,
 				profileImageKey = null,
 				status = MemberStatus.ACTIVE,
@@ -116,7 +118,7 @@ class Member private constructor(
 			email: Email?,
 			name: String?,
 			nickname: String,
-			avatarColor: String,
+			avatarColor: AvatarColor,
 			role: Role,
 			profileImageKey: String?,
 			status: MemberStatus,
@@ -136,8 +138,6 @@ class Member private constructor(
 			createdAt,
 			updatedAt,
 		)
-
-		private fun randomAvatarColor(): String = "#%06X".format(Random.nextInt(0x1000000))
 
 		// 실명 또는 소셜 제공 이름의 최소 유효성을 검증한다.
 		private fun validateName(name: String?) {

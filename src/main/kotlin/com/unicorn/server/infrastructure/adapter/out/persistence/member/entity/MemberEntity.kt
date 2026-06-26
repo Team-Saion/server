@@ -3,6 +3,7 @@ package com.unicorn.server.infrastructure.adapter.out.persistence.member.entity
 import com.unicorn.server.common.persistence.AuditableJpaEntity
 import com.unicorn.server.common.vo.Email
 import com.unicorn.server.domain.member.Member
+import com.unicorn.server.domain.member.enums.AvatarColor
 import com.unicorn.server.domain.member.enums.MemberStatus
 import com.unicorn.server.domain.member.enums.Role
 import com.unicorn.server.domain.member.vo.MemberId
@@ -40,8 +41,9 @@ class MemberEntity protected constructor() : AuditableJpaEntity() {
 	var nickname: String = ""
 		protected set
 
-	@Column(name = "avatar_color", nullable = false, length = 7)
-	var avatarColor: String = ""
+	@Enumerated(EnumType.STRING)
+	@Column(name = "avatar_color", nullable = false, length = 20)
+	lateinit var avatarColor: AvatarColor
 		protected set
 
 	@Enumerated(EnumType.STRING)

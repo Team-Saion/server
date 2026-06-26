@@ -43,8 +43,8 @@ class MemberProfileService(
 		val member = findMemberOrThrow(memberId)
 		val socialAccount = socialAccountOutPort.findByMemberId(member.id)
 		return OnboardingInfoResult(
-			kakaoNickname = socialAccount?.kakaoNickname,
-			kakaoProfileImageUrl = socialAccount?.kakaoProfileImageUrl,
+			socialNickname = socialAccount?.kakaoNickname,
+			socialProfileImageUrl = socialAccount?.kakaoProfileImageUrl,
 			avatarColor = member.avatarColor,
 		)
 	}

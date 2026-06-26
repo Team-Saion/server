@@ -38,9 +38,12 @@ data class MemberResponse(
 	@field:Schema(
 		description = "멤버 역할",
 		example = "MEMBER",
-		allowableValues = ["MEMBER", "ADMIN"],
+		allowableValues = ["PENDING", "MEMBER", "ADMIN"],
 	)
 	val role: Role,
+
+	@field:Schema(description = "멤버 아바타 기본 색상")
+	val avatarColor: AvatarColorResponse,
 
 	@field:Schema(
 		description = "프로필 이미지 객체 키. 설정하지 않았으면 null이다.",
@@ -70,6 +73,7 @@ data class MemberResponse(
 			name = member.name,
 			nickname = member.nickname,
 			role = member.role,
+			avatarColor = AvatarColorResponse.from(member.avatarColor),
 			profileImageKey = member.profileImageKey,
 			status = member.status,
 			createdAt = member.createdAt,

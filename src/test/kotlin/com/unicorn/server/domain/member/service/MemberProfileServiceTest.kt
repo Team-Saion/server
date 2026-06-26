@@ -89,8 +89,8 @@ class MemberProfileServiceTest {
 
 		val result = memberProfileService.getOnboardingInfo(member.id.toString())
 
-		assertThat(result.kakaoNickname).isEqualTo("카카오닉네임")
-		assertThat(result.kakaoProfileImageUrl).isEqualTo("https://example.com/profile.png")
+		assertThat(result.socialNickname).isEqualTo("카카오닉네임")
+		assertThat(result.socialProfileImageUrl).isEqualTo("https://example.com/profile.png")
 		assertThat(result.avatarColor).isEqualTo(member.avatarColor)
 	}
 

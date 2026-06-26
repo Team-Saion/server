@@ -2,6 +2,7 @@ package com.unicorn.server.domain.member
 
 import com.unicorn.server.common.exception.BusinessException
 import com.unicorn.server.common.vo.Email
+import com.unicorn.server.domain.member.enums.AvatarColor
 import com.unicorn.server.domain.member.enums.MemberStatus
 import com.unicorn.server.domain.member.enums.Role
 import com.unicorn.server.domain.member.exception.MemberErrorCode
@@ -42,7 +43,7 @@ class MemberTest {
 	fun create_avatarColorIsAssigned() {
 		val member = Member.create(Email("test@example.com"), "홍길동", "길동이")
 
-		assertThat(member.avatarColor).matches("^#[0-9A-F]{6}$")
+		assertThat(member.avatarColor).isIn(*AvatarColor.values())
 	}
 
 	@Test
