@@ -13,6 +13,13 @@ import com.unicorn.server.domain.member.port.out.MemberOutPort
 import com.unicorn.server.domain.member.port.out.TokenIssuer
 import com.unicorn.server.domain.member.port.out.TokenStore
 import com.unicorn.server.domain.member.vo.MemberId
+import com.unicorn.server.domain.term.MemberTerm
+import com.unicorn.server.domain.term.Term
+import com.unicorn.server.domain.term.enums.TermCode
+import com.unicorn.server.domain.term.exception.TermErrorCode
+import com.unicorn.server.domain.term.port.out.MemberTermOutPort
+import com.unicorn.server.domain.term.port.out.TermOutPort
+import com.unicorn.server.domain.term.vo.TermId
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.DisplayName
@@ -23,14 +30,17 @@ import java.time.LocalDateTime
 class OnboardingServiceTest {
 
 	private val memberOutPort = FakeMemberOutPort()
+	private val termOutPort = FakeTermOutPort()
+	private val memberTermOutPort = FakeMemberTermOutPort()
 	private val tokenIssuer = FakeTokenIssuer()
 	private val tokenStore = FakeTokenStore()
-	private val onboardingService = OnboardingService(memberOutPort, tokenIssuer, tokenStore)
+	private val onboardingService = OnboardingService(memberOutPort, termOutPort, memberTermOutPort, tokenIssuer, tokenStore)
 
 	@Test
 	@DisplayName("completeOnboarding 호출 시 닉네임을 저장하고 MEMBER 역할 토큰을 발급한다")
 	fun completeOnboarding_success_updatesNicknameRoleAndIssuesTokenPair() {
 		val member = memberOutPort.save(Member.create(Email("pending@example.com"), "홍길동", "사용자", Role.PENDING))
+		seedRequiredAgreement(member.id)
 
 		val result = onboardingService.completeOnboarding(
 			member.id.toString(),
@@ -49,6 +59,7 @@ class OnboardingServiceTest {
 	@DisplayName("잘못된 닉네임으로 completeOnboarding 호출 시 INVALID_NICKNAME 예외가 발생한다")
 	fun completeOnboarding_withInvalidNickname_throwsInvalidNickname() {
 		val member = memberOutPort.save(Member.create(Email("invalid-onboarding@example.com"), "홍길동", "사용자", Role.PENDING))
+		seedRequiredAgreement(member.id)
 
 		assertThatThrownBy {
 			onboardingService.completeOnboarding(member.id.toString(), CompleteOnboardingCommand("abc!"))
@@ -56,6 +67,20 @@ class OnboardingServiceTest {
 			.isInstanceOf(BusinessException::class.java)
 			.extracting("errorCode")
 			.isEqualTo(MemberErrorCode.INVALID_NICKNAME)
+	}
+
+	@Test
+	@DisplayName("필수 약관에 동의하지 않은 멤버로 completeOnboarding 호출 시 REQUIRED_TERMS_NOT_AGREED 예외가 발생한다")
+	fun completeOnboarding_withoutRequiredTermAgreement_throwsRequiredTermsNotAgreed() {
+		val member = memberOutPort.save(Member.create(Email("terms-onboarding@example.com"), "홍길동", "사용자", Role.PENDING))
+		termOutPort.seed(term(id = 1L, termCode = TermCode.SERVICE_USE, version = 1, required = true))
+
+		assertThatThrownBy {
+			onboardingService.completeOnboarding(member.id.toString(), CompleteOnboardingCommand("홍길동"))
+		}
+			.isInstanceOf(BusinessException::class.java)
+			.extracting("errorCode")
+			.isEqualTo(TermErrorCode.REQUIRED_TERMS_NOT_AGREED)
 	}
 
 	@Test
@@ -78,6 +103,31 @@ class OnboardingServiceTest {
 		}.isInstanceOf(WithdrawnMemberException::class.java)
 	}
 
+	private fun seedRequiredAgreement(memberId: MemberId) {
+		termOutPort.seed(term(id = 1L, termCode = TermCode.SERVICE_USE, version = 1, required = true))
+		memberTermOutPort.seed(MemberTerm.create(memberId, TermId.of(1L)))
+	}
+
+	private fun term(
+		id: Long,
+		termCode: TermCode,
+		version: Int,
+		required: Boolean,
+	): Term {
+		val now = LocalDateTime.now()
+		return Term.reconstitute(
+			id = TermId.of(id),
+			termCode = termCode,
+			title = "title",
+			contentUrl = null,
+			version = version,
+			required = required,
+			effectiveAt = now.minusDays(1),
+			createdAt = now,
+			updatedAt = now,
+		)
+	}
+
 	private class FakeMemberOutPort : MemberOutPort {
 		private val store = linkedMapOf<MemberId, Member>()
 
@@ -95,6 +145,33 @@ class OnboardingServiceTest {
 
 		override fun findAllDeletedBefore(threshold: LocalDateTime): List<Member> =
 			store.values.filter { it.deletedAt != null && it.deletedAt!!.isBefore(threshold) }
+	}
+
+	private class FakeTermOutPort : TermOutPort {
+		private val store = mutableListOf<Term>()
+
+		fun seed(term: Term) {
+			store += term
+		}
+
+		override fun findAllEffectiveAsOf(now: LocalDateTime): List<Term> =
+			store.filter { !it.effectiveAt.isAfter(now) }
+	}
+
+	private class FakeMemberTermOutPort : MemberTermOutPort {
+		private val store = mutableListOf<MemberTerm>()
+
+		fun seed(memberTerm: MemberTerm) {
+			store += memberTerm
+		}
+
+		override fun saveAll(memberTerms: List<MemberTerm>): List<MemberTerm> {
+			store += memberTerms
+			return memberTerms
+		}
+
+		override fun findAllByMemberId(memberId: MemberId): List<MemberTerm> =
+			store.filter { it.memberId == memberId }
 	}
 
 	private class FakeTokenIssuer : TokenIssuer {
