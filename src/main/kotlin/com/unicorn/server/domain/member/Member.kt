@@ -16,7 +16,7 @@ class Member private constructor(
 	val name: String?,
 	nickname: String,
 	val avatarColor: String,
-	val role: Role,
+	role: Role,
 	profileImageKey: String?,
 	status: MemberStatus,
 	deletedAt: LocalDateTime?,
@@ -27,6 +27,9 @@ class Member private constructor(
 		private set
 
 	var profileImageKey: String? = profileImageKey
+		private set
+
+	var role: Role = role
 		private set
 
 	var status: MemberStatus = status
@@ -57,6 +60,13 @@ class Member private constructor(
 		updatedAt = LocalDateTime.now()
 	}
 
+	// 온보딩을 완료하고 정식 멤버 역할로 전환한다.
+	fun completeOnboarding(nickname: String) {
+		updateProfile(nickname.trim())
+		role = Role.MEMBER
+		updatedAt = LocalDateTime.now()
+	}
+
 	// 프로필 이미지 키를 교체한다. 업로드 검증/스토리지 연동은 use-case 책임이다.
 	fun changeProfileImage(objectKey: String) {
 		require(objectKey.isNotBlank()) { "Profile image key cannot be blank" }
@@ -70,6 +80,9 @@ class Member private constructor(
 
 	companion object {
 		const val WITHDRAWAL_RETENTION_DAYS = 30L
+		private const val MIN_NICKNAME_LENGTH = 2
+		private const val MAX_NICKNAME_LENGTH = 10
+		private val NICKNAME_PATTERN = Regex("^[가-힣a-zA-Z0-9]+$")
 
 		// 신규 멤버를 기본 역할과 활성 상태로 생성한다.
 		fun create(
@@ -131,11 +144,15 @@ class Member private constructor(
 			if (name != null) require(name.isNotBlank()) { "Name cannot be blank" }
 		}
 
-		// 서비스 내 노출 닉네임의 최소/최대 길이를 검증한다.
+		// 서비스 내 노출 닉네임의 길이와 허용 문자를 검증한다.
 		private fun validateNickname(nickname: String) {
-			require(nickname.isNotBlank()) { "Nickname cannot be blank" }
-			require(nickname == nickname.trim()) { "Nickname must not have leading or trailing whitespace" }
-			require(nickname.length in 2..30) { "Nickname must be between 2 and 30 characters" }
+			if (nickname.isBlank() ||
+				nickname != nickname.trim() ||
+				nickname.length !in MIN_NICKNAME_LENGTH..MAX_NICKNAME_LENGTH ||
+				!NICKNAME_PATTERN.matches(nickname)
+			) {
+				throw BusinessException(MemberErrorCode.INVALID_NICKNAME)
+			}
 		}
 	}
 }

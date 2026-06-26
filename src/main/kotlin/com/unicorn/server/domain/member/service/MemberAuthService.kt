@@ -109,12 +109,8 @@ class MemberAuthService(
 
 	// 외부 플랫폼 이름을 멤버 닉네임 제약에 맞게 보정한다.
 	private fun toSafeNickname(name: String): String {
-		val trimmed = name.trim().take(MAX_NICKNAME_LENGTH)
-		return if (trimmed.length < MIN_NICKNAME_LENGTH) {
-			trimmed.padEnd(MIN_NICKNAME_LENGTH, '_')
-		} else {
-			trimmed
-		}
+		val filtered = name.replace(Regex("[^가-힣a-zA-Z0-9]"), "").take(MAX_NICKNAME_LENGTH)
+		return if (filtered.length < MIN_NICKNAME_LENGTH) "사용자" else filtered
 	}
 
 	// 멤버 식별자로 도메인을 조회하고 없으면 도메인 예외를 던진다.
@@ -128,6 +124,6 @@ class MemberAuthService(
 
 	companion object {
 		private const val MIN_NICKNAME_LENGTH = 2
-		private const val MAX_NICKNAME_LENGTH = 30
+		private const val MAX_NICKNAME_LENGTH = 10
 	}
 }

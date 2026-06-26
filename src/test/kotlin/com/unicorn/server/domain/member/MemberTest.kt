@@ -4,6 +4,7 @@ import com.unicorn.server.common.exception.BusinessException
 import com.unicorn.server.common.vo.Email
 import com.unicorn.server.domain.member.enums.MemberStatus
 import com.unicorn.server.domain.member.enums.Role
+import com.unicorn.server.domain.member.exception.MemberErrorCode
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.DisplayName
@@ -90,16 +91,20 @@ class MemberTest {
 		val member = Member.create(Email("test@example.com"), "홍길동", "길동이")
 
 		assertThatThrownBy { member.updateProfile("a") }
-			.isInstanceOf(IllegalArgumentException::class.java)
+			.isInstanceOf(BusinessException::class.java)
+			.extracting("errorCode")
+			.isEqualTo(MemberErrorCode.INVALID_NICKNAME)
 	}
 
 	@Test
-	@DisplayName("닉네임이 30자 초과이면 예외가 발생한다")
+	@DisplayName("닉네임이 10자 초과이면 예외가 발생한다")
 	fun updateProfile_withTooLongNickname_throwsException() {
 		val member = Member.create(Email("test@example.com"), "홍길동", "길동이")
 
-		assertThatThrownBy { member.updateProfile("a".repeat(31)) }
-			.isInstanceOf(IllegalArgumentException::class.java)
+		assertThatThrownBy { member.updateProfile("a".repeat(11)) }
+			.isInstanceOf(BusinessException::class.java)
+			.extracting("errorCode")
+			.isEqualTo(MemberErrorCode.INVALID_NICKNAME)
 	}
 
 	@Test
@@ -108,7 +113,9 @@ class MemberTest {
 		val member = Member.create(Email("test@example.com"), "홍길동", "길동이")
 
 		assertThatThrownBy { member.updateProfile(" 새닉네임 ") }
-			.isInstanceOf(IllegalArgumentException::class.java)
+			.isInstanceOf(BusinessException::class.java)
+			.extracting("errorCode")
+			.isEqualTo(MemberErrorCode.INVALID_NICKNAME)
 	}
 
 	@Test

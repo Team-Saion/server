@@ -64,8 +64,8 @@ class MemberAuthServiceTest {
 	}
 
 	@Test
-	@DisplayName("login 호출 시 카카오 이름이 1자이면 닉네임을 2자로 보정한다")
-	fun login_withOneCharacterName_padsNickname() {
+	@DisplayName("login 호출 시 카카오 이름이 1자이면 기본 닉네임으로 보정한다")
+	fun login_withOneCharacterName_usesDefaultNickname() {
 		val command = SocialLoginCommand(
 			provider = SocialProvider.KAKAO,
 			providerId = "kakao-short-name",
@@ -76,7 +76,7 @@ class MemberAuthServiceTest {
 		memberAuthService.login(command)
 
 		val member = memberOutPort.findByEmail(Email("short@example.com"))!!
-		assertThat(member.nickname).isEqualTo("김_")
+		assertThat(member.nickname).isEqualTo("사용자")
 	}
 
 	@Test
@@ -99,9 +99,9 @@ class MemberAuthServiceTest {
 	}
 
 	@Test
-	@DisplayName("login 호출 시 카카오 이름이 30자 초과이면 닉네임을 30자로 자른다")
+	@DisplayName("login 호출 시 카카오 이름이 10자 초과이면 닉네임을 10자로 자른다")
 	fun login_withTooLongName_truncatesNickname() {
-		val longName = "가".repeat(31)
+		val longName = "가".repeat(11)
 		val command = SocialLoginCommand(
 			provider = SocialProvider.KAKAO,
 			providerId = "kakao-long-name",
@@ -112,7 +112,7 @@ class MemberAuthServiceTest {
 		memberAuthService.login(command)
 
 		val member = memberOutPort.findByEmail(Email("long@example.com"))!!
-		assertThat(member.nickname).isEqualTo("가".repeat(30))
+		assertThat(member.nickname).isEqualTo("가".repeat(10))
 	}
 
 	@Test
@@ -266,6 +266,9 @@ class MemberAuthServiceTest {
 
 		override fun findByProviderAndProviderId(provider: SocialProvider, providerId: String): SocialAccount? =
 			store[provider to providerId]
+
+		override fun findByMemberId(memberId: MemberId): SocialAccount? =
+			store.values.firstOrNull { it.memberId == memberId }
 	}
 
 	private class FakeTokenIssuer : TokenIssuer {
