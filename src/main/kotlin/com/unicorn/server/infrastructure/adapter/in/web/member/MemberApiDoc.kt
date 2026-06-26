@@ -3,6 +3,7 @@ package com.unicorn.server.infrastructure.adapter.`in`.web.member
 import com.unicorn.server.common.exception.CommonErrorCode
 import com.unicorn.server.common.port.out.storage.exception.ObjectStorageErrorCode
 import com.unicorn.server.domain.member.exception.MemberErrorCode
+import com.unicorn.server.domain.term.exception.TermErrorCode
 import com.unicorn.server.infrastructure.adapter.`in`.web.common.dto.ApiResponse
 import com.unicorn.server.infrastructure.adapter.`in`.web.common.swagger.annotation.ApiErrorCodeExample
 import com.unicorn.server.infrastructure.adapter.`in`.web.common.swagger.annotation.ApiErrorCodeExamples
@@ -75,6 +76,8 @@ interface MemberApiDoc {
 			- 닉네임은 앞뒤 공백 제거 후 2자 이상 10자 이하입니다.
 			- 닉네임은 한글, 영문, 숫자만 허용합니다.
 			- PENDING, MEMBER 역할 모두 접근할 수 있습니다.
+			- 이 API를 호출하기 전에 약관 동의 API(`POST /api/v1/terms/agree`)를 통해 모든 필수 약관에 동의해야 합니다.
+			- 필수 약관 동의가 완료되지 않은 경우 400 오류가 반환됩니다.
 		""",
 	)
 	@ApiErrorCodeExamples(
@@ -83,6 +86,7 @@ interface MemberApiDoc {
 		ApiErrorCodeExample(codeType = MemberErrorCode::class, code = "INVALID_NICKNAME"),
 		ApiErrorCodeExample(codeType = MemberErrorCode::class, code = "MEMBER_NOT_FOUND"),
 		ApiErrorCodeExample(codeType = MemberErrorCode::class, code = "WITHDRAWN_MEMBER"),
+		ApiErrorCodeExample(codeType = TermErrorCode::class, code = "REQUIRED_TERMS_NOT_AGREED"),
 	)
 	@ApiSuccessCodeExample(TokenResponse::class)
 	fun completeOnboarding(
