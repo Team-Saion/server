@@ -50,14 +50,17 @@ class MemberAuthServiceTest {
 
 		val result = memberAuthService.login(command)
 
-		assertThat(result.accessToken).isNotBlank()
-		assertThat(result.refreshToken).isNotBlank()
+		assertThat(result.tokenPair.accessToken).isNotBlank()
+		assertThat(result.tokenPair.refreshToken).isNotBlank()
+		assertThat(result.isNewMember).isTrue()
 		assertThat(memberOutPort.existsByEmail(Email("new@example.com"))).isTrue()
+		val member = memberOutPort.findByEmail(Email("new@example.com"))!!
+		assertThat(member.role).isEqualTo(Role.PENDING)
 		val socialAccount = socialAccountOutPort.findByProviderAndProviderId(SocialProvider.KAKAO, "kakao-123")
 		assertThat(socialAccount).isNotNull()
 		assertThat(socialAccount!!.kakaoNickname).isEqualTo("카카오닉네임")
 		assertThat(socialAccount.kakaoProfileImageUrl).isEqualTo("https://example.com/profile.png")
-		assertThat(tokenStore.findMemberIdByRefreshToken(result.refreshToken)).isNotNull()
+		assertThat(tokenStore.findMemberIdByRefreshToken(result.tokenPair.refreshToken)).isNotNull()
 	}
 
 	@Test
@@ -88,7 +91,8 @@ class MemberAuthServiceTest {
 
 		val result = memberAuthService.login(command)
 
-		assertThat(result.accessToken).isNotBlank()
+		assertThat(result.tokenPair.accessToken).isNotBlank()
+		assertThat(result.isNewMember).isTrue()
 		val socialAccount = socialAccountOutPort.findByProviderAndProviderId(SocialProvider.KAKAO, "kakao-null-email")!!
 		val member = memberOutPort.findById(socialAccount.memberId)!!
 		assertThat(member.email).isNull()
@@ -129,7 +133,8 @@ class MemberAuthServiceTest {
 
 		val result = memberAuthService.login(command)
 
-		assertThat(result.accessToken).isNotBlank()
+		assertThat(result.tokenPair.accessToken).isNotBlank()
+		assertThat(result.isNewMember).isFalse()
 	}
 
 	@Test

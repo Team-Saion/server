@@ -3,6 +3,7 @@ package com.unicorn.server.domain.member.service
 import com.unicorn.server.common.vo.Email
 import com.unicorn.server.domain.member.Member
 import com.unicorn.server.domain.member.SocialAccount
+import com.unicorn.server.domain.member.enums.Role
 import com.unicorn.server.domain.member.exception.DuplicateEmailException
 import com.unicorn.server.domain.member.exception.InvalidRefreshTokenException
 import com.unicorn.server.domain.member.exception.MemberNotFoundException
@@ -11,6 +12,7 @@ import com.unicorn.server.domain.member.port.`in`.LogoutInPort
 import com.unicorn.server.domain.member.port.`in`.ReissueTokenInPort
 import com.unicorn.server.domain.member.port.`in`.SocialLoginInPort
 import com.unicorn.server.domain.member.port.dto.SocialLoginCommand
+import com.unicorn.server.domain.member.port.dto.SocialLoginResult
 import com.unicorn.server.domain.member.port.dto.TokenPair
 import com.unicorn.server.domain.member.port.out.MemberOutPort
 import com.unicorn.server.domain.member.port.out.SocialAccountOutPort
@@ -31,12 +33,12 @@ class MemberAuthService(
 ) : SocialLoginInPort, LogoutInPort, ReissueTokenInPort {
 
 	// 검증된 소셜 사용자 정보로 신규 가입 또는 기존 로그인을 처리하고 토큰을 발급한다.
-	override fun login(command: SocialLoginCommand): TokenPair {
-		val member = findOrCreateMember(command)
+	override fun login(command: SocialLoginCommand): SocialLoginResult {
+		val (member, isNewMember) = findOrCreateMember(command)
 
 		val tokenPair = tokenIssuer.issue(member.id.toString(), member.role)
 		tokenStore.save(member.id.toString(), tokenPair.refreshToken)
-		return tokenPair
+		return SocialLoginResult(tokenPair = tokenPair, isNewMember = isNewMember)
 	}
 
 	// 멤버 로그아웃 요청을 처리한다.
@@ -64,7 +66,7 @@ class MemberAuthService(
 	}
 
 	// 소셜 계정으로 기존 멤버를 찾거나 신규 멤버와 소셜 계정을 생성한다.
-	private fun findOrCreateMember(command: SocialLoginCommand): Member {
+	private fun findOrCreateMember(command: SocialLoginCommand): Pair<Member, Boolean> {
 		// 소셜 계정 조회
 		val existingSocialAccount = socialAccountOutPort.findByProviderAndProviderId(
 			command.provider,
@@ -72,7 +74,7 @@ class MemberAuthService(
 		)
 
 		if (existingSocialAccount != null) {
-			return findMemberOrThrow(existingSocialAccount.memberId.toString())
+			return findMemberOrThrow(existingSocialAccount.memberId.toString()) to false
 		}
 
 		// 이메일 중복 검증
@@ -87,6 +89,7 @@ class MemberAuthService(
 				email = emailVo,
 				name = command.name,
 				nickname = toSafeNickname(command.name ?: ""),
+				role = Role.PENDING,
 			),
 		)
 
@@ -101,7 +104,7 @@ class MemberAuthService(
 			),
 		)
 
-		return newMember
+		return newMember to true
 	}
 
 	// 외부 플랫폼 이름을 멤버 닉네임 제약에 맞게 보정한다.
