@@ -62,6 +62,7 @@ class Member private constructor(
 
 	// 온보딩을 완료하고 정식 멤버 역할로 전환한다.
 	fun completeOnboarding(nickname: String) {
+		check(this.role == Role.PENDING) { "Member is already onboarded" }
 		val trimmed = nickname.trim()
 		validateNickname(trimmed)
 		this.nickname = trimmed

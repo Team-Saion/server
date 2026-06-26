@@ -80,7 +80,7 @@ class MemberAuthService(
 		// 이메일 중복 검증
 		val emailVo = command.email?.let { Email(it) }
 		if (emailVo != null && memberOutPort.existsByEmail(emailVo)) {
-			throw DuplicateEmailException(command.email!!)
+			throw DuplicateEmailException(emailVo.value)
 		}
 
 		// 멤버 및 소셜 계정 생성

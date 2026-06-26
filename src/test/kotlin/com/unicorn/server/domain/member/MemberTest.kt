@@ -120,6 +120,16 @@ class MemberTest {
 	}
 
 	@Test
+	@DisplayName("PENDING 상태가 아닌 멤버가 completeOnboarding을 호출하면 예외가 발생한다")
+	fun completeOnboarding_whenAlreadyOnboarded_throwsException() {
+		val member = Member.create(Email("test@example.com"), "홍길동", "길동이", Role.MEMBER)
+
+		assertThatThrownBy { member.completeOnboarding("새닉네임") }
+			.isInstanceOf(IllegalStateException::class.java)
+			.hasMessageContaining("Member is already onboarded")
+	}
+
+	@Test
 	@DisplayName("changeProfileImage 호출 시 profileImageKey가 변경된다")
 	fun changeProfileImage_keyIsUpdated() {
 		val member = Member.create(Email("test@example.com"), "홍길동", "길동이")

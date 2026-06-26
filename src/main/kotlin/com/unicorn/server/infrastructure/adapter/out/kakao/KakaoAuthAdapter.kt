@@ -26,7 +26,13 @@ class KakaoAuthAdapter(
 			decoder.setJwtValidator(
 				DelegatingOAuth2TokenValidator(
 					JwtValidators.createDefaultWithIssuer(issuer),
-					JwtClaimValidator<List<String>>("aud") { it != null && it.contains(appKey) },
+					JwtClaimValidator<Any>("aud") { aud ->
+						when (aud) {
+							is String -> aud == appKey
+							is List<*> -> aud.contains(appKey)
+							else -> false
+						}
+					},
 				),
 			)
 		}
