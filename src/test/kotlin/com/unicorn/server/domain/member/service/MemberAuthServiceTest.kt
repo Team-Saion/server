@@ -6,6 +6,7 @@ import com.unicorn.server.domain.member.SocialAccount
 import com.unicorn.server.domain.member.enums.Role
 import com.unicorn.server.domain.member.enums.SocialProvider
 import com.unicorn.server.domain.member.exception.DuplicateEmailException
+import com.unicorn.server.domain.member.exception.InvalidRefreshTokenException
 import com.unicorn.server.domain.member.exception.MemberNotFoundException
 import com.unicorn.server.domain.member.exception.WithdrawnMemberException
 import com.unicorn.server.domain.member.port.dto.SocialLoginCommand
@@ -146,6 +147,54 @@ class MemberAuthServiceTest {
 			.isInstanceOf(MemberNotFoundException::class.java)
 	}
 
+	@Test
+	@DisplayName("유효한 refresh token으로 reissue 호출 시 새 토큰 쌍을 발급하고 기존 토큰을 무효화한다")
+	fun reissue_withValidRefreshToken_rotatesTokenPair() {
+		val member = memberOutPort.save(Member.create(Email("reissue@example.com"), "홍길동", "길동이"))
+		val oldRefreshToken = "old-refresh-token"
+		tokenIssuer.registerRefreshToken(oldRefreshToken, member.id.toString())
+		tokenStore.save(member.id.toString(), oldRefreshToken)
+
+		val result = memberAuthService.reissue(oldRefreshToken)
+
+		assertThat(result.accessToken).isEqualTo("access-${member.id}")
+		assertThat(result.refreshToken).isEqualTo("refresh-${member.id}")
+		assertThat(tokenStore.findMemberIdByRefreshToken(oldRefreshToken)).isNull()
+		assertThat(tokenStore.findMemberIdByRefreshToken(result.refreshToken)).isEqualTo(member.id.toString())
+	}
+
+	@Test
+	@DisplayName("검증할 수 없는 refresh token으로 reissue 호출 시 InvalidRefreshTokenException이 발생한다")
+	fun reissue_withInvalidRefreshToken_throwsInvalidRefreshTokenException() {
+		assertThatThrownBy { memberAuthService.reissue("invalid-refresh-token") }
+			.isInstanceOf(InvalidRefreshTokenException::class.java)
+	}
+
+	@Test
+	@DisplayName("저장소의 활성 토큰과 다른 refresh token으로 reissue 호출 시 InvalidRefreshTokenException이 발생한다")
+	fun reissue_withInactiveRefreshToken_throwsInvalidRefreshTokenException() {
+		val member = memberOutPort.save(Member.create(Email("inactive@example.com"), "홍길동", "길동이"))
+		val inactiveRefreshToken = "inactive-refresh-token"
+		tokenIssuer.registerRefreshToken(inactiveRefreshToken, member.id.toString())
+
+		assertThatThrownBy { memberAuthService.reissue(inactiveRefreshToken) }
+			.isInstanceOf(InvalidRefreshTokenException::class.java)
+	}
+
+	@Test
+	@DisplayName("탈퇴한 멤버의 refresh token으로 reissue 호출 시 WithdrawnMemberException이 발생한다")
+	fun reissue_withWithdrawnMember_throwsWithdrawnMemberException() {
+		val member = memberOutPort.save(Member.create(Email("withdrawn-reissue@example.com"), "홍길동", "길동이"))
+		member.withdraw()
+		memberOutPort.save(member)
+		val refreshToken = "withdrawn-refresh-token"
+		tokenIssuer.registerRefreshToken(refreshToken, member.id.toString())
+		tokenStore.save(member.id.toString(), refreshToken)
+
+		assertThatThrownBy { memberAuthService.reissue(refreshToken) }
+			.isInstanceOf(WithdrawnMemberException::class.java)
+	}
+
 	private class FakeMemberOutPort : MemberOutPort {
 		private val store = linkedMapOf<MemberId, Member>()
 
@@ -178,8 +227,17 @@ class MemberAuthServiceTest {
 	}
 
 	private class FakeTokenIssuer : TokenIssuer {
+		private val refreshTokens = mutableMapOf<String, String>()
+
 		override fun issue(memberId: String, role: Role): TokenPair =
 			TokenPair("access-$memberId", "refresh-$memberId")
+
+		override fun parseRefreshToken(refreshToken: String): String? =
+			refreshTokens[refreshToken]
+
+		fun registerRefreshToken(refreshToken: String, memberId: String) {
+			refreshTokens[refreshToken] = memberId
+		}
 	}
 
 	private class FakeTokenStore : TokenStore {
