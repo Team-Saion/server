@@ -31,7 +31,7 @@ class SocialLoginServiceTest {
 				provider = SocialProvider.KAKAO,
 				providerId = "fake-kakao-id",
 				email = "fake@example.com",
-				name = "가짜유저",
+				name = null,
 				kakaoNickname = "가짜유저",
 				kakaoProfileImageUrl = "https://example.com/profile.png",
 			),

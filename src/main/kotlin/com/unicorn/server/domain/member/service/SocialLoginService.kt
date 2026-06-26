@@ -23,7 +23,7 @@ class SocialLoginService(
 				provider = SocialProvider.KAKAO,
 				providerId = userInfo.providerId,
 				email = userInfo.email,
-				name = userInfo.name,
+				name = null,
 				kakaoNickname = userInfo.name,
 				kakaoProfileImageUrl = userInfo.profileImageUrl,
 			),
