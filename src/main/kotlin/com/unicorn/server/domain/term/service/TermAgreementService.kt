@@ -25,9 +25,14 @@ class TermAgreementService(
 			.groupBy { it.termCode }
 			.mapNotNull { (_, versions) -> versions.maxByOrNull { it.version } }
 
-		val requiredTermIds = activeTerms.filter { it.required }.map { it.id }
+		val activeTermIds = activeTerms.map { it.id }.toSet()
 		val agreedTermIds = command.termIds.map { TermId.of(it) }
 
+		if (!activeTermIds.containsAll(agreedTermIds)) {
+			throw BusinessException(TermErrorCode.INVALID_TERM_ID)
+		}
+
+		val requiredTermIds = activeTerms.filter { it.required }.map { it.id }
 		if (!agreedTermIds.containsAll(requiredTermIds)) {
 			throw BusinessException(TermErrorCode.REQUIRED_TERMS_NOT_AGREED)
 		}

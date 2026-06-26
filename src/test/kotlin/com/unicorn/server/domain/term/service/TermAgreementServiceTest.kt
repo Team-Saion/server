@@ -58,6 +58,23 @@ class TermAgreementServiceTest {
 	}
 
 	@Test
+	@DisplayName("활성 약관 목록에 없는 termId가 포함되면 INVALID_TERM_ID 예외가 발생한다")
+	fun agreeTerms_withInvalidTermId_throwsInvalidTermId() {
+		termOutPort.seed(term(id = 1L, termCode = TermCode.SERVICE_USE, version = 1, required = true))
+		termOutPort.seed(term(id = 2L, termCode = TermCode.PRIVACY_COLLECTION, version = 1, required = true))
+		val command = AgreeTermsCommand(
+			memberId = MEMBER_ID,
+			termIds = listOf(1L, 2L, 999L),
+		)
+
+		assertThatThrownBy { termAgreementService.agreeTerms(command) }
+			.isInstanceOf(BusinessException::class.java)
+			.extracting { (it as BusinessException).errorCode }
+			.isEqualTo(TermErrorCode.INVALID_TERM_ID)
+		assertThat(memberTermOutPort.saved).isEmpty()
+	}
+
+	@Test
 	@DisplayName("같은 약관 코드에 여러 버전이 있으면 활성 최신 버전의 필수 동의 여부만 검사한다")
 	fun agreeTerms_multipleVersions_checksLatestVersionOnly() {
 		termOutPort.seed(term(id = 1L, termCode = TermCode.SERVICE_USE, version = 1, required = true))
