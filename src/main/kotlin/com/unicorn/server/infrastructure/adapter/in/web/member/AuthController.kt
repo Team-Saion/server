@@ -4,6 +4,7 @@ import com.unicorn.server.domain.member.port.`in`.KakaoLoginInPort
 import com.unicorn.server.domain.member.port.`in`.ReissueTokenInPort
 import com.unicorn.server.infrastructure.adapter.`in`.web.common.dto.ApiResponse
 import com.unicorn.server.infrastructure.adapter.`in`.web.member.dto.KakaoLoginRequest
+import com.unicorn.server.infrastructure.adapter.`in`.web.member.dto.KakaoLoginResponse
 import com.unicorn.server.infrastructure.adapter.`in`.web.member.dto.RefreshTokenRequest
 import com.unicorn.server.infrastructure.adapter.`in`.web.member.dto.TokenResponse
 import jakarta.validation.Valid
@@ -19,10 +20,11 @@ class AuthController(
 	private val kakaoLoginInPort: KakaoLoginInPort,
 	private val reissueTokenInPort: ReissueTokenInPort,
 ) : AuthApiDoc {
+
 	@PostMapping("/kakao")
-	override fun kakaoLogin(@RequestBody @Valid request: KakaoLoginRequest): ApiResponse<TokenResponse> {
-		val tokenPair = kakaoLoginInPort.kakaoLogin(request.idToken)
-		return ApiResponse.success(TokenResponse.from(tokenPair))
+	override fun kakaoLogin(@RequestBody @Valid request: KakaoLoginRequest): ApiResponse<KakaoLoginResponse> {
+		val result = kakaoLoginInPort.kakaoLogin(request.idToken)
+		return ApiResponse.success(KakaoLoginResponse.from(result))
 	}
 
 	@PostMapping("/refresh")

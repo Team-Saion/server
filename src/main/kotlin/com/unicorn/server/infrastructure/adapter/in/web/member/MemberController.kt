@@ -1,14 +1,20 @@
 package com.unicorn.server.infrastructure.adapter.`in`.web.member
 
+import com.unicorn.server.domain.member.port.`in`.CompleteOnboardingInPort
 import com.unicorn.server.domain.member.port.`in`.GetMemberInPort
+import com.unicorn.server.domain.member.port.`in`.GetOnboardingInfoInPort
 import com.unicorn.server.domain.member.port.`in`.LogoutInPort
 import com.unicorn.server.domain.member.port.`in`.UpdateProfileInPort
 import com.unicorn.server.domain.member.port.`in`.UploadProfileImageInPort
 import com.unicorn.server.domain.member.port.`in`.WithdrawMemberInPort
+import com.unicorn.server.domain.member.port.dto.CompleteOnboardingCommand
 import com.unicorn.server.domain.member.port.dto.UpdateProfileCommand
 import com.unicorn.server.domain.member.port.dto.UploadProfileImageCommand
 import com.unicorn.server.infrastructure.adapter.`in`.web.common.dto.ApiResponse
+import com.unicorn.server.infrastructure.adapter.`in`.web.member.dto.CompleteOnboardingRequest
 import com.unicorn.server.infrastructure.adapter.`in`.web.member.dto.MemberResponse
+import com.unicorn.server.infrastructure.adapter.`in`.web.member.dto.OnboardingInfoResponse
+import com.unicorn.server.infrastructure.adapter.`in`.web.member.dto.TokenResponse
 import com.unicorn.server.infrastructure.adapter.`in`.web.member.dto.UpdateProfileRequest
 import jakarta.validation.Valid
 import org.springframework.http.MediaType
@@ -28,10 +34,12 @@ import org.springframework.web.multipart.MultipartFile
 @RequestMapping("/api/v1/members")
 class MemberController(
 	private val getMemberInPort: GetMemberInPort,
+	private val getOnboardingInfoInPort: GetOnboardingInfoInPort,
 	private val updateProfileInPort: UpdateProfileInPort,
 	private val uploadProfileImageInPort: UploadProfileImageInPort,
 	private val logoutInPort: LogoutInPort,
 	private val withdrawMemberInPort: WithdrawMemberInPort,
+	private val completeOnboardingInPort: CompleteOnboardingInPort,
 ) : MemberApiDoc {
 
 	// GET /api/v1/members/me - 내 프로필을 조회한다.
@@ -41,6 +49,28 @@ class MemberController(
 	): ApiResponse<MemberResponse> {
 		val member = getMemberInPort.getById(memberId)
 		return ApiResponse.success(MemberResponse.from(member))
+	}
+
+	// GET /api/v1/members/me/onboarding-info - 온보딩 사전정보를 조회한다.
+	@GetMapping("/me/onboarding-info")
+	override fun getOnboardingInfo(
+		@AuthenticationPrincipal memberId: String,
+	): ApiResponse<OnboardingInfoResponse> {
+		val result = getOnboardingInfoInPort.getOnboardingInfo(memberId)
+		return ApiResponse.success(OnboardingInfoResponse.from(result))
+	}
+
+	// PATCH /api/v1/members/me/onboarding - 온보딩을 완료하고 MEMBER 토큰을 발급한다.
+	@PatchMapping("/me/onboarding")
+	override fun completeOnboarding(
+		@AuthenticationPrincipal memberId: String,
+		@RequestBody @Valid request: CompleteOnboardingRequest,
+	): ApiResponse<TokenResponse> {
+		val tokenPair = completeOnboardingInPort.completeOnboarding(
+			memberId,
+			CompleteOnboardingCommand(nickname = request.nickname),
+		)
+		return ApiResponse.success(TokenResponse.from(tokenPair))
 	}
 
 	// PATCH /api/v1/members/me/profile - 닉네임을 변경한다.

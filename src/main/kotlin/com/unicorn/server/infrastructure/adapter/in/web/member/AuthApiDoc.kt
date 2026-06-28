@@ -7,6 +7,7 @@ import com.unicorn.server.infrastructure.adapter.`in`.web.common.swagger.annotat
 import com.unicorn.server.infrastructure.adapter.`in`.web.common.swagger.annotation.ApiErrorCodeExamples
 import com.unicorn.server.infrastructure.adapter.`in`.web.common.swagger.annotation.ApiSuccessCodeExample
 import com.unicorn.server.infrastructure.adapter.`in`.web.member.dto.KakaoLoginRequest
+import com.unicorn.server.infrastructure.adapter.`in`.web.member.dto.KakaoLoginResponse
 import com.unicorn.server.infrastructure.adapter.`in`.web.member.dto.RefreshTokenRequest
 import com.unicorn.server.infrastructure.adapter.`in`.web.member.dto.TokenResponse
 import io.swagger.v3.oas.annotations.Operation
@@ -25,6 +26,13 @@ interface AuthApiDoc {
 			- 요청 바디: `idToken`
 			- ID Token은 카카오 SDK 또는 카카오 로그인 플로우에서 발급받은 토큰입니다.
 			- 서버는 카카오 JWKS로 서명, 만료, issuer, audience를 검증합니다.
+			- `isNewMember`가 `true`이면 해당 소셜 계정으로 처음 가입한 것입니다.
+			- 소셜 계정이 이미 존재하면 기존 멤버로 로그인하며 `isNewMember = false`를 반환합니다.
+			- 온보딩 화면 진입 여부는 `isNewMember`가 아닌 access token JWT의 `role` 클레임 값을 기준으로 판단하세요.
+			  - `role = PENDING`: 온보딩 미완료 → 약관 동의 → 닉네임 설정 화면으로 진입
+			  - `role = MEMBER`: 온보딩 완료 → 서비스 메인 화면으로 진입
+			- `role` 값은 access token을 Base64 디코딩하거나 `GET /api/v1/members/me` 응답에서 확인할 수 있습니다.
+			- 기존 회원이 재로그인하면 `isNewMember = false`이지만 `role = PENDING`일 수 있습니다.
 		""",
 	)
 	@ApiErrorCodeExamples(
@@ -33,10 +41,10 @@ interface AuthApiDoc {
 		ApiErrorCodeExample(codeType = MemberErrorCode::class, code = "DUPLICATE_EMAIL"),
 		ApiErrorCodeExample(codeType = MemberErrorCode::class, code = "WITHDRAWN_MEMBER"),
 	)
-	@ApiSuccessCodeExample(TokenResponse::class)
+	@ApiSuccessCodeExample(KakaoLoginResponse::class)
 	fun kakaoLogin(
 		@RequestBody @Valid request: KakaoLoginRequest,
-	): ApiResponse<TokenResponse>
+	): ApiResponse<KakaoLoginResponse>
 
 	@Operation(
 		summary = "인증 토큰 재발급",

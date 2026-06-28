@@ -26,7 +26,13 @@ class KakaoAuthAdapter(
 			decoder.setJwtValidator(
 				DelegatingOAuth2TokenValidator(
 					JwtValidators.createDefaultWithIssuer(issuer),
-					JwtClaimValidator<String>("aud") { it == appKey },
+					JwtClaimValidator<Any>("aud") { aud ->
+						when (aud) {
+							is String -> aud == appKey
+							is List<*> -> aud.contains(appKey)
+							else -> false
+						}
+					},
 				),
 			)
 		}
@@ -39,13 +45,11 @@ class KakaoAuthAdapter(
 			throw InvalidSocialTokenException(e.message)
 		}
 
-		val providerId = jwt.subject
-			?: throw InvalidSocialTokenException("Missing sub claim")
+		val providerId = jwt.subject ?: throw InvalidSocialTokenException("Missing sub claim")
 		val email = jwt.getClaimAsString("email")
-			?: throw InvalidSocialTokenException("Missing email claim")
 		val name = jwt.getClaimAsString("nickname")
-			?: throw InvalidSocialTokenException("Missing nickname claim")
+		val profileImageUrl = jwt.getClaimAsString("picture")
 
-		return KakaoUserInfo(providerId = providerId, email = email, name = name)
+		return KakaoUserInfo(providerId = providerId, email = email, name = name, profileImageUrl = profileImageUrl)
 	}
 }

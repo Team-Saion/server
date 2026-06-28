@@ -3,6 +3,7 @@ package com.unicorn.server.infrastructure.adapter.out.persistence.member.entity
 import com.unicorn.server.common.persistence.AuditableJpaEntity
 import com.unicorn.server.common.vo.Email
 import com.unicorn.server.domain.member.Member
+import com.unicorn.server.domain.member.enums.AvatarColor
 import com.unicorn.server.domain.member.enums.MemberStatus
 import com.unicorn.server.domain.member.enums.Role
 import com.unicorn.server.domain.member.vo.MemberId
@@ -28,16 +29,21 @@ class MemberEntity protected constructor() : AuditableJpaEntity() {
 	var id: String = ""
 		protected set
 
-	@Column(name = "email", nullable = false, length = 255)
-	var email: String = ""
+	@Column(name = "email", nullable = true, length = 255)
+	var email: String? = null
 		protected set
 
-	@Column(name = "name", nullable = false, length = 100)
-	var name: String = ""
+	@Column(name = "name", nullable = true, length = 100)
+	var name: String? = null
 		protected set
 
 	@Column(name = "nickname", nullable = false, length = 30)
 	var nickname: String = ""
+		protected set
+
+	@Enumerated(EnumType.STRING)
+	@Column(name = "avatar_color", nullable = false, length = 20)
+	lateinit var avatarColor: AvatarColor
 		protected set
 
 	@Enumerated(EnumType.STRING)
@@ -60,9 +66,10 @@ class MemberEntity protected constructor() : AuditableJpaEntity() {
 
 	constructor(member: Member) : this() {
 		id = member.id.toString()
-		email = member.email.value
+		email = member.email?.value
 		name = member.name
 		nickname = member.nickname
+		avatarColor = member.avatarColor
 		role = member.role
 		profileImageKey = member.profileImageKey
 		status = member.status
@@ -73,9 +80,10 @@ class MemberEntity protected constructor() : AuditableJpaEntity() {
 
 	// 도메인 변경사항을 기존 영속성 객체에 반영한다.
 	fun update(member: Member) {
-		email = member.email.value
+		email = member.email?.value
 		name = member.name
 		nickname = member.nickname
+		avatarColor = member.avatarColor
 		role = member.role
 		profileImageKey = member.profileImageKey
 		status = member.status
@@ -86,9 +94,10 @@ class MemberEntity protected constructor() : AuditableJpaEntity() {
 	// 영속성 객체를 순수 도메인 객체로 복원한다.
 	fun toDomain(): Member = Member.reconstitute(
 		id = MemberId.of(id),
-		email = Email(email),
+		email = email?.let { Email(it) },
 		name = name,
 		nickname = nickname,
+		avatarColor = avatarColor,
 		role = role,
 		profileImageKey = profileImageKey,
 		status = status,

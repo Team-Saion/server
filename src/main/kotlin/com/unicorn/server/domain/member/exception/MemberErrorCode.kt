@@ -19,6 +19,13 @@ enum class MemberErrorCode(
 	// Conflict
 	DUPLICATE_EMAIL("M409_1", "Email already exists", HttpStatus.CONFLICT),
 
+	// Bad Request
+	INVALID_NICKNAME(
+		"M400_1",
+		"Nickname must be 2-10 characters using Korean, English, or numbers only",
+		HttpStatus.BAD_REQUEST,
+	),
+
 	// Gone
 	MEMBER_ALREADY_DELETED("M410_1", "Member is already deleted", HttpStatus.GONE),
 	WITHDRAWN_MEMBER("M410_2", "Member has withdrawn", HttpStatus.GONE),

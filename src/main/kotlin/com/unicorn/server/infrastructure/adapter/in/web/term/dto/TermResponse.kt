@@ -4,7 +4,7 @@ import com.unicorn.server.domain.term.Term
 import io.swagger.v3.oas.annotations.media.Schema
 import java.time.LocalDateTime
 
-/** GET /v1/terms 응답으로 노출되는 약관 1건의 DTO다. */
+/** GET /api/v1/terms 응답으로 노출되는 약관 1건의 DTO다. */
 @Schema(description = "약관 응답")
 data class TermResponse(
 	@field:Schema(description = "약관 버전 ID")
