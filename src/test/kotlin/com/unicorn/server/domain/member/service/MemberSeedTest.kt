@@ -33,10 +33,17 @@ class MemberSeedTest : BaseTest() {
         val seededMember = baseMember.toDomain()
         memberOutPort.save(seededMember)
         socialAccountOutPort.save(
-            SocialAccount.create(seededMember.id, SocialProvider.KAKAO, baseMember.providerId, baseMember.email),
+            SocialAccount.create(
+                memberId = seededMember.id,
+                provider = SocialProvider.KAKAO,
+                providerId = baseMember.providerId,
+                email = baseMember.email,
+                kakaoNickname = baseMember.nickname,
+                kakaoProfileImageUrl = null,
+            ),
         )
 
-        val tokenPair = memberAuthService.login(
+        val result = memberAuthService.login(
             SocialLoginCommand(
                 provider = SocialProvider.KAKAO,
                 providerId = baseMember.providerId,
@@ -45,12 +52,12 @@ class MemberSeedTest : BaseTest() {
             ),
         )
 
-        println("[MemberSeedTest] accessToken=${tokenPair.accessToken}")
+        println("[MemberSeedTest] accessToken=${result.tokenPair.accessToken}")
 
-        assertThat(tokenPair.accessToken).isNotBlank()
-        assertThat(jwtProvider.validate(tokenPair.accessToken)).isTrue()
-        assertThat(jwtProvider.extractMemberId(tokenPair.accessToken)).isEqualTo(baseMember.id)
-        assertThat(jwtProvider.extractRoles(tokenPair.accessToken)).containsExactly(Role.MEMBER.name)
+        assertThat(result.tokenPair.accessToken).isNotBlank()
+        assertThat(jwtProvider.validate(result.tokenPair.accessToken)).isTrue()
+        assertThat(jwtProvider.extractMemberId(result.tokenPair.accessToken)).isEqualTo(baseMember.id)
+        assertThat(jwtProvider.extractRoles(result.tokenPair.accessToken)).containsExactly(Role.MEMBER.name)
     }
 
     private class FakeMemberOutPort : MemberOutPort {
@@ -82,5 +89,8 @@ class MemberSeedTest : BaseTest() {
 
         override fun findByProviderAndProviderId(provider: SocialProvider, providerId: String): SocialAccount? =
             store[provider to providerId]
+
+        override fun findByMemberId(memberId: MemberId): SocialAccount? =
+            store.values.firstOrNull { it.memberId == memberId }
     }
 }
