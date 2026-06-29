@@ -3,6 +3,8 @@ spring:
     name: server
   profiles:
     default: dev
+  flyway:
+    enabled: false
 app:
   server:
     url: ${SERVER_URL:http://localhost:8080}
