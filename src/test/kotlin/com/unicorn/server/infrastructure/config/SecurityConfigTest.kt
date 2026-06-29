@@ -77,6 +77,18 @@ class SecurityConfigTest(
 			.andExpect(status().isForbidden)
 	}
 
+	@Test
+	@DisplayName("PENDING 멤버가 일반 멤버 API에 접근하면 403을 반환한다")
+	fun memberApi_withPendingRole_returnsForbidden() {
+		val accessToken = jwtProvider.issue(MEMBER_ID, Role.PENDING).accessToken
+
+		mockMvc.perform(
+			get("/v1/members/me")
+				.header(HttpHeaders.AUTHORIZATION, "Bearer $accessToken"),
+		)
+			.andExpect(status().isForbidden)
+	}
+
 	companion object {
 		private const val MEMBER_ID = "00000000-0000-0000-0000-000000000001"
 	}

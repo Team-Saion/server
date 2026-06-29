@@ -18,14 +18,16 @@ data class MemberResponse(
 	@field:Schema(
 		description = "서비스 내 고유 이메일",
 		example = "user@example.com",
+		nullable = true,
 	)
-	val email: String,
+	val email: String?,
 
 	@field:Schema(
 		description = "소셜 플랫폼에서 제공한 이름",
 		example = "홍길동",
+		nullable = true,
 	)
-	val name: String,
+	val name: String?,
 
 	@field:Schema(
 		description = "서비스 내 노출 닉네임",
@@ -36,9 +38,12 @@ data class MemberResponse(
 	@field:Schema(
 		description = "멤버 역할",
 		example = "MEMBER",
-		allowableValues = ["MEMBER", "ADMIN"],
+		allowableValues = ["PENDING", "MEMBER", "ADMIN"],
 	)
 	val role: Role,
+
+	@field:Schema(description = "멤버 아바타 기본 색상")
+	val avatarColor: AvatarColorResponse,
 
 	@field:Schema(
 		description = "프로필 이미지 객체 키. 설정하지 않았으면 null이다.",
@@ -64,10 +69,11 @@ data class MemberResponse(
 		// 도메인 멤버를 응답 DTO로 변환한다.
 		fun from(member: Member): MemberResponse = MemberResponse(
 			id = member.id.toString(),
-			email = member.email.value,
+			email = member.email?.value,
 			name = member.name,
 			nickname = member.nickname,
 			role = member.role,
+			avatarColor = AvatarColorResponse.from(member.avatarColor),
 			profileImageKey = member.profileImageKey,
 			status = member.status,
 			createdAt = member.createdAt,

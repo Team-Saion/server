@@ -4,6 +4,7 @@ import com.unicorn.server.common.annotation.PersistenceAdapter
 import com.unicorn.server.domain.member.SocialAccount
 import com.unicorn.server.domain.member.enums.SocialProvider
 import com.unicorn.server.domain.member.port.out.SocialAccountOutPort
+import com.unicorn.server.domain.member.vo.MemberId
 import com.unicorn.server.infrastructure.adapter.out.persistence.member.entity.SocialAccountEntity
 import org.springframework.transaction.annotation.Transactional
 
@@ -28,4 +29,9 @@ class SocialAccountPersistenceAdapter(
 	@Transactional(readOnly = true)
 	override fun findByProviderAndProviderId(provider: SocialProvider, providerId: String): SocialAccount? =
 		socialAccountJpaRepository.findByProviderAndProviderId(provider, providerId)?.toDomain()
+
+	// 멤버 식별자로 소셜 계정을 조회한다.
+	@Transactional(readOnly = true)
+	override fun findByMemberId(memberId: MemberId): SocialAccount? =
+		socialAccountJpaRepository.findByMemberId(memberId.toString())?.toDomain()
 }

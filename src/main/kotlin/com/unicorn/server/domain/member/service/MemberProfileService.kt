@@ -9,12 +9,15 @@ import com.unicorn.server.domain.member.event.MemberWithdrawnEvent
 import com.unicorn.server.domain.member.exception.MemberNotFoundException
 import com.unicorn.server.domain.member.exception.WithdrawnMemberException
 import com.unicorn.server.domain.member.port.`in`.GetMemberInPort
+import com.unicorn.server.domain.member.port.`in`.GetOnboardingInfoInPort
 import com.unicorn.server.domain.member.port.`in`.UpdateProfileInPort
 import com.unicorn.server.domain.member.port.`in`.UploadProfileImageInPort
 import com.unicorn.server.domain.member.port.`in`.WithdrawMemberInPort
+import com.unicorn.server.domain.member.port.dto.OnboardingInfoResult
 import com.unicorn.server.domain.member.port.dto.UpdateProfileCommand
 import com.unicorn.server.domain.member.port.dto.UploadProfileImageCommand
 import com.unicorn.server.domain.member.port.out.MemberOutPort
+import com.unicorn.server.domain.member.port.out.SocialAccountOutPort
 import com.unicorn.server.domain.member.vo.MemberId
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -27,12 +30,24 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 @Transactional(readOnly = true)
 class MemberProfileService(
 	private val memberOutPort: MemberOutPort,
+	private val socialAccountOutPort: SocialAccountOutPort,
 	private val eventPublisher: EventPublisher,
 	private val objectStorage: ObjectStorage,
-) : GetMemberInPort, UpdateProfileInPort, WithdrawMemberInPort, UploadProfileImageInPort {
+) : GetMemberInPort, GetOnboardingInfoInPort, UpdateProfileInPort, WithdrawMemberInPort, UploadProfileImageInPort {
 
 	// 멤버 식별자로 저장된 멤버를 조회한다.
 	override fun getById(memberId: String): Member = findMemberOrThrow(memberId)
+
+	// 온보딩 화면 표시를 위한 소셜 계정 정보와 멤버 기본 색상을 조회한다.
+	override fun getOnboardingInfo(memberId: String): OnboardingInfoResult {
+		val member = findMemberOrThrow(memberId)
+		val socialAccount = socialAccountOutPort.findByMemberId(member.id)
+		return OnboardingInfoResult(
+			socialNickname = socialAccount?.kakaoNickname,
+			socialProfileImageUrl = socialAccount?.kakaoProfileImageUrl,
+			avatarColor = member.avatarColor,
+		)
+	}
 
 	// 멤버 프로필을 조회, 변경, 저장한다.
 	@Transactional
