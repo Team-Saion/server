@@ -2,6 +2,7 @@ package com.unicorn.server
 
 import com.unicorn.server.common.vo.Email
 import com.unicorn.server.domain.member.Member
+import com.unicorn.server.domain.member.enums.AvatarColor
 import com.unicorn.server.domain.member.enums.MemberStatus
 import com.unicorn.server.domain.member.enums.Role
 import com.unicorn.server.domain.member.vo.MemberId
@@ -9,7 +10,7 @@ import java.time.LocalDateTime
 
 open class BaseTest {
     protected val baseMember = BaseMember()
-    protected val testJwtSecret: String = "test-secret-key-for-jwt-signing-must-be-at-least-32-bytes!!"
+    protected val testJwtSecret: String = "aqr3l4WUSfDEauYcRmAJPH1TXW9ym3Zs5EPMhzekPI3"
     protected val accessTokenExpirationSeconds: Long = 3600L
     protected val refreshTokenExpirationSeconds: Long = 2592000L
 
@@ -31,6 +32,7 @@ open class BaseTest {
             deletedAt = null,
             createdAt = LocalDateTime.of(2026, 1, 1, 0, 0),
             updatedAt = LocalDateTime.of(2026, 1, 1, 0, 0),
+            avatarColor = AvatarColor.random(),
         )
     }
 }

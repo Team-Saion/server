@@ -37,7 +37,7 @@ app:
   server:
     url: http://localhost
   jwt:
-    secret: ${JWT_SECRET}
+    secret: aqr3l4WUSfDEauYcRmAJPH1TXW9ym3Zs5EPMhzekPI3
     access-token-expiration: 3600
     refresh-token-expiration: 2592000
   kakao:
