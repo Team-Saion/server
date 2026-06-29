@@ -44,20 +44,28 @@ class MemberAuthServiceTest {
 			providerId = "kakao-123",
 			email = "new@example.com",
 			name = "신규유저",
+			kakaoNickname = "카카오닉네임",
+			kakaoProfileImageUrl = "https://example.com/profile.png",
 		)
 
 		val result = memberAuthService.login(command)
 
-		assertThat(result.accessToken).isNotBlank()
-		assertThat(result.refreshToken).isNotBlank()
+		assertThat(result.tokenPair.accessToken).isNotBlank()
+		assertThat(result.tokenPair.refreshToken).isNotBlank()
+		assertThat(result.isNewMember).isTrue()
 		assertThat(memberOutPort.existsByEmail(Email("new@example.com"))).isTrue()
-		assertThat(socialAccountOutPort.findByProviderAndProviderId(SocialProvider.KAKAO, "kakao-123")).isNotNull()
-		assertThat(tokenStore.findMemberIdByRefreshToken(result.refreshToken)).isNotNull()
+		val member = memberOutPort.findByEmail(Email("new@example.com"))!!
+		assertThat(member.role).isEqualTo(Role.PENDING)
+		val socialAccount = socialAccountOutPort.findByProviderAndProviderId(SocialProvider.KAKAO, "kakao-123")
+		assertThat(socialAccount).isNotNull()
+		assertThat(socialAccount!!.kakaoNickname).isEqualTo("카카오닉네임")
+		assertThat(socialAccount.kakaoProfileImageUrl).isEqualTo("https://example.com/profile.png")
+		assertThat(tokenStore.findMemberIdByRefreshToken(result.tokenPair.refreshToken)).isNotNull()
 	}
 
 	@Test
-	@DisplayName("login 호출 시 카카오 이름이 1자이면 닉네임을 2자로 보정한다")
-	fun login_withOneCharacterName_padsNickname() {
+	@DisplayName("login 호출 시 카카오 이름이 1자이면 기본 닉네임으로 보정한다")
+	fun login_withOneCharacterName_usesDefaultNickname() {
 		val command = SocialLoginCommand(
 			provider = SocialProvider.KAKAO,
 			providerId = "kakao-short-name",
@@ -68,13 +76,32 @@ class MemberAuthServiceTest {
 		memberAuthService.login(command)
 
 		val member = memberOutPort.findByEmail(Email("short@example.com"))!!
-		assertThat(member.nickname).isEqualTo("김_")
+		assertThat(member.nickname).isEqualTo("사용자")
 	}
 
 	@Test
-	@DisplayName("login 호출 시 카카오 이름이 30자 초과이면 닉네임을 30자로 자른다")
+	@DisplayName("login 호출 시 email이 null이어도 이메일 없는 멤버를 생성한다")
+	fun login_withNullEmail_createsMemberWithoutEmail() {
+		val command = SocialLoginCommand(
+			provider = SocialProvider.KAKAO,
+			providerId = "kakao-null-email",
+			email = null,
+			name = "이메일없음",
+		)
+
+		val result = memberAuthService.login(command)
+
+		assertThat(result.tokenPair.accessToken).isNotBlank()
+		assertThat(result.isNewMember).isTrue()
+		val socialAccount = socialAccountOutPort.findByProviderAndProviderId(SocialProvider.KAKAO, "kakao-null-email")!!
+		val member = memberOutPort.findById(socialAccount.memberId)!!
+		assertThat(member.email).isNull()
+	}
+
+	@Test
+	@DisplayName("login 호출 시 카카오 이름이 10자 초과이면 닉네임을 10자로 자른다")
 	fun login_withTooLongName_truncatesNickname() {
-		val longName = "가".repeat(31)
+		val longName = "가".repeat(11)
 		val command = SocialLoginCommand(
 			provider = SocialProvider.KAKAO,
 			providerId = "kakao-long-name",
@@ -85,7 +112,7 @@ class MemberAuthServiceTest {
 		memberAuthService.login(command)
 
 		val member = memberOutPort.findByEmail(Email("long@example.com"))!!
-		assertThat(member.nickname).isEqualTo("가".repeat(30))
+		assertThat(member.nickname).isEqualTo("가".repeat(10))
 	}
 
 	@Test
@@ -93,13 +120,21 @@ class MemberAuthServiceTest {
 	fun login_existingMember_returnsTokenPair() {
 		val member = memberOutPort.save(Member.create(Email("existing@example.com"), "홍길동", "길동이"))
 		socialAccountOutPort.save(
-			SocialAccount.create(member.id, SocialProvider.KAKAO, "kakao-456", "existing@example.com"),
+			SocialAccount.create(
+				member.id,
+				SocialProvider.KAKAO,
+				"kakao-456",
+				"existing@example.com",
+				"홍길동",
+				"https://example.com/existing.png",
+			),
 		)
 		val command = SocialLoginCommand(SocialProvider.KAKAO, "kakao-456", "existing@example.com", "홍길동")
 
 		val result = memberAuthService.login(command)
 
-		assertThat(result.accessToken).isNotBlank()
+		assertThat(result.tokenPair.accessToken).isNotBlank()
+		assertThat(result.isNewMember).isFalse()
 	}
 
 	@Test
@@ -109,7 +144,14 @@ class MemberAuthServiceTest {
 		member.withdraw()
 		memberOutPort.save(member)
 		socialAccountOutPort.save(
-			SocialAccount.create(member.id, SocialProvider.KAKAO, "kakao-withdrawn", "withdrawn-login@example.com"),
+			SocialAccount.create(
+				member.id,
+				SocialProvider.KAKAO,
+				"kakao-withdrawn",
+				"withdrawn-login@example.com",
+				"홍길동",
+				"https://example.com/withdrawn.png",
+			),
 		)
 		val command = SocialLoginCommand(SocialProvider.KAKAO, "kakao-withdrawn", "withdrawn-login@example.com", "홍길동")
 
@@ -224,6 +266,9 @@ class MemberAuthServiceTest {
 
 		override fun findByProviderAndProviderId(provider: SocialProvider, providerId: String): SocialAccount? =
 			store[provider to providerId]
+
+		override fun findByMemberId(memberId: MemberId): SocialAccount? =
+			store.values.firstOrNull { it.memberId == memberId }
 	}
 
 	private class FakeTokenIssuer : TokenIssuer {

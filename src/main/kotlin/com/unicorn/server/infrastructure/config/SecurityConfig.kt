@@ -41,8 +41,9 @@ class SecurityConfig(
 			.authorizeHttpRequests { auth ->
 				auth
 					.requestMatchers(*PERMIT_ALL_ENDPOINTS).permitAll()
+					.requestMatchers(*PENDING_ENDPOINTS).hasAnyRole("PENDING", "MEMBER", "ADMIN")
 					.requestMatchers(*ADMIN_ENDPOINTS).hasRole("ADMIN")
-					.anyRequest().authenticated()
+					.anyRequest().hasAnyRole("MEMBER", "ADMIN")
 			}
 			.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
 			.build()
@@ -58,9 +59,8 @@ class SecurityConfig(
 	companion object {
 		private val PERMIT_ALL_ENDPOINTS = arrayOf(
 			"/api/v1/auth/**",
-			"/v1/terms/**",
+			"/api/v1/terms",
 			"/api/swagger-ui/**",
-			"/swagger-ui/**",
 			"/api/swagger-ui.html",
 			"/api/api-specs/**",
 			"/actuator/**",
@@ -69,6 +69,13 @@ class SecurityConfig(
 
 		private val ADMIN_ENDPOINTS = arrayOf(
 			"/v1/admin/**",
+		)
+
+		private val PENDING_ENDPOINTS = arrayOf<String>(
+			"/api/v1/terms/agree",
+			"/api/v1/members/me/onboarding-info",
+			"/api/v1/members/me/onboarding",
+			"/api/v1/members/me/profile-image"
 		)
 	}
 }

@@ -13,6 +13,8 @@ class SocialAccount private constructor(
 	val providerId: String,
 	// 소셜 플랫폼에서 받은 이메일(참고용). 다른 플랫폼 확장을 고려해 nullable로 선언한다.
 	val email: String?,
+	val kakaoNickname: String?,
+	val kakaoProfileImageUrl: String?,
 	val createdAt: LocalDateTime,
 ) {
 	companion object {
@@ -22,12 +24,16 @@ class SocialAccount private constructor(
 			provider: SocialProvider,
 			providerId: String,
 			email: String?,
+			kakaoNickname: String?,
+			kakaoProfileImageUrl: String?,
 		): SocialAccount = SocialAccount(
 			id = SocialAccountId.generate(),
 			memberId = memberId,
 			provider = provider,
 			providerId = providerId,
 			email = email,
+			kakaoNickname = kakaoNickname,
+			kakaoProfileImageUrl = kakaoProfileImageUrl,
 			createdAt = LocalDateTime.now(),
 		)
 
@@ -38,7 +44,18 @@ class SocialAccount private constructor(
 			provider: SocialProvider,
 			providerId: String,
 			email: String?,
+			kakaoNickname: String?,
+			kakaoProfileImageUrl: String?,
 			createdAt: LocalDateTime,
-		): SocialAccount = SocialAccount(id, memberId, provider, providerId, email, createdAt)
+		): SocialAccount = SocialAccount(
+			id,
+			memberId,
+			provider,
+			providerId,
+			email,
+			kakaoNickname,
+			kakaoProfileImageUrl,
+			createdAt,
+		)
 	}
 }

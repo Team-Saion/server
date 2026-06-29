@@ -9,13 +9,16 @@ import com.unicorn.server.common.port.out.storage.exception.ObjectSizeExceededEx
 import com.unicorn.server.common.port.out.storage.exception.UnsupportedContentTypeException
 import com.unicorn.server.common.vo.Email
 import com.unicorn.server.domain.member.Member
+import com.unicorn.server.domain.member.SocialAccount
 import com.unicorn.server.domain.member.enums.MemberStatus
+import com.unicorn.server.domain.member.enums.SocialProvider
 import com.unicorn.server.domain.member.event.MemberWithdrawnEvent
 import com.unicorn.server.domain.member.exception.MemberNotFoundException
 import com.unicorn.server.domain.member.exception.WithdrawnMemberException
 import com.unicorn.server.domain.member.port.dto.UpdateProfileCommand
 import com.unicorn.server.domain.member.port.dto.UploadProfileImageCommand
 import com.unicorn.server.domain.member.port.out.MemberOutPort
+import com.unicorn.server.domain.member.port.out.SocialAccountOutPort
 import com.unicorn.server.domain.member.vo.MemberId
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -29,9 +32,15 @@ import java.time.LocalDateTime
 class MemberProfileServiceTest {
 
 	private val memberOutPort = FakeMemberOutPort()
+	private val socialAccountOutPort = FakeSocialAccountOutPort()
 	private val eventPublisher = RecordingEventPublisher()
 	private val objectStorage = FakeObjectStorage()
-	private val memberProfileService = MemberProfileService(memberOutPort, eventPublisher, objectStorage)
+	private val memberProfileService = MemberProfileService(
+		memberOutPort,
+		socialAccountOutPort,
+		eventPublisher,
+		objectStorage,
+	)
 
 	@Test
 	@DisplayName("getById 호출 시 저장된 멤버를 반환한다")
@@ -61,6 +70,28 @@ class MemberProfileServiceTest {
 
 		assertThatThrownBy { memberProfileService.getById(member.id.toString()) }
 			.isInstanceOf(WithdrawnMemberException::class.java)
+	}
+
+	@Test
+	@DisplayName("getOnboardingInfo 호출 시 카카오 정보와 아바타 색상을 반환한다")
+	fun getOnboardingInfo_returnsSocialAccountAndAvatarColor() {
+		val member = memberOutPort.save(Member.create(Email("onboarding@example.com"), "홍길동", "길동이"))
+		socialAccountOutPort.save(
+			SocialAccount.create(
+				member.id,
+				SocialProvider.KAKAO,
+				"kakao-onboarding",
+				"onboarding@example.com",
+				"카카오닉네임",
+				"https://example.com/profile.png",
+			),
+		)
+
+		val result = memberProfileService.getOnboardingInfo(member.id.toString())
+
+		assertThat(result.socialNickname).isEqualTo("카카오닉네임")
+		assertThat(result.socialProfileImageUrl).isEqualTo("https://example.com/profile.png")
+		assertThat(result.avatarColor).isEqualTo(member.avatarColor)
 	}
 
 	@Test
@@ -253,6 +284,21 @@ class MemberProfileServiceTest {
 
 		override fun findAllDeletedBefore(threshold: LocalDateTime): List<Member> =
 			store.values.filter { it.deletedAt != null && it.deletedAt!!.isBefore(threshold) }
+	}
+
+	private class FakeSocialAccountOutPort : SocialAccountOutPort {
+		private val store = linkedMapOf<Pair<SocialProvider, String>, SocialAccount>()
+
+		override fun save(socialAccount: SocialAccount): SocialAccount {
+			store[socialAccount.provider to socialAccount.providerId] = socialAccount
+			return socialAccount
+		}
+
+		override fun findByProviderAndProviderId(provider: SocialProvider, providerId: String): SocialAccount? =
+			store[provider to providerId]
+
+		override fun findByMemberId(memberId: MemberId): SocialAccount? =
+			store.values.firstOrNull { it.memberId == memberId }
 	}
 
 	private class RecordingEventPublisher : EventPublisher {

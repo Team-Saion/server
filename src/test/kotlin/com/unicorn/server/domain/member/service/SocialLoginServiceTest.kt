@@ -4,6 +4,7 @@ import com.unicorn.server.domain.member.enums.SocialProvider
 import com.unicorn.server.domain.member.port.`in`.SocialLoginInPort
 import com.unicorn.server.domain.member.port.dto.KakaoUserInfo
 import com.unicorn.server.domain.member.port.dto.SocialLoginCommand
+import com.unicorn.server.domain.member.port.dto.SocialLoginResult
 import com.unicorn.server.domain.member.port.dto.TokenPair
 import com.unicorn.server.domain.member.port.out.KakaoAuthPort
 import org.assertj.core.api.Assertions.assertThat
@@ -22,14 +23,17 @@ class SocialLoginServiceTest {
 	fun kakaoLogin_delegatesToSocialLogin() {
 		val result = socialLoginService.kakaoLogin("id-token")
 
-		assertThat(result.accessToken).isEqualTo("access-token")
-		assertThat(result.refreshToken).isEqualTo("refresh-token")
+		assertThat(result.tokenPair.accessToken).isEqualTo("access-token")
+		assertThat(result.tokenPair.refreshToken).isEqualTo("refresh-token")
+		assertThat(result.isNewMember).isFalse()
 		assertThat(socialLoginInPort.command).isEqualTo(
 			SocialLoginCommand(
 				provider = SocialProvider.KAKAO,
 				providerId = "fake-kakao-id",
 				email = "fake@example.com",
-				name = "가짜유저",
+				name = null,
+				kakaoNickname = "가짜유저",
+				kakaoProfileImageUrl = "https://example.com/profile.png",
 			),
 		)
 	}
@@ -40,15 +44,16 @@ class SocialLoginServiceTest {
 				providerId = "fake-kakao-id",
 				email = "fake@example.com",
 				name = "가짜유저",
+				profileImageUrl = "https://example.com/profile.png",
 			)
 	}
 
 	private class RecordingSocialLoginInPort : SocialLoginInPort {
 		var command: SocialLoginCommand? = null
 
-		override fun login(command: SocialLoginCommand): TokenPair {
+		override fun login(command: SocialLoginCommand): SocialLoginResult {
 			this.command = command
-			return TokenPair("access-token", "refresh-token")
+			return SocialLoginResult(TokenPair("access-token", "refresh-token"), isNewMember = false)
 		}
 	}
 }
