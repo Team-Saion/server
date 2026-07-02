@@ -10,7 +10,7 @@ import com.unicorn.server.domain.member.vo.MemberId
 import java.time.LocalDateTime
 
 // Member 도메인 - 서비스 관점의 멤버 프로필과 탈퇴 생명주기 규칙을 담당한다.
-class Member private constructor(
+class Member internal constructor(
 	val id: MemberId,
 	val email: Email?,
 	val name: String?,
@@ -112,33 +112,6 @@ class Member private constructor(
 				updatedAt = now,
 			)
 		}
-
-		// 저장소의 원시 상태를 도메인 멤버로 복원한다.
-		fun reconstitute(
-			id: MemberId,
-			email: Email?,
-			name: String?,
-			nickname: String,
-			avatarColor: AvatarColor,
-			role: Role,
-			profileImageKey: String?,
-			status: MemberStatus,
-			deletedAt: LocalDateTime?,
-			createdAt: LocalDateTime,
-			updatedAt: LocalDateTime,
-		): Member = Member(
-			id,
-			email,
-			name,
-			nickname,
-			avatarColor,
-			role,
-			profileImageKey,
-			status,
-			deletedAt,
-			createdAt,
-			updatedAt,
-		)
 
 		// 실명 또는 소셜 제공 이름의 최소 유효성을 검증한다.
 		private fun validateName(name: String?) {

@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletResponse
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.MediaType
+import org.springframework.http.HttpMethod
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
@@ -40,6 +41,7 @@ class SecurityConfig(
 			}
 			.authorizeHttpRequests { auth ->
 				auth
+					.requestMatchers(HttpMethod.GET, "/api/v1/invitations/by-token/**").permitAll()
 					.requestMatchers(*PERMIT_ALL_ENDPOINTS).permitAll()
 					.requestMatchers(*PENDING_ENDPOINTS).hasAnyRole("PENDING", "MEMBER", "ADMIN")
 					.requestMatchers(*ADMIN_ENDPOINTS).hasRole("ADMIN")

@@ -50,7 +50,7 @@ class TermQueryServiceTest {
 
 	private var nextId = 1L
 
-	private fun term(termCode: TermCode, version: Int): Term = Term.reconstitute(
+	private fun term(termCode: TermCode, version: Int): Term = Term(
 		id = TermId.of(nextId++),
 		termCode = termCode,
 		title = "title",

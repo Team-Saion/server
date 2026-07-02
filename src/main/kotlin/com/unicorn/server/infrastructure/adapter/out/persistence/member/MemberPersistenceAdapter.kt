@@ -6,7 +6,8 @@ import com.unicorn.server.domain.member.Member
 import com.unicorn.server.domain.member.enums.MemberStatus
 import com.unicorn.server.domain.member.port.out.MemberOutPort
 import com.unicorn.server.domain.member.vo.MemberId
-import com.unicorn.server.infrastructure.adapter.out.persistence.member.entity.MemberEntity
+import com.unicorn.server.infrastructure.adapter.out.persistence.member.entity.toDomain
+import com.unicorn.server.infrastructure.adapter.out.persistence.member.entity.toEntity
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 
@@ -19,12 +20,7 @@ class MemberPersistenceAdapter(
 	// 멤버를 신규 저장하거나 기존 row에 도메인 변경사항을 반영한다.
 	@Transactional
 	override fun save(member: Member): Member {
-		// 기존 entity 조회 또는 신규 entity 조립
-		val entity = memberJpaRepository.findById(member.id.toString())
-			.map { it.apply { update(member) } }
-			.orElseGet { MemberEntity(member) }
-
-		// 저장 후 도메인으로 복원
+		val entity = member.toEntity()
 		return memberJpaRepository.save(entity).toDomain()
 	}
 

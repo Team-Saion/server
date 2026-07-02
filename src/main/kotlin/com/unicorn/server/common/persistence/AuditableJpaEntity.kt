@@ -17,12 +17,12 @@ abstract class AuditableJpaEntity {
 	@CreatedDate
 	@Column(name = "created_at", nullable = false, updatable = false)
 	var createdAt: LocalDateTime? = null
-		protected set
+		internal set
 
 	@LastModifiedDate
 	@Column(name = "updated_at")
 	var updatedAt: LocalDateTime? = null
-		protected set
+		internal set
 
 	@CreatedBy
 	@Column(name = "created_by", updatable = false, length = 100)

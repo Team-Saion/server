@@ -115,7 +115,7 @@ class OnboardingServiceTest {
 		required: Boolean,
 	): Term {
 		val now = LocalDateTime.now()
-		return Term.reconstitute(
+		return Term(
 			id = TermId.of(id),
 			termCode = termCode,
 			title = "title",

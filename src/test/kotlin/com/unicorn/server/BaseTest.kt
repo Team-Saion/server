@@ -21,7 +21,7 @@ open class BaseTest {
         val nickname: String = "local_member"
         val providerId: String = "kakao-local-member-001"
 
-        fun toDomain(): Member = Member.reconstitute(
+        fun toDomain(): Member = Member(
             id = MemberId.of(id),
             email = Email(email),
             name = name,
