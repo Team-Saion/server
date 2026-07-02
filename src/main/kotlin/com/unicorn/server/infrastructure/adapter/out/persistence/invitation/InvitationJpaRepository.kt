@@ -1,0 +1,8 @@
+package com.unicorn.server.infrastructure.adapter.out.persistence.invitation
+
+import com.unicorn.server.infrastructure.adapter.out.persistence.invitation.entity.InvitationEntity
+import org.springframework.data.jpa.repository.JpaRepository
+
+interface InvitationJpaRepository : JpaRepository<InvitationEntity, String> {
+	fun findByToken(token: String): InvitationEntity?
+}

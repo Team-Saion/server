@@ -1,0 +1,34 @@
+package com.unicorn.server.infrastructure.adapter.out.persistence.invitation.entity
+
+import com.unicorn.server.common.persistence.AuditableJpaEntity
+import jakarta.persistence.Column
+import jakarta.persistence.Entity
+import jakarta.persistence.Id
+import jakarta.persistence.Table
+import java.time.LocalDateTime
+import java.util.UUID
+
+@Entity
+@Table(name = "invitation_click_log")
+class InvitationClickLogEntity protected constructor() : AuditableJpaEntity() {
+	@Id
+	@Column(name = "id", nullable = false, length = 36)
+	var id: String = ""
+		protected set
+
+	@Column(name = "invitation_id", nullable = false, length = 36)
+	var invitationId: String = ""
+		protected set
+
+	@Column(name = "clicked_at", nullable = false)
+	lateinit var clickedAt: LocalDateTime
+		protected set
+
+	constructor(invitationId: String, clickedAt: LocalDateTime) : this() {
+		id = UUID.randomUUID().toString()
+		this.invitationId = invitationId
+		this.clickedAt = clickedAt
+		createdAt = clickedAt
+		updatedAt = clickedAt
+	}
+}
