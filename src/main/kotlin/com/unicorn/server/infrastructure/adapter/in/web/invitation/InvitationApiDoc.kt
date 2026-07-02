@@ -7,7 +7,6 @@ import com.unicorn.server.infrastructure.adapter.`in`.web.common.swagger.annotat
 import com.unicorn.server.infrastructure.adapter.`in`.web.common.swagger.annotation.ApiErrorCodeExamples
 import com.unicorn.server.infrastructure.adapter.`in`.web.common.swagger.annotation.ApiSuccessCodeExample
 import com.unicorn.server.infrastructure.adapter.`in`.web.invitation.dto.AcceptInvitationResponse
-import com.unicorn.server.infrastructure.adapter.`in`.web.invitation.dto.DispatchInvitationRequest
 import com.unicorn.server.infrastructure.adapter.`in`.web.invitation.dto.InvitationDetailResponse
 import com.unicorn.server.infrastructure.adapter.`in`.web.invitation.dto.IssueInvitationRequest
 import com.unicorn.server.infrastructure.adapter.`in`.web.invitation.dto.IssuedInvitationResponse
@@ -19,7 +18,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestBody
 
-@Tag(name = "Invitation API", description = "초대장 발급, 조회, 발송 로그, 수락 API")
+@Tag(name = "Invitation API", description = "초대장 발급, 조회, 수락 API")
 interface InvitationApiDoc {
 	@Operation(
 		summary = "초대장 발급",
@@ -45,24 +44,6 @@ interface InvitationApiDoc {
 		@AuthenticationPrincipal memberId: String,
 		@RequestBody @Valid request: IssueInvitationRequest,
 	): ApiResponse<IssuedInvitationResponse>
-
-	@Operation(
-		summary = "초대장 발송 채널 로깅",
-		description = """
-			이미 발급된 초대장을 어떤 채널로 공유했는지 기록합니다.
-
-			- 링크 복사 / 메시지 전송 / 카카오톡 전송을 각각 로깅합니다.
-			- 현재 응답은 200 OK입니다.
-		""",
-	)
-	@ApiErrorCodeExamples(
-		ApiErrorCodeExample(codeType = InvitationErrorCode::class, code = "INVITATION_NOT_FOUND"),
-	)
-	@ApiSuccessCodeExample(Unit::class)
-	fun dispatch(
-		@PathVariable invitationId: String,
-		@RequestBody @Valid request: DispatchInvitationRequest,
-	): ApiResponse<Unit>
 
 	@Operation(
 		summary = "초대장 수락 화면 조회",
