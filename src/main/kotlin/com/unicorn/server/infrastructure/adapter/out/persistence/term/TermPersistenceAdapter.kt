@@ -5,6 +5,7 @@ import com.unicorn.server.common.exception.BusinessException
 import com.unicorn.server.domain.term.Term
 import com.unicorn.server.domain.term.exception.TermErrorCode
 import com.unicorn.server.domain.term.port.out.TermOutPort
+import com.unicorn.server.infrastructure.adapter.out.persistence.term.entity.toDomain
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 

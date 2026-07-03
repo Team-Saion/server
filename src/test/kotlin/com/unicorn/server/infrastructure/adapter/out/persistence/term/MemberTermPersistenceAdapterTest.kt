@@ -1,5 +1,6 @@
 package com.unicorn.server.infrastructure.adapter.out.persistence.term
 
+import com.unicorn.server.TestIdFactory
 import com.unicorn.server.domain.member.vo.MemberId
 import com.unicorn.server.domain.term.MemberTerm
 import com.unicorn.server.domain.term.vo.TermId
@@ -20,7 +21,7 @@ class MemberTermPersistenceAdapterTest(
 	@Test
 	@DisplayName("회원 약관 동의 내역을 저장하고 도메인으로 복원한다")
 	fun saveAll_persistsAndReturnsDomain() {
-		val memberId = MemberId.of("00000000-0000-0000-0000-000000000001")
+		val memberId = TestIdFactory.memberId()
 		val memberTerm = MemberTerm.create(memberId, TermId.of(1L))
 
 		val result = memberTermPersistenceAdapter.saveAll(listOf(memberTerm))

@@ -6,7 +6,7 @@ import com.unicorn.server.domain.member.vo.SocialAccountId
 import java.time.LocalDateTime
 
 // SocialAccount 도메인 - 외부 소셜 계정과 서비스 멤버의 연결 정보를 담당한다.
-class SocialAccount private constructor(
+class SocialAccount internal constructor(
 	val id: SocialAccountId,
 	val memberId: MemberId,
 	val provider: SocialProvider,
@@ -35,27 +35,6 @@ class SocialAccount private constructor(
 			kakaoNickname = kakaoNickname,
 			kakaoProfileImageUrl = kakaoProfileImageUrl,
 			createdAt = LocalDateTime.now(),
-		)
-
-		// 저장소의 원시 상태를 도메인 소셜 계정으로 복원한다.
-		fun reconstitute(
-			id: SocialAccountId,
-			memberId: MemberId,
-			provider: SocialProvider,
-			providerId: String,
-			email: String?,
-			kakaoNickname: String?,
-			kakaoProfileImageUrl: String?,
-			createdAt: LocalDateTime,
-		): SocialAccount = SocialAccount(
-			id,
-			memberId,
-			provider,
-			providerId,
-			email,
-			kakaoNickname,
-			kakaoProfileImageUrl,
-			createdAt,
 		)
 	}
 }

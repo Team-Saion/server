@@ -33,8 +33,10 @@ logging:
 
 app:
   jwt:
-    secret: ${JWT_SECRET}
+    secret: ${JWT_SECRET:dev-secret-key-for-local-development-only-min-32-chars}
     access-token-expiration: 2592000
     refresh-token-expiration: 2592000
   kakao:
-    app-key: ${KAKAO_APP_KEY}
+    app-key: ${KAKAO_APP_KEY:dummy-kakao-key}
+  s3:
+    bucket: ${S3_BUCKET:local-dev-bucket}

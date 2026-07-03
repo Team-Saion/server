@@ -5,7 +5,8 @@ import com.unicorn.server.domain.member.SocialAccount
 import com.unicorn.server.domain.member.enums.SocialProvider
 import com.unicorn.server.domain.member.port.out.SocialAccountOutPort
 import com.unicorn.server.domain.member.vo.MemberId
-import com.unicorn.server.infrastructure.adapter.out.persistence.member.entity.SocialAccountEntity
+import com.unicorn.server.infrastructure.adapter.out.persistence.member.entity.toDomain
+import com.unicorn.server.infrastructure.adapter.out.persistence.member.entity.toEntity
 import org.springframework.transaction.annotation.Transactional
 
 // SocialAccountPersistenceAdapter - SocialAccountOutPort를 JPA 저장소로 구현한다.
@@ -19,7 +20,7 @@ class SocialAccountPersistenceAdapter(
 	override fun save(socialAccount: SocialAccount): SocialAccount {
 		// 기존 entity 조회 또는 신규 entity 조립
 		val entity = socialAccountJpaRepository.findById(socialAccount.id.toString())
-			.orElseGet { SocialAccountEntity(socialAccount) }
+			.orElseGet { socialAccount.toEntity() }
 
 		// 저장 후 도메인으로 복원
 		return socialAccountJpaRepository.save(entity).toDomain()
