@@ -18,7 +18,7 @@ class InvitationRedemptionLogEntity internal constructor() : AuditableJpaEntity(
 	var invitationId: String = ""
 		internal set
 
-	@Column(name = "redeemer_member_id", nullable = false, length = 21)
+	@Column(name = "redeemer_member_id", nullable = false, length = 36)
 	var redeemerMemberId: String = ""
 		internal set
 

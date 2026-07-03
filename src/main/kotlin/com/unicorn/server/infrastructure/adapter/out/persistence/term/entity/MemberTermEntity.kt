@@ -32,7 +32,7 @@ class MemberTermEntity internal constructor() {
 	var id: Long? = null
 		internal set
 
-	@Column(name = "member_id", nullable = false, length = 21)
+	@Column(name = "member_id", nullable = false, length = 36)
 	var memberId: String = ""
 		internal set
 

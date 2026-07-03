@@ -40,7 +40,7 @@ class InvitationEntity internal constructor() : AuditableJpaEntity() {
 	var token: String = ""
 		internal set
 
-	@Column(name = "inviter_id", nullable = false, length = 21)
+	@Column(name = "inviter_id", nullable = false, length = 36)
 	var inviterId: String = ""
 		internal set
 

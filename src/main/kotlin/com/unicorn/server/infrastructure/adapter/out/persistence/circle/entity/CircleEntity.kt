@@ -18,7 +18,7 @@ class CircleEntity internal constructor() : AuditableJpaEntity() {
 	var name: String = ""
 		internal set
 
-	@Column(name = "owner_id", nullable = false, length = 21)
+	@Column(name = "owner_id", nullable = false, length = 36)
 	var ownerId: String = ""
 		internal set
 
