@@ -23,7 +23,7 @@ import java.time.LocalDateTime
 )
 class InvitationEntity internal constructor() : AuditableJpaEntity() {
 	@Id
-	@Column(name = "id", nullable = false, length = 36)
+	@Column(name = "id", nullable = false, length = 21)
 	var id: String = ""
 		internal set
 
@@ -32,7 +32,7 @@ class InvitationEntity internal constructor() : AuditableJpaEntity() {
 	lateinit var type: InvitationType
 		internal set
 
-	@Column(name = "target_id", nullable = false, length = 36)
+	@Column(name = "target_id", nullable = false, length = 21)
 	var targetId: String = ""
 		internal set
 
@@ -40,7 +40,7 @@ class InvitationEntity internal constructor() : AuditableJpaEntity() {
 	var token: String = ""
 		internal set
 
-	@Column(name = "inviter_id", nullable = false, length = 36)
+	@Column(name = "inviter_id", nullable = false, length = 21)
 	var inviterId: String = ""
 		internal set
 

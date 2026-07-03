@@ -16,7 +16,7 @@ class InvitationClickLogEntity protected constructor() : AuditableJpaEntity() {
 	var id: String = ""
 		protected set
 
-	@Column(name = "invitation_id", nullable = false, length = 36)
+	@Column(name = "invitation_id", nullable = false, length = 21)
 	var invitationId: String = ""
 		protected set
 

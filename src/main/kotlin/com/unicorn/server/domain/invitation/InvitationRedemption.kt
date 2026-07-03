@@ -14,9 +14,9 @@ class InvitationRedemption internal constructor(
 	val updatedAt: LocalDateTime,
 ) {
 	companion object {
-		fun create(invitationId: InvitationId, redeemerMemberId: MemberId, now: LocalDateTime): InvitationRedemption =
+		fun create(id: InvitationRedemptionId, invitationId: InvitationId, redeemerMemberId: MemberId, now: LocalDateTime): InvitationRedemption =
 			InvitationRedemption(
-				id = InvitationRedemptionId.generate(),
+				id = id,
 				invitationId = invitationId,
 				redeemerMemberId = redeemerMemberId,
 				redeemedAt = now,

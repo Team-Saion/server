@@ -9,8 +9,6 @@ import com.unicorn.server.domain.invitation.vo.InviteMessage
 import com.unicorn.server.domain.invitation.vo.InviteToName
 import com.unicorn.server.domain.member.vo.MemberId
 
-import java.util.UUID
-
 // ========== InvitationEntity ↔ Invitation ==========
 
 /**
@@ -37,7 +35,7 @@ fun Invitation.toEntity(): InvitationEntity = InvitationEntity().apply {
 fun InvitationEntity.toDomain(): Invitation = Invitation(
 	id = InvitationId.of(this.id),
 	type = this.type,
-	targetId = UUID.fromString(this.targetId),
+	targetId = this.targetId,
 	token = InvitationToken(this.token),
 	inviterId = MemberId.of(this.inviterId),
 	inviteToName = this.inviteToName?.let(::InviteToName),

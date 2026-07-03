@@ -10,15 +10,15 @@ import jakarta.persistence.Table
 @Table(name = "invitation_redemption_log")
 class InvitationRedemptionLogEntity internal constructor() : AuditableJpaEntity() {
 	@Id
-	@Column(name = "id", nullable = false, length = 36)
+	@Column(name = "id", nullable = false, length = 21)
 	var id: String = ""
 		internal set
 
-	@Column(name = "invitation_id", nullable = false, length = 36)
+	@Column(name = "invitation_id", nullable = false, length = 21)
 	var invitationId: String = ""
 		internal set
 
-	@Column(name = "redeemer_member_id", nullable = false, length = 36)
+	@Column(name = "redeemer_member_id", nullable = false, length = 21)
 	var redeemerMemberId: String = ""
 		internal set
 

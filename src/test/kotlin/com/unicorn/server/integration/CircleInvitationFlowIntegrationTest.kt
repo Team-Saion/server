@@ -1,6 +1,7 @@
 package com.unicorn.server.integration
 
 import com.unicorn.server.BaseTest
+import com.unicorn.server.TestIdFactory
 import com.unicorn.server.domain.circle.port.dto.CreateCircleCommand
 import com.unicorn.server.domain.circle.port.`in`.CircleInPort
 import com.unicorn.server.domain.home.port.`in`.HomeQueryInPort
@@ -48,9 +49,9 @@ class CircleInvitationFlowIntegrationTest : BaseTest() {
 		val initialDispatchCount = invitationDispatchLogJpaRepository.count()
 		val initialClickCount = invitationClickLogJpaRepository.count()
 		val initialRedemptionCount = invitationRedemptionLogJpaRepository.count()
-		val owner = memberOutPort.save(Member.create(null, "Owner", "ownerA", role = Role.MEMBER))
-		val invitee1 = memberOutPort.save(Member.create(null, "Invitee1", "inviteeA", role = Role.MEMBER))
-		val invitee2 = memberOutPort.save(Member.create(null, "Invitee2", "inviteeB", role = Role.MEMBER))
+		val owner = memberOutPort.save(member("Owner", "ownerA"))
+		val invitee1 = memberOutPort.save(member("Invitee1", "inviteeA"))
+		val invitee2 = memberOutPort.save(member("Invitee2", "inviteeB"))
 
 		val circle = circleInPort.create(owner.id.toString(), CreateCircleCommand("멀티초대1"))
 		val issued = issueInvitationInPort.issue(
@@ -75,8 +76,8 @@ class CircleInvitationFlowIntegrationTest : BaseTest() {
 	@DisplayName("같은 사용자가 같은 링크를 다시 수락하면 예외를 던지고 수락 로그가 늘지 않는다")
 	fun reaccept_sameMember_throwsException() {
 		val initialRedemptionCount = invitationRedemptionLogJpaRepository.count()
-		val owner = memberOutPort.save(Member.create(null, "Owner4", "ownerD", role = Role.MEMBER))
-		val invitee = memberOutPort.save(Member.create(null, "Invitee4", "inviteeD", role = Role.MEMBER))
+		val owner = memberOutPort.save(member("Owner4", "ownerD"))
+		val invitee = memberOutPort.save(member("Invitee4", "inviteeD"))
 		val circle = circleInPort.create(owner.id.toString(), CreateCircleCommand("재수락테스트4"))
 		val issued = issueInvitationInPort.issue(
 			owner.id.toString(),
@@ -96,7 +97,7 @@ class CircleInvitationFlowIntegrationTest : BaseTest() {
 	fun dispatchAndLookup_logsPersisted() {
 		val initialDispatchCount = invitationDispatchLogJpaRepository.count()
 		val initialClickCount = invitationClickLogJpaRepository.count()
-		val owner = memberOutPort.save(Member.create(null, "Owner5", "ownerE", role = Role.MEMBER))
+		val owner = memberOutPort.save(member("Owner5", "ownerE"))
 		val circle = circleInPort.create(owner.id.toString(), CreateCircleCommand("로그테스트5"))
 		val issued = issueInvitationInPort.issue(
 			owner.id.toString(),
@@ -115,7 +116,7 @@ class CircleInvitationFlowIntegrationTest : BaseTest() {
 	@Test
 	@DisplayName("자기 자신이 발급한 초대장을 자신이 수락하면 예외가 발생한다")
 	fun selfInviteAccept_throwsException() {
-		val owner = memberOutPort.save(Member.create(null, "Owner2", "ownerB", role = Role.MEMBER))
+		val owner = memberOutPort.save(member("Owner2", "ownerB"))
 		val circle = circleInPort.create(owner.id.toString(), CreateCircleCommand("자기초대2"))
 		val issued = issueInvitationInPort.issue(
 			owner.id.toString(),
@@ -129,8 +130,8 @@ class CircleInvitationFlowIntegrationTest : BaseTest() {
 	@Test
 	@DisplayName("탈퇴한 멤버는 써클 홈 구성원 목록에서 제외된다")
 	fun withdrawnMember_hiddenFromHome() {
-		val owner = memberOutPort.save(Member.create(null, "Owner3", "ownerC", role = Role.MEMBER))
-		val invitee = memberOutPort.save(Member.create(null, "Invitee3", "inviteeC", role = Role.MEMBER))
+		val owner = memberOutPort.save(member("Owner3", "ownerC"))
+		val invitee = memberOutPort.save(member("Invitee3", "inviteeC"))
 		val circle = circleInPort.create(owner.id.toString(), CreateCircleCommand("탈퇴필터3"))
 		val issued = issueInvitationInPort.issue(
 			owner.id.toString(),
@@ -146,4 +147,7 @@ class CircleInvitationFlowIntegrationTest : BaseTest() {
 		assertThat(home.members).hasSize(1)
 		assertThat(home.members.single().memberId).isEqualTo(owner.id.toString())
 	}
+
+	private fun member(name: String, nickname: String): Member =
+		Member.create(TestIdFactory.memberId(), null, name, nickname, role = Role.MEMBER)
 }

@@ -6,6 +6,7 @@ import com.unicorn.server.domain.invitation.event.InvitationDispatchedEvent
 import com.unicorn.server.domain.invitation.event.InvitationRedeemedEvent
 import com.unicorn.server.domain.invitation.port.out.InvitationClickLogOutPort
 import com.unicorn.server.domain.invitation.port.out.InvitationDispatchLogOutPort
+import com.unicorn.server.domain.invitation.port.out.InvitationRedemptionIdGenerator
 import com.unicorn.server.domain.invitation.port.out.InvitationRedemptionLogOutPort
 import com.unicorn.server.domain.invitation.vo.InvitationId
 import com.unicorn.server.domain.member.vo.MemberId
@@ -18,6 +19,7 @@ import java.time.LocalDateTime
 class InvitationEventListener(
 	private val invitationDispatchLogOutPort: InvitationDispatchLogOutPort,
 	private val invitationClickLogOutPort: InvitationClickLogOutPort,
+	private val invitationRedemptionIdGenerator: InvitationRedemptionIdGenerator,
 	private val invitationRedemptionLogOutPort: InvitationRedemptionLogOutPort,
 ) {
 	@EventListener
@@ -38,6 +40,7 @@ class InvitationEventListener(
 		val now = LocalDateTime.now()
 		invitationRedemptionLogOutPort.save(
 			InvitationRedemption.create(
+				id = invitationRedemptionIdGenerator.next(),
 				invitationId = InvitationId.of(event.invitationId),
 				redeemerMemberId = MemberId.of(event.redeemerMemberId),
 				now = now,

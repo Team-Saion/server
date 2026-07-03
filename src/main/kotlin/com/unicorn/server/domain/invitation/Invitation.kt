@@ -9,12 +9,11 @@ import com.unicorn.server.domain.invitation.vo.InvitationId
 import com.unicorn.server.domain.invitation.vo.InvitationToken
 import com.unicorn.server.domain.member.vo.MemberId
 import java.time.LocalDateTime
-import java.util.UUID
 
 class Invitation internal constructor(
 	val id: InvitationId,
 	val type: InvitationType,
-	val targetId: UUID,
+	val targetId: String,
 	val token: InvitationToken,
 	val inviterId: MemberId,
 	val inviteToName: InviteToName?,
@@ -53,8 +52,9 @@ class Invitation internal constructor(
 		private const val EXPIRE_HOURS = 48L
 
 		fun create(
+			id: InvitationId,
 			type: InvitationType,
-			targetId: UUID,
+			targetId: String,
 			token: InvitationToken,
 			inviterId: MemberId,
 			inviteToName: InviteToName?,
@@ -62,7 +62,7 @@ class Invitation internal constructor(
 		): Invitation {
 			val now = LocalDateTime.now()
 			return Invitation(
-				id = InvitationId.generate(),
+				id = id,
 				type = type,
 				targetId = targetId,
 				token = token,

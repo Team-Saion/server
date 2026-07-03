@@ -24,6 +24,7 @@ import com.unicorn.server.domain.invitation.port.`in`.DispatchInvitationInPort
 import com.unicorn.server.domain.invitation.port.`in`.GetInvitationByTokenInPort
 import com.unicorn.server.domain.invitation.port.`in`.IssueInvitationInPort
 import com.unicorn.server.domain.invitation.port.out.InvitationOutPort
+import com.unicorn.server.domain.invitation.port.out.InvitationIdGenerator
 import com.unicorn.server.domain.invitation.port.out.InvitationTokenGenerator
 import com.unicorn.server.domain.invitation.vo.InviteMessage
 import com.unicorn.server.domain.invitation.vo.InviteToName
@@ -35,12 +36,12 @@ import com.unicorn.server.domain.member.vo.MemberId
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
-import java.util.UUID
 
 @Service
 @Transactional
 class InvitationService(
 	private val invitationOutPort: InvitationOutPort,
+	private val invitationIdGenerator: InvitationIdGenerator,
 	private val tokenGenerator: InvitationTokenGenerator,
 	private val circleInPort: CircleInPort,
 	private val circleMemberInPort: CircleMemberInPort,
@@ -59,15 +60,16 @@ class InvitationService(
 
 		val invitation = invitationOutPort.save(
 			Invitation.create(
+				id = invitationIdGenerator.next(),
 				type = command.type,
-				targetId = UUID.fromString(command.targetId),
+				targetId = command.targetId,
 				token = tokenGenerator.generate(),
 				inviterId = inviterId,
 				inviteToName = command.inviteToName?.takeIf { it.isNotBlank() }?.let(::InviteToName),
 				message = command.message?.takeIf { it.isNotBlank() }?.let(::InviteMessage),
 			),
 		)
-		eventPublisher.publish(InvitationIssuedEvent(invitation.id.toString(), invitation.type, invitation.targetId.toString(), invitation.inviterId.toString()))
+		eventPublisher.publish(InvitationIssuedEvent(invitation.id.toString(), invitation.type, invitation.targetId, invitation.inviterId.toString()))
 		return IssuedInvitationResult(
 			invitationId = invitation.id.toString(),
 			token = invitation.token.value,
@@ -93,7 +95,7 @@ class InvitationService(
 			throw InvitationExpiredException(invitation.id.toString())
 		}
 		val inviter = getMemberProfileInPort.getMemberProfile(invitation.inviterId.toString()) ?: throw MemberNotFoundException(invitation.inviterId.toString())
-		val circle = circleInPort.getCircleSummary(invitation.targetId.toString())
+		val circle = circleInPort.getCircleSummary(invitation.targetId)
 		eventPublisher.publish(InvitationClickedEvent(invitation.id.toString()))
 		return InvitationDetailView(
 			invitationId = invitation.id.toString(),
@@ -120,12 +122,12 @@ class InvitationService(
 		val redeemerMemberId = MemberId.of(memberId)
 		invitation.ensureNotSelfApproval(redeemerMemberId)
 
-		val joinResult = circleMemberInPort.join(invitation.targetId.toString(), memberId)
+		val joinResult = circleMemberInPort.join(invitation.targetId, memberId)
 		eventPublisher.publish(
 			InvitationRedeemedEvent(
 				invitationId = invitation.id.toString(),
 				type = invitation.type,
-				targetId = invitation.targetId.toString(),
+				targetId = invitation.targetId,
 				redeemerMemberId = memberId,
 			),
 		)

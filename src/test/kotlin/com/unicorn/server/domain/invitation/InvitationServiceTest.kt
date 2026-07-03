@@ -1,5 +1,6 @@
 package com.unicorn.server.domain.invitation
 
+import com.unicorn.server.TestIdFactory
 import com.unicorn.server.common.exception.BusinessException
 import com.unicorn.server.common.port.out.event.EventPublisher
 import com.unicorn.server.common.vo.Email
@@ -14,6 +15,7 @@ import com.unicorn.server.domain.invitation.exception.InvitationErrorCode
 import com.unicorn.server.domain.invitation.exception.InvitationExpiredException
 import com.unicorn.server.domain.invitation.port.dto.DispatchInvitationCommand
 import com.unicorn.server.domain.invitation.port.dto.IssueInvitationCommand
+import com.unicorn.server.domain.invitation.port.out.InvitationIdGenerator
 import com.unicorn.server.domain.invitation.port.out.InvitationOutPort
 import com.unicorn.server.domain.invitation.port.out.InvitationTokenGenerator
 import com.unicorn.server.domain.invitation.service.InvitationService
@@ -28,8 +30,6 @@ import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
-import java.util.UUID
-
 @DisplayName("InvitationService 단위 테스트")
 class InvitationServiceTest {
 	@Test
@@ -40,7 +40,7 @@ class InvitationServiceTest {
 		val outsider = fixture.member("outsider@example.com", "outsider")
 		fixture.memberProfileInPort.save(owner)
 		fixture.memberProfileInPort.save(outsider)
-		val circleId = java.util.UUID.randomUUID().toString()
+		val circleId = TestIdFactory.circleId().toString()
 		fixture.circleInPort.put(CircleSummary(circleId, "무인가써클", owner.id.toString()))
 		fixture.circleMemberInPort.put(circleId, owner.id.toString())
 
@@ -61,13 +61,13 @@ class InvitationServiceTest {
 		val fixture = Fixture()
 		val owner = fixture.member("owner4@example.com", "owner4")
 		fixture.memberProfileInPort.save(owner)
-		val circleId = java.util.UUID.randomUUID().toString()
+		val circleId = TestIdFactory.circleId().toString()
 		fixture.circleInPort.put(CircleSummary(circleId, "만료초대테스트", owner.id.toString()))
 
 		val expiredInvitation = Invitation(
-			id = InvitationId.generate(),
+			id = TestIdFactory.invitationId(),
 			type = InvitationType.CIRCLE,
-			targetId = java.util.UUID.fromString(circleId),
+			targetId = circleId,
 			token = InvitationToken("abcdefghijklmnopqrstuvwxABCDEFGH"),
 			inviterId = owner.id,
 			inviteToName = null,
@@ -91,6 +91,7 @@ class InvitationServiceTest {
 		val memberProfileInPort = FakeMemberProfileInPort()
 		val service = InvitationService(
 			invitationOutPort = invitationOutPort,
+			invitationIdGenerator = object : InvitationIdGenerator { override fun next() = TestIdFactory.invitationId() },
 			tokenGenerator = object : InvitationTokenGenerator {
 				override fun generate(): InvitationToken = InvitationToken("abcdefghijklmnopqrstuvwxABCDEFGH")
 			},
@@ -100,7 +101,7 @@ class InvitationServiceTest {
 			eventPublisher = object : EventPublisher { override fun publish(event: com.unicorn.server.common.domain.Event) = Unit },
 		)
 
-		fun member(email: String, nickname: String): Member = Member.create(Email(email), nickname, nickname, role = Role.MEMBER)
+		fun member(email: String, nickname: String): Member = Member.create(TestIdFactory.memberId(), Email(email), nickname, nickname, role = Role.MEMBER)
 	}
 
 	private class FakeInvitationOutPort : InvitationOutPort {
