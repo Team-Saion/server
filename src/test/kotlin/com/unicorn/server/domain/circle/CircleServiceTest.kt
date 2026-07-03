@@ -1,8 +1,11 @@
 package com.unicorn.server.domain.circle
 
+import com.unicorn.server.TestIdFactory
 import com.unicorn.server.common.port.out.event.EventPublisher
 import com.unicorn.server.common.vo.Email
 import com.unicorn.server.domain.circle.port.dto.CreateCircleCommand
+import com.unicorn.server.domain.circle.port.out.CircleIdGenerator
+import com.unicorn.server.domain.circle.port.out.CircleMemberIdGenerator
 import com.unicorn.server.domain.circle.port.out.CircleMemberOutPort
 import com.unicorn.server.domain.circle.port.out.CircleOutPort
 import com.unicorn.server.domain.circle.service.CircleService
@@ -23,12 +26,14 @@ class CircleServiceTest {
 	private val circleMemberOutPort = FakeCircleMemberOutPort()
 	private val memberQueryInPort = FakeMemberQueryInPort()
 	private val eventPublisher = RecordingEventPublisher()
-	private val circleService = CircleService(circleOutPort, circleMemberOutPort, memberQueryInPort, eventPublisher)
+	private val circleIdGenerator = object : CircleIdGenerator { override fun next() = TestIdFactory.circleId() }
+	private val circleMemberIdGenerator = object : CircleMemberIdGenerator { override fun next() = TestIdFactory.circleMemberId() }
+	private val circleService = CircleService(circleOutPort, circleMemberOutPort, circleIdGenerator, circleMemberIdGenerator, memberQueryInPort, eventPublisher)
 
 	@Test
 	@DisplayName("써클 생성 시 initiator 멤버십이 함께 생성된다")
 	fun create_success() {
-		val owner = Member.create(Email("owner@example.com"), "Owner", "비니", role = com.unicorn.server.domain.member.enums.Role.MEMBER)
+		val owner = Member.create(TestIdFactory.memberId(), Email("owner@example.com"), "Owner", "비니", role = com.unicorn.server.domain.member.enums.Role.MEMBER)
 		memberQueryInPort.save(owner)
 
 		val result = circleService.create(owner.id.toString(), CreateCircleCommand("비니네"))

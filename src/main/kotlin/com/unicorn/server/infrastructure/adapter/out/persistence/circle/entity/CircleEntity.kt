@@ -10,7 +10,7 @@ import jakarta.persistence.Table
 @Table(name = "circle")
 class CircleEntity internal constructor() : AuditableJpaEntity() {
 	@Id
-	@Column(name = "id", nullable = false, length = 36)
+	@Column(name = "id", nullable = false, length = 21)
 	var id: String = ""
 		internal set
 
@@ -18,7 +18,7 @@ class CircleEntity internal constructor() : AuditableJpaEntity() {
 	var name: String = ""
 		internal set
 
-	@Column(name = "owner_id", nullable = false, length = 36)
+	@Column(name = "owner_id", nullable = false, length = 21)
 	var ownerId: String = ""
 		internal set
 

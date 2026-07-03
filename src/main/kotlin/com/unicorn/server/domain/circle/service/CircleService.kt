@@ -15,6 +15,8 @@ import com.unicorn.server.domain.circle.port.dto.CreateCircleCommand
 import com.unicorn.server.domain.circle.port.dto.JoinCircleResult
 import com.unicorn.server.domain.circle.port.`in`.CircleInPort
 import com.unicorn.server.domain.circle.port.`in`.CircleMemberInPort
+import com.unicorn.server.domain.circle.port.out.CircleIdGenerator
+import com.unicorn.server.domain.circle.port.out.CircleMemberIdGenerator
 import com.unicorn.server.domain.circle.port.out.CircleMemberOutPort
 import com.unicorn.server.domain.circle.port.out.CircleOutPort
 import com.unicorn.server.domain.circle.vo.CircleId
@@ -29,15 +31,18 @@ import org.springframework.transaction.annotation.Transactional
 class CircleService(
     private val circleOutPort: CircleOutPort,
     private val circleMemberOutPort: CircleMemberOutPort,
+    private val circleIdGenerator: CircleIdGenerator,
+    private val circleMemberIdGenerator: CircleMemberIdGenerator,
     private val getMemberProfileInPort: GetMemberProfileInPort,
     private val eventPublisher: EventPublisher,
 ) : CircleInPort, CircleMemberInPort {
     override fun create(memberId: String, command: CreateCircleCommand): CircleSummary {
         val owner = getMemberProfileInPort.getMemberProfile(memberId) ?: throw MemberNotFoundException(memberId)
         val ownerId = MemberId.of(owner.memberId)
-        val circle = circleOutPort.save(Circle.create(command.name, ownerId))
+        val circleId = circleIdGenerator.next()
+        val circle = circleOutPort.save(Circle.create(circleId, command.name, ownerId))
         val circleMember = circleMemberOutPort.save(
-            CircleMember.createInitiator(circle.id, ownerId, owner.nickname),
+            CircleMember.createInitiator(circleMemberIdGenerator.next(), circle.id, ownerId, owner.nickname),
         )
         eventPublisher.publish(CircleCreatedEvent(circle.id.toString(), ownerId.toString()))
         eventPublisher.publish(
@@ -65,7 +70,7 @@ class CircleService(
 
         val member = getMemberProfileInPort.getMemberProfile(memberId) ?: throw MemberNotFoundException(memberId)
         val circleMember = circleMemberOutPort.save(
-            CircleMember.createMember(targetCircleId, targetMemberId, member.nickname),
+            CircleMember.createMember(circleMemberIdGenerator.next(), targetCircleId, targetMemberId, member.nickname),
         )
         eventPublisher.publish(CircleMemberJoinedEvent(circleId, memberId, circleMember.role))
         return JoinCircleResult(circleId = circleId)

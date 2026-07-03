@@ -1,5 +1,6 @@
 package com.unicorn.server.domain.circle
 
+import com.unicorn.server.TestIdFactory
 import com.unicorn.server.common.exception.BusinessException
 import com.unicorn.server.domain.circle.exception.CircleErrorCode
 import com.unicorn.server.domain.member.vo.MemberId
@@ -13,7 +14,7 @@ class CirclePolicyTest {
 	@Test
 	@DisplayName("유효한 써클 이름으로 생성 시 trim된 이름이 저장된다")
 	fun create_withValidName_success() {
-		val circle = Circle.create(" 비니abc123 ", MemberId.generate())
+		val circle = Circle.create(TestIdFactory.circleId(), " 비니abc123 ", TestIdFactory.memberId())
 
 		assertThat(circle.name).isEqualTo("비니abc123")
 	}
@@ -21,7 +22,7 @@ class CirclePolicyTest {
 	@Test
 	@DisplayName("특수문자가 포함된 써클 이름으로 생성 시 예외가 발생한다")
 	fun create_withInvalidCharset_throwsException() {
-		assertThatThrownBy { Circle.create("비니네!", MemberId.generate()) }
+		assertThatThrownBy { Circle.create(TestIdFactory.circleId(), "비니네!", TestIdFactory.memberId()) }
 			.isInstanceOf(BusinessException::class.java)
 			.extracting("errorCode")
 			.isEqualTo(CircleErrorCode.CIRCLE_NAME_INVALID_CHARSET)
@@ -30,7 +31,7 @@ class CirclePolicyTest {
 	@Test
 	@DisplayName("공백만 있는 써클 이름으로 생성 시 예외가 발생한다")
 	fun create_withBlankName_throwsException() {
-		assertThatThrownBy { Circle.create("   ", MemberId.generate()) }
+		assertThatThrownBy { Circle.create(TestIdFactory.circleId(), "   ", TestIdFactory.memberId()) }
 			.isInstanceOf(BusinessException::class.java)
 			.extracting("errorCode")
 			.isEqualTo(CircleErrorCode.CIRCLE_NAME_BLANK)
@@ -41,8 +42,9 @@ class CirclePolicyTest {
 	fun createMember_withTooLongNickname_throwsException() {
 		assertThatThrownBy {
 			CircleMember.createMember(
-				circleId = com.unicorn.server.domain.circle.vo.CircleId.generate(),
-				memberId = MemberId.generate(),
+				id = TestIdFactory.circleMemberId(),
+				circleId = TestIdFactory.circleId(),
+				memberId = TestIdFactory.memberId(),
 				nickname = "a".repeat(31),
 			)
 		}

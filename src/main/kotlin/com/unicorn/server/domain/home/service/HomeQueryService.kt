@@ -59,7 +59,6 @@ class HomeQueryService(
                     memberId = profile.memberId,
                     nickname = membership.nickname,
                     avatarColor = profile.avatarColor,
-                    kakaoNickname = profile.kakaoNickname,
                     isMe = profile.memberId == requesterId,
                     role = membership.role,
                 )

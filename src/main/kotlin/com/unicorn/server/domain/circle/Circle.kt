@@ -34,9 +34,9 @@ class Circle internal constructor(
 	}
 
 	companion object {
-		fun create(name: String, ownerId: MemberId): Circle {
+		fun create(id: CircleId, name: String, ownerId: MemberId): Circle {
 			val now = LocalDateTime.now()
-			return Circle(CircleId.generate(), validateName(name), ownerId, false, now, now)
+			return Circle(id, validateName(name), ownerId, false, now, now)
 		}
 
 		private fun validateName(name: String): String {

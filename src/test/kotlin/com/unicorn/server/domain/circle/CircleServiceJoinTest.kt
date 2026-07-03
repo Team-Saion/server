@@ -1,8 +1,11 @@
 package com.unicorn.server.domain.circle
 
+import com.unicorn.server.TestIdFactory
 import com.unicorn.server.common.port.out.event.EventPublisher
 import com.unicorn.server.common.vo.Email
 import com.unicorn.server.domain.circle.port.out.CircleMemberOutPort
+import com.unicorn.server.domain.circle.port.out.CircleIdGenerator
+import com.unicorn.server.domain.circle.port.out.CircleMemberIdGenerator
 import com.unicorn.server.domain.circle.port.out.CircleOutPort
 import com.unicorn.server.domain.circle.service.CircleService
 import com.unicorn.server.domain.circle.vo.CircleId
@@ -21,19 +24,21 @@ class CircleServiceJoinTest {
 	private val circleMemberOutPort = FakeCircleMemberOutPort()
 	private val memberQueryInPort = FakeMemberQueryInPort()
 	private val eventPublisher = RecordingEventPublisher()
-	private val circleService = CircleService(circleOutPort, circleMemberOutPort, memberQueryInPort, eventPublisher)
+	private val circleIdGenerator = object : CircleIdGenerator { override fun next() = TestIdFactory.circleId() }
+	private val circleMemberIdGenerator = object : CircleMemberIdGenerator { override fun next() = TestIdFactory.circleMemberId() }
+	private val circleService = CircleService(circleOutPort, circleMemberOutPort, circleIdGenerator, circleMemberIdGenerator, memberQueryInPort, eventPublisher)
 
 	@Test
 	@DisplayName("이미 참여한 사용자가 join 하면 예외를 던진다")
 	fun join_alreadyJoined_throwsException() {
-		val owner = Member.create(Email("owner2@example.com"), "Owner", "owner2", role = Role.MEMBER)
-		val friend = Member.create(Email("friend@example.com"), "Friend", "friend", role = Role.MEMBER)
+		val owner = Member.create(TestIdFactory.memberId(), Email("owner2@example.com"), "Owner", "owner2", role = Role.MEMBER)
+		val friend = Member.create(TestIdFactory.memberId(), Email("friend@example.com"), "Friend", "friend", role = Role.MEMBER)
 		memberQueryInPort.save(owner)
 		memberQueryInPort.save(friend)
 
-		val circle = Circle.create("테스트써클1", owner.id)
+		val circle = Circle.create(TestIdFactory.circleId(), "테스트써클1", owner.id)
 		circleOutPort.save(circle)
-		circleMemberOutPort.save(CircleMember.createMember(circle.id, friend.id, friend.nickname))
+		circleMemberOutPort.save(CircleMember.createMember(TestIdFactory.circleMemberId(), circle.id, friend.id, friend.nickname))
 
 		org.junit.jupiter.api.assertThrows<com.unicorn.server.common.exception.BusinessException> {
 			circleService.join(circle.id.toString(), friend.id.toString())

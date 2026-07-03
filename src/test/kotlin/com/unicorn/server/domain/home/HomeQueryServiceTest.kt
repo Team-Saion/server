@@ -1,5 +1,6 @@
 package com.unicorn.server.domain.home
 
+import com.unicorn.server.TestIdFactory
 import com.unicorn.server.common.exception.BusinessException
 import com.unicorn.server.domain.circle.exception.CircleErrorCode
 import com.unicorn.server.domain.circle.port.dto.CircleMemberDto
@@ -30,7 +31,7 @@ class HomeQueryServiceTest {
 	@Test
 	@DisplayName("조회 요청자가 홈에 노출 가능한 구성원이 아니면 접근 거부된다")
 	fun getHome_requesterNotVisible_throwsException() {
-		val circleId = CircleId.generate().toString()
+		val circleId = TestIdFactory.circleId().toString()
 		val ownerId = java.util.UUID.randomUUID().toString()
 		val hiddenId = java.util.UUID.randomUUID().toString()
 		circleInPort.put(CircleSummary(circleId, "홈테스트1", ownerId))
@@ -47,7 +48,7 @@ class HomeQueryServiceTest {
 	@Test
 	@DisplayName("비활성 멤버 프로필은 홈 구성원 목록에서 제외된다")
 	fun getHome_inactiveProfile_hidden() {
-		val circleId = CircleId.generate().toString()
+		val circleId = TestIdFactory.circleId().toString()
 		val ownerId = java.util.UUID.randomUUID().toString()
 		val inactiveId = java.util.UUID.randomUUID().toString()
 		circleInPort.put(CircleSummary(circleId, "홈테스트2", ownerId))
@@ -66,7 +67,7 @@ class HomeQueryServiceTest {
 	@Test
 	@DisplayName("getMembers는 스케줄 조회 없이 구성원 목록만 반환한다")
 	fun getMembers_withoutScheduleQueries_success() {
-		val circleId = CircleId.generate().toString()
+		val circleId = TestIdFactory.circleId().toString()
 		val ownerId = java.util.UUID.randomUUID().toString()
 		val friendId = java.util.UUID.randomUUID().toString()
 		circleInPort.put(CircleSummary(circleId, "홈테스트3", ownerId))

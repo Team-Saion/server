@@ -22,15 +22,15 @@ import java.time.LocalDateTime
 )
 class CircleMemberEntity internal constructor() : AuditableJpaEntity() {
     @Id
-    @Column(name = "id", nullable = false, length = 36)
+    @Column(name = "id", nullable = false, length = 21)
     var id: String = ""
         internal set
 
-    @Column(name = "circle_id", nullable = false, length = 36)
+    @Column(name = "circle_id", nullable = false, length = 21)
     var circleId: String = ""
         internal set
 
-    @Column(name = "member_id", nullable = false, length = 36)
+    @Column(name = "member_id", nullable = false, length = 21)
     var memberId: String = ""
         internal set
 

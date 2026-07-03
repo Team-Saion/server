@@ -47,10 +47,10 @@ class CircleMember internal constructor(
 	}
 
 	companion object {
-		fun createInitiator(circleId: CircleId, memberId: MemberId, nickname: String): CircleMember {
+		fun createInitiator(id: CircleMemberId, circleId: CircleId, memberId: MemberId, nickname: String): CircleMember {
 			val now = LocalDateTime.now()
 			return CircleMember(
-				id = CircleMemberId.generate(),
+				id = id,
 				circleId = circleId,
 				memberId = memberId,
 				nickname = validateNickname(nickname),
@@ -64,10 +64,10 @@ class CircleMember internal constructor(
 			)
 		}
 
-		fun createMember(circleId: CircleId, memberId: MemberId, nickname: String): CircleMember {
+		fun createMember(id: CircleMemberId, circleId: CircleId, memberId: MemberId, nickname: String): CircleMember {
 			val now = LocalDateTime.now()
 			return CircleMember(
-				id = CircleMemberId.generate(),
+				id = id,
 				circleId = circleId,
 				memberId = memberId,
 				nickname = validateNickname(nickname),
