@@ -1,10 +1,10 @@
 create table invitation
 (
-    id             varchar(36) not null,
+    id             varchar(21) not null,
     type           varchar(20) not null,
-    target_id      varchar(36) not null,
+    target_id      varchar(21) not null,
     token          varchar(64) not null,
-    inviter_id     varchar(36) not null,
+    inviter_id     varchar(21) not null,
     invite_to_name varchar(10),
     message        varchar(50),
     status         varchar(20) not null,
@@ -25,7 +25,7 @@ create index idx_invitation_status_expires_at on invitation (status, expires_at)
 create table invitation_dispatch_log
 (
     id            varchar(36) not null,
-    invitation_id varchar(36) not null,
+    invitation_id varchar(21) not null,
     channel       varchar(20) not null,
     dispatched_at timestamp   not null,
     created_at    timestamp   not null,
@@ -41,7 +41,7 @@ create index idx_invitation_dispatch_log_channel on invitation_dispatch_log (cha
 create table invitation_click_log
 (
     id            varchar(36) not null,
-    invitation_id varchar(36) not null,
+    invitation_id varchar(21) not null,
     clicked_at    timestamp   not null,
     created_at    timestamp   not null,
     updated_at    timestamp,
@@ -54,9 +54,9 @@ create index idx_invitation_click_log_invitation_id on invitation_click_log (inv
 
 create table invitation_redemption_log
 (
-    id                 varchar(36) not null,
-    invitation_id      varchar(36) not null,
-    redeemer_member_id varchar(36) not null,
+    id                 varchar(21) not null,
+    invitation_id      varchar(21) not null,
+    redeemer_member_id varchar(21) not null,
     redeemed_at        timestamp   not null,
     created_at         timestamp   not null,
     updated_at         timestamp,
