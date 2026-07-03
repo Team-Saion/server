@@ -12,7 +12,7 @@ insert into member (
     created_by,
     updated_by
 ) values (
-    '11111111-1111-1111-1111-111111111111',
+    'MB20260101000000001',
     'local.member@unicorn.test',
     'Local Member',
     'local_member',
@@ -37,8 +37,8 @@ insert into social_account (
     created_by,
     updated_by
 ) values (
-    '22222222-2222-2222-2222-222222222222',
-    '11111111-1111-1111-1111-111111111111',
+    'SA20260101000000001',
+    'MB20260101000000001',
     'KAKAO',
     'kakao-local-member-001',
     'local.member@unicorn.test',

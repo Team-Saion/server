@@ -61,7 +61,7 @@ class JwtProviderTest {
 		)
 
 	companion object {
-		private const val MEMBER_ID = "00000000-0000-0000-0000-000000000001"
+		private const val MEMBER_ID = "MB20260101000000001"
 		private const val SECRET_KEY = "test-secret-key-for-jwt-signing-must-be-at-least-32-bytes!!"
 	}
 }
