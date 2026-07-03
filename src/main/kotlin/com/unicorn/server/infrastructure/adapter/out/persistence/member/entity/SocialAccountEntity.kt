@@ -26,11 +26,11 @@ import jakarta.persistence.UniqueConstraint
 class SocialAccountEntity internal constructor() : AuditableJpaEntity() {
 
 	@Id
-	@Column(name = "id", nullable = false, length = 36)
+	@Column(name = "id", nullable = false, length = 21)
 	var id: String = ""
 		internal set
 
-	@Column(name = "member_id", nullable = false, length = 36)
+	@Column(name = "member_id", nullable = false, length = 21)
 	var memberId: String = ""
 		internal set
 

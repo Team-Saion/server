@@ -15,7 +15,9 @@ import com.unicorn.server.domain.member.port.dto.SocialLoginCommand
 import com.unicorn.server.domain.member.port.dto.SocialLoginResult
 import com.unicorn.server.domain.member.port.dto.TokenPair
 import com.unicorn.server.domain.member.port.out.MemberOutPort
+import com.unicorn.server.domain.member.port.out.MemberIdGenerator
 import com.unicorn.server.domain.member.port.out.SocialAccountOutPort
+import com.unicorn.server.domain.member.port.out.SocialAccountIdGenerator
 import com.unicorn.server.domain.member.port.out.TokenIssuer
 import com.unicorn.server.domain.member.port.out.TokenStore
 import com.unicorn.server.domain.member.vo.MemberId
@@ -28,6 +30,8 @@ import org.springframework.transaction.annotation.Transactional
 class MemberAuthService(
 	private val memberOutPort: MemberOutPort,
 	private val socialAccountOutPort: SocialAccountOutPort,
+	private val memberIdGenerator: MemberIdGenerator,
+	private val socialAccountIdGenerator: SocialAccountIdGenerator,
 	private val tokenIssuer: TokenIssuer,
 	private val tokenStore: TokenStore,
 ) : SocialLoginInPort, LogoutInPort, ReissueTokenInPort {
@@ -86,6 +90,7 @@ class MemberAuthService(
 		// 멤버 및 소셜 계정 생성
 		val newMember = memberOutPort.save(
 			Member.create(
+				id = memberIdGenerator.next(),
 				email = emailVo,
 				name = command.name,
 				nickname = toSafeNickname(command.name ?: ""),
@@ -95,6 +100,7 @@ class MemberAuthService(
 
 		socialAccountOutPort.save(
 			SocialAccount.create(
+				id = socialAccountIdGenerator.next(),
 				memberId = newMember.id,
 				provider = command.provider,
 				providerId = command.providerId,

@@ -1,5 +1,6 @@
 package com.unicorn.server.domain.member.service
 
+import com.unicorn.server.TestIdFactory
 import com.unicorn.server.common.exception.BusinessException
 import com.unicorn.server.common.vo.Email
 import com.unicorn.server.domain.member.Member
@@ -39,7 +40,7 @@ class OnboardingServiceTest {
 	@Test
 	@DisplayName("completeOnboarding 호출 시 닉네임을 저장하고 MEMBER 역할 토큰을 발급한다")
 	fun completeOnboarding_success_updatesNicknameRoleAndIssuesTokenPair() {
-		val member = memberOutPort.save(Member.create(Email("pending@example.com"), "홍길동", "사용자", Role.PENDING))
+		val member = memberOutPort.save(member("pending@example.com", role = Role.PENDING))
 		seedRequiredAgreement(member.id)
 
 		val result = onboardingService.completeOnboarding(
@@ -58,7 +59,7 @@ class OnboardingServiceTest {
 	@Test
 	@DisplayName("잘못된 닉네임으로 completeOnboarding 호출 시 INVALID_NICKNAME 예외가 발생한다")
 	fun completeOnboarding_withInvalidNickname_throwsInvalidNickname() {
-		val member = memberOutPort.save(Member.create(Email("invalid-onboarding@example.com"), "홍길동", "사용자", Role.PENDING))
+		val member = memberOutPort.save(member("invalid-onboarding@example.com", role = Role.PENDING))
 		seedRequiredAgreement(member.id)
 
 		assertThatThrownBy {
@@ -72,7 +73,7 @@ class OnboardingServiceTest {
 	@Test
 	@DisplayName("필수 약관에 동의하지 않은 멤버로 completeOnboarding 호출 시 REQUIRED_TERMS_NOT_AGREED 예외가 발생한다")
 	fun completeOnboarding_withoutRequiredTermAgreement_throwsRequiredTermsNotAgreed() {
-		val member = memberOutPort.save(Member.create(Email("terms-onboarding@example.com"), "홍길동", "사용자", Role.PENDING))
+		val member = memberOutPort.save(member("terms-onboarding@example.com", role = Role.PENDING))
 		termOutPort.seed(term(id = 1L, termCode = TermCode.SERVICE_USE, version = 1, required = true))
 
 		assertThatThrownBy {
@@ -87,14 +88,14 @@ class OnboardingServiceTest {
 	@DisplayName("존재하지 않는 ID로 completeOnboarding 호출 시 MemberNotFoundException이 발생한다")
 	fun completeOnboarding_whenNotFound_throwsMemberNotFoundException() {
 		assertThatThrownBy {
-			onboardingService.completeOnboarding(MemberId.generate().toString(), CompleteOnboardingCommand("홍길동"))
+			onboardingService.completeOnboarding(TestIdFactory.memberId().toString(), CompleteOnboardingCommand("홍길동"))
 		}.isInstanceOf(MemberNotFoundException::class.java)
 	}
 
 	@Test
 	@DisplayName("탈퇴한 멤버로 completeOnboarding 호출 시 WithdrawnMemberException이 발생한다")
 	fun completeOnboarding_whenWithdrawn_throwsWithdrawnMemberException() {
-		val member = memberOutPort.save(Member.create(Email("withdrawn-onboarding@example.com"), "홍길동", "사용자"))
+		val member = memberOutPort.save(member("withdrawn-onboarding@example.com"))
 		member.withdraw()
 		memberOutPort.save(member)
 
@@ -102,6 +103,9 @@ class OnboardingServiceTest {
 			onboardingService.completeOnboarding(member.id.toString(), CompleteOnboardingCommand("홍길동"))
 		}.isInstanceOf(WithdrawnMemberException::class.java)
 	}
+
+	private fun member(email: String, role: Role = Role.MEMBER): Member =
+		Member.create(TestIdFactory.memberId(), Email(email), "홍길동", "사용자", role)
 
 	private fun seedRequiredAgreement(memberId: MemberId) {
 		termOutPort.seed(term(id = 1L, termCode = TermCode.SERVICE_USE, version = 1, required = true))
