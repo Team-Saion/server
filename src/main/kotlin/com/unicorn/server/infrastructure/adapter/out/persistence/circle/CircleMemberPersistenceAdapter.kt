@@ -30,6 +30,11 @@ class CircleMemberPersistenceAdapter(
 			.map { it.toDomain() }
 
 	@Transactional(readOnly = true)
+	override fun findAllActiveByMemberId(memberId: MemberId): List<CircleMember> =
+		circleMemberJpaRepository.findAllByMemberIdAndStatusAndDelYn(memberId.toString(), CircleMemberStatus.ACTIVE, "N")
+			.map { it.toDomain() }
+
+	@Transactional(readOnly = true)
 	override fun existsByCircleAndMember(circleId: CircleId, memberId: MemberId): Boolean =
 		circleMemberJpaRepository.existsByCircleIdAndMemberId(circleId.toString(), memberId.toString())
 

@@ -114,6 +114,7 @@ class InvitationServiceTest {
 	private class FakeCircleInPort : CircleInPort {
 		private val circles = linkedMapOf<String, CircleSummary>()
 		override fun create(memberId: String, command: CreateCircleCommand): CircleSummary = error("not used")
+		override fun listCircles(memberId: String): List<CircleSummary> = error("not used")
 		override fun getCircleSummary(circleId: String): CircleSummary = circles.getValue(circleId)
 		fun put(summary: CircleSummary) { circles[summary.id] = summary }
 	}

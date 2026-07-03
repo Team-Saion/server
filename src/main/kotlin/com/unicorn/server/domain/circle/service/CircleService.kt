@@ -55,6 +55,16 @@ class CircleService(
         return CircleSummary(circle.id.toString(), circle.name, circle.ownerId.toString())
     }
 
+    override fun listCircles(memberId: String): List<CircleSummary> =
+        circleMemberOutPort.findAllActiveByMemberId(MemberId.of(memberId))
+            .sortedByDescending { it.joinedAt }
+            .distinctBy { it.circleId }
+            .mapNotNull { membership ->
+                circleOutPort.findById(membership.circleId)
+                    ?.takeIf { !it.deleted }
+                    ?.let { circle -> CircleSummary(circle.id.toString(), circle.name, circle.ownerId.toString()) }
+            }
+
     override fun getCircleSummary(circleId: String): CircleSummary {
         val circle = circleOutPort.findById(CircleId.of(circleId)) ?: throw CircleNotFoundException(circleId)
         return CircleSummary(circle.id.toString(), circle.name, circle.ownerId.toString())

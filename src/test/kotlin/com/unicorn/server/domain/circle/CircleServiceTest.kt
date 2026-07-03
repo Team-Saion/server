@@ -43,6 +43,24 @@ class CircleServiceTest {
 		assertThat(circleMemberOutPort.members.first().memberId).isEqualTo(owner.id)
 	}
 
+	@Test
+	@DisplayName("내가 속한 모든 활성 써클 목록을 조회한다")
+	fun listCircles_returnsAllActiveMemberCircles() {
+		val member = Member.create(TestIdFactory.memberId(), Email("member@example.com"), "Member", "멤버", role = com.unicorn.server.domain.member.enums.Role.MEMBER)
+		val otherMember = Member.create(TestIdFactory.memberId(), Email("other@example.com"), "Other", "다른멤버", role = com.unicorn.server.domain.member.enums.Role.MEMBER)
+		memberQueryInPort.save(member)
+		memberQueryInPort.save(otherMember)
+
+		val myCircle = circleOutPort.save(Circle.create(TestIdFactory.circleId(), "내써클", otherMember.id))
+		val anotherCircle = circleOutPort.save(Circle.create(TestIdFactory.circleId(), "또다른써클", member.id))
+		circleMemberOutPort.save(com.unicorn.server.domain.circle.CircleMember.createMember(TestIdFactory.circleMemberId(), myCircle.id, member.id, member.nickname))
+		circleMemberOutPort.save(com.unicorn.server.domain.circle.CircleMember.createInitiator(TestIdFactory.circleMemberId(), anotherCircle.id, member.id, member.nickname))
+
+		val result = circleService.listCircles(member.id.toString())
+
+		assertThat(result.map { it.id }).containsExactly(anotherCircle.id.toString(), myCircle.id.toString())
+	}
+
 	private class FakeCircleOutPort : CircleOutPort {
 		private val circles = linkedMapOf<CircleId, Circle>()
 		override fun save(circle: Circle): Circle {
@@ -62,6 +80,7 @@ class CircleServiceTest {
 		}
 		override fun findByCircleAndMember(circleId: CircleId, memberId: MemberId) = members.firstOrNull { it.circleId == circleId && it.memberId == memberId }
 		override fun findAllActiveByCircleId(circleId: CircleId) = members.filter { it.circleId == circleId }
+		override fun findAllActiveByMemberId(memberId: MemberId) = members.filter { it.memberId == memberId }
 		override fun existsByCircleAndMember(circleId: CircleId, memberId: MemberId) = members.any { it.circleId == circleId && it.memberId == memberId }
 		override fun countActiveByCircleId(circleId: CircleId) = members.count { it.circleId == circleId }.toLong()
 	}

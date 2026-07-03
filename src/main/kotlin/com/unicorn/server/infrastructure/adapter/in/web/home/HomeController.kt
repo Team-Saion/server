@@ -11,11 +11,11 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@RequestMapping("/api/v1/circles")
+@RequestMapping("/api/v1/homes")
 class HomeController(
 	private val homeQueryInPort: HomeQueryInPort,
 ) : HomeApiDoc {
-	@GetMapping("/{circleId}/home")
+	@GetMapping("/{circleId}")
 	override fun getHome(
 		@AuthenticationPrincipal memberId: String,
 		@PathVariable circleId: String,
