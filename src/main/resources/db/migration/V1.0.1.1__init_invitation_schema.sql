@@ -4,7 +4,7 @@ create table invitation
     type           varchar(20) not null,
     target_id      varchar(21) not null,
     token          varchar(64) not null,
-    inviter_id     varchar(21) not null,
+    inviter_id     varchar(36) not null,
     invite_to_name varchar(10),
     message        varchar(50),
     status         varchar(20) not null,
@@ -56,7 +56,7 @@ create table invitation_redemption_log
 (
     id                 varchar(21) not null,
     invitation_id      varchar(21) not null,
-    redeemer_member_id varchar(21) not null,
+    redeemer_member_id varchar(36) not null,
     redeemed_at        timestamp   not null,
     created_at         timestamp   not null,
     updated_at         timestamp,

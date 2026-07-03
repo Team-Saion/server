@@ -1,7 +1,7 @@
 create table circle (
     id varchar(21) not null,
     name varchar(20) not null,
-    owner_id varchar(21) not null,
+    owner_id varchar(36) not null,
     del_yn varchar(1) not null default 'N',
     created_at timestamp not null,
     updated_at timestamp,
@@ -16,7 +16,7 @@ create index idx_circle_del_yn on circle (del_yn);
 create table circle_member (
     id varchar(21) not null,
     circle_id varchar(21) not null,
-    member_id varchar(21) not null,
+    member_id varchar(36) not null,
     nickname varchar(30) not null,
     role varchar(20) not null,
     status varchar(20) not null,
