@@ -184,10 +184,10 @@ class ExampleResponseCustomizer : OperationCustomizer {
 
 	private fun sampleString(name: String?): String =
 		when (name) {
-			"memberId" -> "MB20260101000000001"
+			"memberId" -> "00000000-0000-0000-0000-000000000001"
 			"circleId", "targetId" -> "CC20260101000000001"
 			"invitationId" -> "IV20260101000000001"
-			"id" -> "MB20260101000000001"
+			"id" -> "00000000-0000-0000-0000-000000000001"
 			"userId" -> "user-1"
 			"email" -> "user@example.com"
 			"username" -> "unicorn"

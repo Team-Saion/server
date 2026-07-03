@@ -11,7 +11,7 @@ import java.time.LocalDateTime
 data class MemberResponse(
 	@field:Schema(
 		description = "멤버 식별자",
-		example = "MB20260101000000001",
+		example = "00000000-0000-0000-0000-000000000001",
 	)
 	val id: String,
 
@@ -47,7 +47,7 @@ data class MemberResponse(
 
 	@field:Schema(
 		description = "프로필 이미지 객체 키. 설정하지 않았으면 null이다.",
-		example = "member/profile/MB20260101000000001.png",
+		example = "member/profile/00000000-0000-0000-0000-000000000001.png",
 		nullable = true,
 	)
 	val profileImageKey: String?,
