@@ -13,9 +13,9 @@ object TestIdFactory {
 
 	fun nextSequence(): Long = sequence.getAndIncrement()
 
-	fun memberId(): MemberId = MemberId.generate(nextSequence())
+	fun memberId(): MemberId = MemberId.generate()
 
-	fun socialAccountId(): SocialAccountId = SocialAccountId.generate(nextSequence())
+	fun socialAccountId(): SocialAccountId = SocialAccountId.generate()
 
 	fun circleId(): CircleId = CircleId.generate(nextSequence())
 

@@ -15,7 +15,7 @@ open class BaseTest {
     protected val refreshTokenExpirationSeconds: Long = 2592000L
 
     protected class BaseMember {
-        val id: String = "MB20260101000000001"
+        val id: String = "11111111-1111-1111-1111-111111111111"
         val email: String = "local.member@unicorn.test"
         val name: String = "Local Member"
         val nickname: String = "local_member"

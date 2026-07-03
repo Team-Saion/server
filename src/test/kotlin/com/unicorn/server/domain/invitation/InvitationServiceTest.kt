@@ -101,7 +101,7 @@ class InvitationServiceTest {
 			eventPublisher = object : EventPublisher { override fun publish(event: com.unicorn.server.common.domain.Event) = Unit },
 		)
 
-		fun member(email: String, nickname: String): Member = Member.create(TestIdFactory.memberId(), Email(email), nickname, nickname, role = Role.MEMBER)
+		fun member(email: String, nickname: String): Member = Member.create(Email(email), nickname, nickname, role = Role.MEMBER)
 	}
 
 	private class FakeInvitationOutPort : InvitationOutPort {

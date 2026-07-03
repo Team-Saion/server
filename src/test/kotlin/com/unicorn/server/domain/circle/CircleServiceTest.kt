@@ -33,7 +33,7 @@ class CircleServiceTest {
 	@Test
 	@DisplayName("써클 생성 시 initiator 멤버십이 함께 생성된다")
 	fun create_success() {
-		val owner = Member.create(TestIdFactory.memberId(), Email("owner@example.com"), "Owner", "비니", role = com.unicorn.server.domain.member.enums.Role.MEMBER)
+		val owner = Member.create(Email("owner@example.com"), "Owner", "비니", role = com.unicorn.server.domain.member.enums.Role.MEMBER)
 		memberQueryInPort.save(owner)
 
 		val result = circleService.create(owner.id.toString(), CreateCircleCommand("비니네"))
@@ -46,8 +46,8 @@ class CircleServiceTest {
 	@Test
 	@DisplayName("내가 속한 모든 활성 써클 목록을 조회한다")
 	fun listCircles_returnsAllActiveMemberCircles() {
-		val member = Member.create(TestIdFactory.memberId(), Email("member@example.com"), "Member", "멤버", role = com.unicorn.server.domain.member.enums.Role.MEMBER)
-		val otherMember = Member.create(TestIdFactory.memberId(), Email("other@example.com"), "Other", "다른멤버", role = com.unicorn.server.domain.member.enums.Role.MEMBER)
+		val member = Member.create(Email("member@example.com"), "Member", "멤버", role = com.unicorn.server.domain.member.enums.Role.MEMBER)
+		val otherMember = Member.create(Email("other@example.com"), "Other", "다른멤버", role = com.unicorn.server.domain.member.enums.Role.MEMBER)
 		memberQueryInPort.save(member)
 		memberQueryInPort.save(otherMember)
 

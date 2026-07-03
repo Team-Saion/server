@@ -31,8 +31,8 @@ class CircleServiceJoinTest {
 	@Test
 	@DisplayName("이미 참여한 사용자가 join 하면 예외를 던진다")
 	fun join_alreadyJoined_throwsException() {
-		val owner = Member.create(TestIdFactory.memberId(), Email("owner2@example.com"), "Owner", "owner2", role = Role.MEMBER)
-		val friend = Member.create(TestIdFactory.memberId(), Email("friend@example.com"), "Friend", "friend", role = Role.MEMBER)
+		val owner = Member.create(Email("owner2@example.com"), "Owner", "owner2", role = Role.MEMBER)
+		val friend = Member.create(Email("friend@example.com"), "Friend", "friend", role = Role.MEMBER)
 		memberQueryInPort.save(owner)
 		memberQueryInPort.save(friend)
 

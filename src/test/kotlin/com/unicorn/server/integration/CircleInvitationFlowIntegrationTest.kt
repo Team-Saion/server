@@ -149,5 +149,5 @@ class CircleInvitationFlowIntegrationTest : BaseTest() {
 	}
 
 	private fun member(name: String, nickname: String): Member =
-		Member.create(TestIdFactory.memberId(), null, name, nickname, role = Role.MEMBER)
+		Member.create(null, name, nickname, role = Role.MEMBER)
 }
