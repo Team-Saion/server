@@ -12,6 +12,7 @@ import com.unicorn.server.infrastructure.adapter.`in`.web.invitation.dto.IssueIn
 import com.unicorn.server.infrastructure.adapter.`in`.web.invitation.dto.IssuedInvitationResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.responses.ApiResponse as SwaggerApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -38,6 +39,7 @@ interface InvitationApiDoc {
 		ApiErrorCodeExample(codeType = InvitationErrorCode::class, code = "INVITE_TO_NAME_INVALID"),
 		ApiErrorCodeExample(codeType = InvitationErrorCode::class, code = "INVITE_MESSAGE_INVALID"),
 	)
+	@SwaggerApiResponse(responseCode = "201", description = "Created")
 	@ApiSuccessCodeExample(IssuedInvitationResponse::class)
 	fun issue(
 		@Parameter(hidden = true)

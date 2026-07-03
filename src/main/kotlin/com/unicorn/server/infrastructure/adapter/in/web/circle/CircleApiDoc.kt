@@ -10,13 +10,33 @@ import com.unicorn.server.infrastructure.adapter.`in`.web.common.swagger.annotat
 import com.unicorn.server.infrastructure.adapter.`in`.web.common.swagger.annotation.ApiSuccessCodeExample
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.responses.ApiResponse as SwaggerApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.RequestBody
 
-@Tag(name = "Circle API", description = "써클 생성 API")
+@Tag(name = "Circle API", description = "써클 생성 및 목록 조회 API")
 interface CircleApiDoc {
+	@Operation(
+		summary = "내 써클 목록 조회",
+		description = """
+			인증된 사용자가 속한 모든 써클 목록을 조회합니다.
+
+			- Authorization 헤더의 Bearer access token이 필요합니다.
+			- 생성한 써클뿐 아니라 현재 활성 구성원으로 속한 써클을 모두 반환합니다.
+			- soft delete 된 써클은 응답에서 제외됩니다.
+		""",
+	)
+	@ApiErrorCodeExamples(
+		ApiErrorCodeExample(codeType = CommonErrorCode::class, code = "UNAUTHORIZED"),
+	)
+	@ApiSuccessCodeExample(CircleSummaryResponse::class)
+	fun listCircles(
+		@Parameter(hidden = true)
+		@AuthenticationPrincipal memberId: String,
+	): ApiResponse<List<CircleSummaryResponse>>
+
 	@Operation(
 		summary = "써클 생성",
 		description = """
@@ -34,6 +54,7 @@ interface CircleApiDoc {
 		ApiErrorCodeExample(codeType = CircleErrorCode::class, code = "CIRCLE_NAME_TOO_LONG"),
 		ApiErrorCodeExample(codeType = CircleErrorCode::class, code = "CIRCLE_NAME_INVALID_CHARSET"),
 	)
+	@SwaggerApiResponse(responseCode = "201", description = "Created")
 	@ApiSuccessCodeExample(CircleSummaryResponse::class)
 	fun create(
 		@Parameter(hidden = true)
