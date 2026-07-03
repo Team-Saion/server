@@ -21,36 +21,36 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/v1/invitations")
 class InvitationController(
-	private val issueInvitationInPort: IssueInvitationInPort,
-	private val getInvitationByTokenInPort: GetInvitationByTokenInPort,
-	private val acceptCircleInvitationInPort: AcceptCircleInvitationInPort,
+    private val issueInvitationInPort: IssueInvitationInPort,
+    private val getInvitationByTokenInPort: GetInvitationByTokenInPort,
+    private val acceptCircleInvitationInPort: AcceptCircleInvitationInPort,
 ) : InvitationApiDoc {
-	@PostMapping
-	override fun issue(
-		@AuthenticationPrincipal memberId: String,
-		@RequestBody request: IssueInvitationRequest,
-	): ApiResponse<IssuedInvitationResponse> = ApiResponse.created(
-		IssuedInvitationResponse.from(
-			issueInvitationInPort.issue(
-				memberId,
-				IssueInvitationCommand(
-					type = InvitationType.valueOf(request.type),
-					targetId = request.targetId,
-					inviteToName = request.inviteToName,
-					message = request.message,
-				),
-			),
-		),
-	)
+    @PostMapping
+    override fun issue(
+        @AuthenticationPrincipal memberId: String,
+        @RequestBody request: IssueInvitationRequest,
+    ): ApiResponse<IssuedInvitationResponse> = ApiResponse.created(
+        IssuedInvitationResponse.from(
+            issueInvitationInPort.issue(
+                memberId,
+                IssueInvitationCommand(
+                    type = InvitationType.valueOf(request.type),
+                    targetId = request.targetId,
+                    inviteToName = request.inviteToName,
+                    message = request.message,
+                ),
+            ),
+        ),
+    )
 
-	@GetMapping("/by-token/{token}")
-	override fun getByToken(@PathVariable token: String): ApiResponse<InvitationDetailResponse> =
-		ApiResponse.success(InvitationDetailResponse.from(getInvitationByTokenInPort.getByToken(token)))
+    @GetMapping("/{token}")
+    override fun getByToken(@PathVariable token: String): ApiResponse<InvitationDetailResponse> =
+        ApiResponse.success(InvitationDetailResponse.from(getInvitationByTokenInPort.getByToken(token)))
 
-	@PostMapping("/by-token/{token}/accept")
-	override fun accept(
-		@PathVariable token: String,
-		@AuthenticationPrincipal memberId: String,
-	): ApiResponse<AcceptInvitationResponse> =
-		ApiResponse.success(AcceptInvitationResponse.from(acceptCircleInvitationInPort.accept(token, memberId)))
+    @PostMapping("/{token}")
+    override fun accept(
+        @PathVariable token: String,
+        @AuthenticationPrincipal memberId: String,
+    ): ApiResponse<AcceptInvitationResponse> =
+        ApiResponse.success(AcceptInvitationResponse.from(acceptCircleInvitationInPort.accept(token, memberId)))
 }

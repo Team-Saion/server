@@ -13,7 +13,7 @@ data class IssueInvitationRequest(
 
 	@field:Schema(
 		description = "초대 대상 ID (써클 ID)",
-		example = "550e8400-e29b-41d4-a716-446655440000",
+		example = "CC20260101000000001",
 	)
 	val targetId: String,
 
