@@ -1,6 +1,5 @@
 package com.unicorn.server.domain.member.service
 
-import com.unicorn.server.TestIdFactory
 import com.unicorn.server.common.vo.Email
 import com.unicorn.server.domain.member.Member
 import com.unicorn.server.domain.member.SocialAccount
@@ -12,9 +11,7 @@ import com.unicorn.server.domain.member.exception.MemberNotFoundException
 import com.unicorn.server.domain.member.exception.WithdrawnMemberException
 import com.unicorn.server.domain.member.port.dto.SocialLoginCommand
 import com.unicorn.server.domain.member.port.dto.TokenPair
-import com.unicorn.server.domain.member.port.out.MemberIdGenerator
 import com.unicorn.server.domain.member.port.out.MemberOutPort
-import com.unicorn.server.domain.member.port.out.SocialAccountIdGenerator
 import com.unicorn.server.domain.member.port.out.SocialAccountOutPort
 import com.unicorn.server.domain.member.port.out.TokenIssuer
 import com.unicorn.server.domain.member.port.out.TokenStore
@@ -32,13 +29,9 @@ class MemberAuthServiceTest {
 	private val socialAccountOutPort = FakeSocialAccountOutPort()
 	private val tokenIssuer = FakeTokenIssuer()
 	private val tokenStore = FakeTokenStore()
-	private val memberIdGenerator = object : MemberIdGenerator { override fun next() = TestIdFactory.memberId() }
-	private val socialAccountIdGenerator = object : SocialAccountIdGenerator { override fun next() = TestIdFactory.socialAccountId() }
 	private val memberAuthService = MemberAuthService(
 		memberOutPort,
 		socialAccountOutPort,
-		memberIdGenerator,
-		socialAccountIdGenerator,
 		tokenIssuer,
 		tokenStore,
 	)
@@ -125,10 +118,9 @@ class MemberAuthServiceTest {
 	@Test
 	@DisplayName("login 호출 시 기존 멤버는 SocialAccount로 조회되고 토큰이 발급된다")
 	fun login_existingMember_returnsTokenPair() {
-		val member = memberOutPort.save(member("existing@example.com", "홍길동", "길동이"))
+		val member = memberOutPort.save(Member.create(Email("existing@example.com"), "홍길동", "길동이"))
 		socialAccountOutPort.save(
 			SocialAccount.create(
-				TestIdFactory.socialAccountId(),
 				member.id,
 				SocialProvider.KAKAO,
 				"kakao-456",
@@ -148,12 +140,11 @@ class MemberAuthServiceTest {
 	@Test
 	@DisplayName("login 호출 시 기존 소셜 계정의 멤버가 탈퇴 상태이면 WithdrawnMemberException이 발생한다")
 	fun login_existingWithdrawnMember_throwsWithdrawnMemberException() {
-		val member = memberOutPort.save(member("withdrawn-login@example.com", "홍길동", "길동이"))
+		val member = memberOutPort.save(Member.create(Email("withdrawn-login@example.com"), "홍길동", "길동이"))
 		member.withdraw()
 		memberOutPort.save(member)
 		socialAccountOutPort.save(
 			SocialAccount.create(
-				TestIdFactory.socialAccountId(),
 				member.id,
 				SocialProvider.KAKAO,
 				"kakao-withdrawn",
@@ -171,7 +162,7 @@ class MemberAuthServiceTest {
 	@Test
 	@DisplayName("login 호출 시 다른 providerId로 동일 이메일 가입하면 DuplicateEmailException이 발생한다")
 	fun login_duplicateEmail_throwsDuplicateEmailException() {
-		memberOutPort.save(member("dup@example.com", "기존유저", "기존"))
+		memberOutPort.save(Member.create(Email("dup@example.com"), "기존유저", "기존"))
 		val command = SocialLoginCommand(SocialProvider.KAKAO, "kakao-new-id", "dup@example.com", "신규")
 
 		assertThatThrownBy { memberAuthService.login(command) }
@@ -181,7 +172,7 @@ class MemberAuthServiceTest {
 	@Test
 	@DisplayName("logout 호출 시 TokenStore에서 refresh token을 삭제한다")
 	fun logout_deletesRefreshTokenFromTokenStore() {
-		val member = memberOutPort.save(member("test@example.com", "홍길동", "길동이"))
+		val member = memberOutPort.save(Member.create(Email("test@example.com"), "홍길동", "길동이"))
 		tokenStore.save(member.id.toString(), "some-refresh-token")
 
 		memberAuthService.logout(member.id.toString())
@@ -192,7 +183,7 @@ class MemberAuthServiceTest {
 	@Test
 	@DisplayName("존재하지 않는 ID로 logout 호출 시 MemberNotFoundException이 발생한다")
 	fun logout_whenNotFound_throwsMemberNotFoundException() {
-		val unknownId = TestIdFactory.memberId().toString()
+		val unknownId = MemberId.generate().toString()
 
 		assertThatThrownBy { memberAuthService.logout(unknownId) }
 			.isInstanceOf(MemberNotFoundException::class.java)
@@ -201,7 +192,7 @@ class MemberAuthServiceTest {
 	@Test
 	@DisplayName("유효한 refresh token으로 reissue 호출 시 새 토큰 쌍을 발급하고 기존 토큰을 무효화한다")
 	fun reissue_withValidRefreshToken_rotatesTokenPair() {
-		val member = memberOutPort.save(member("reissue@example.com", "홍길동", "길동이"))
+		val member = memberOutPort.save(Member.create(Email("reissue@example.com"), "홍길동", "길동이"))
 		val oldRefreshToken = "old-refresh-token"
 		tokenIssuer.registerRefreshToken(oldRefreshToken, member.id.toString())
 		tokenStore.save(member.id.toString(), oldRefreshToken)
@@ -224,7 +215,7 @@ class MemberAuthServiceTest {
 	@Test
 	@DisplayName("저장소의 활성 토큰과 다른 refresh token으로 reissue 호출 시 InvalidRefreshTokenException이 발생한다")
 	fun reissue_withInactiveRefreshToken_throwsInvalidRefreshTokenException() {
-		val member = memberOutPort.save(member("inactive@example.com", "홍길동", "길동이"))
+		val member = memberOutPort.save(Member.create(Email("inactive@example.com"), "홍길동", "길동이"))
 		val inactiveRefreshToken = "inactive-refresh-token"
 		tokenIssuer.registerRefreshToken(inactiveRefreshToken, member.id.toString())
 
@@ -235,7 +226,7 @@ class MemberAuthServiceTest {
 	@Test
 	@DisplayName("탈퇴한 멤버의 refresh token으로 reissue 호출 시 WithdrawnMemberException이 발생한다")
 	fun reissue_withWithdrawnMember_throwsWithdrawnMemberException() {
-		val member = memberOutPort.save(member("withdrawn-reissue@example.com", "홍길동", "길동이"))
+		val member = memberOutPort.save(Member.create(Email("withdrawn-reissue@example.com"), "홍길동", "길동이"))
 		member.withdraw()
 		memberOutPort.save(member)
 		val refreshToken = "withdrawn-refresh-token"
@@ -245,9 +236,6 @@ class MemberAuthServiceTest {
 		assertThatThrownBy { memberAuthService.reissue(refreshToken) }
 			.isInstanceOf(WithdrawnMemberException::class.java)
 	}
-
-	private fun member(email: String, name: String?, nickname: String, role: Role = Role.MEMBER): Member =
-		Member.create(TestIdFactory.memberId(), Email(email), name, nickname, role)
 
 	private class FakeMemberOutPort : MemberOutPort {
 		private val store = linkedMapOf<MemberId, Member>()

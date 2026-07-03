@@ -22,7 +22,7 @@ import java.time.LocalDateTime
 class MemberEntity internal constructor() : AuditableJpaEntity() {
 
 	@Id
-	@Column(name = "id", nullable = false, length = 21)
+	@Column(name = "id", nullable = false, length = 36)
 	var id: String = ""
 		internal set
 

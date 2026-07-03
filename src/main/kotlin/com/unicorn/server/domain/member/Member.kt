@@ -89,7 +89,6 @@ class Member internal constructor(
 
 		// 신규 멤버를 기본 역할과 활성 상태로 생성한다.
 		fun create(
-			id: MemberId,
 			email: Email?,
 			name: String?,
 			nickname: String,
@@ -100,7 +99,7 @@ class Member internal constructor(
 
 			val now = LocalDateTime.now()
 			return Member(
-				id = id,
+				id = MemberId.generate(),
 				email = email,
 				name = name,
 				nickname = nickname,

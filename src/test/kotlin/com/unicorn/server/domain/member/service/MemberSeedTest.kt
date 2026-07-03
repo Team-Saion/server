@@ -1,16 +1,13 @@
 package com.unicorn.server.domain.member.service
 
 import com.unicorn.server.BaseTest
-import com.unicorn.server.TestIdFactory
 import com.unicorn.server.common.vo.Email
 import com.unicorn.server.domain.member.Member
 import com.unicorn.server.domain.member.SocialAccount
 import com.unicorn.server.domain.member.enums.Role
 import com.unicorn.server.domain.member.enums.SocialProvider
 import com.unicorn.server.domain.member.port.dto.SocialLoginCommand
-import com.unicorn.server.domain.member.port.out.MemberIdGenerator
 import com.unicorn.server.domain.member.port.out.MemberOutPort
-import com.unicorn.server.domain.member.port.out.SocialAccountIdGenerator
 import com.unicorn.server.domain.member.port.out.SocialAccountOutPort
 import com.unicorn.server.domain.member.port.out.TokenStore
 import com.unicorn.server.domain.member.vo.MemberId
@@ -28,9 +25,7 @@ class MemberSeedTest : BaseTest() {
     private val socialAccountOutPort = FakeSocialAccountOutPort()
     private val tokenStore: TokenStore = InMemoryTokenStoreAdapter()
     private val jwtProvider = JwtProvider(testJwtSecret, accessTokenExpirationSeconds, refreshTokenExpirationSeconds)
-    private val memberIdGenerator = object : MemberIdGenerator { override fun next() = TestIdFactory.memberId() }
-    private val socialAccountIdGenerator = object : SocialAccountIdGenerator { override fun next() = TestIdFactory.socialAccountId() }
-    private val memberAuthService = MemberAuthService(memberOutPort, socialAccountOutPort, memberIdGenerator, socialAccountIdGenerator, jwtProvider, tokenStore)
+    private val memberAuthService = MemberAuthService(memberOutPort, socialAccountOutPort, jwtProvider, tokenStore)
 
     @Test
     @DisplayName("baseMember 정보로 access token을 발급하고 로그에 출력한다")
@@ -39,7 +34,6 @@ class MemberSeedTest : BaseTest() {
         memberOutPort.save(seededMember)
         socialAccountOutPort.save(
             SocialAccount.create(
-                id = TestIdFactory.socialAccountId(),
                 memberId = seededMember.id,
                 provider = SocialProvider.KAKAO,
                 providerId = baseMember.providerId,

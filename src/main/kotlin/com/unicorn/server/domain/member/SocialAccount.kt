@@ -20,7 +20,6 @@ class SocialAccount internal constructor(
 	companion object {
 		// 신규 소셜 계정 연결 정보를 생성한다.
 		fun create(
-			id: SocialAccountId,
 			memberId: MemberId,
 			provider: SocialProvider,
 			providerId: String,
@@ -28,7 +27,7 @@ class SocialAccount internal constructor(
 			kakaoNickname: String?,
 			kakaoProfileImageUrl: String?,
 		): SocialAccount = SocialAccount(
-			id = id,
+			id = SocialAccountId.generate(),
 			memberId = memberId,
 			provider = provider,
 			providerId = providerId,

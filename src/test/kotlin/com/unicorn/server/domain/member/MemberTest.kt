@@ -1,6 +1,5 @@
 package com.unicorn.server.domain.member
 
-import com.unicorn.server.TestIdFactory
 import com.unicorn.server.common.exception.BusinessException
 import com.unicorn.server.common.vo.Email
 import com.unicorn.server.domain.member.enums.AvatarColor
@@ -18,7 +17,7 @@ class MemberTest {
 	@Test
 	@DisplayName("Member 생성 시 초기 상태는 ACTIVE이다")
 	fun create_initialStatusIsActive() {
-		val member = member()
+		val member = Member.create(Email("test@example.com"), "홍길동", "길동이")
 
 		assertThat(member.status).isEqualTo(MemberStatus.ACTIVE)
 	}
@@ -26,7 +25,7 @@ class MemberTest {
 	@Test
 	@DisplayName("Member 생성 시 기본 역할은 MEMBER이다")
 	fun create_defaultRoleIsMember() {
-		val member = member()
+		val member = Member.create(Email("test@example.com"), "홍길동", "길동이")
 
 		assertThat(member.role).isEqualTo(Role.MEMBER)
 	}
@@ -34,7 +33,7 @@ class MemberTest {
 	@Test
 	@DisplayName("Member 생성 시 profileImageKey는 null이다")
 	fun create_profileImageKeyIsNull() {
-		val member = member()
+		val member = Member.create(Email("test@example.com"), "홍길동", "길동이")
 
 		assertThat(member.profileImageKey).isNull()
 	}
@@ -42,7 +41,7 @@ class MemberTest {
 	@Test
 	@DisplayName("Member 생성 시 avatarColor가 할당된다")
 	fun create_avatarColorIsAssigned() {
-		val member = member()
+		val member = Member.create(Email("test@example.com"), "홍길동", "길동이")
 
 		assertThat(member.avatarColor).isIn(*AvatarColor.values())
 	}
@@ -50,7 +49,7 @@ class MemberTest {
 	@Test
 	@DisplayName("withdraw 호출 시 상태가 DELETED가 된다")
 	fun withdraw_statusBecomesDeleted() {
-		val member = member()
+		val member = Member.create(Email("test@example.com"), "홍길동", "길동이")
 
 		member.withdraw()
 
@@ -60,7 +59,7 @@ class MemberTest {
 	@Test
 	@DisplayName("withdraw 호출 시 deletedAt이 세팅된다")
 	fun withdraw_deletedAtIsSet() {
-		val member = member()
+		val member = Member.create(Email("test@example.com"), "홍길동", "길동이")
 
 		member.withdraw()
 
@@ -70,7 +69,7 @@ class MemberTest {
 	@Test
 	@DisplayName("이미 탈퇴한 멤버를 다시 withdraw하면 예외가 발생한다")
 	fun withdraw_whenAlreadyDeleted_throwsException() {
-		val member = member()
+		val member = Member.create(Email("test@example.com"), "홍길동", "길동이")
 		member.withdraw()
 
 		assertThatThrownBy { member.withdraw() }
@@ -80,7 +79,7 @@ class MemberTest {
 	@Test
 	@DisplayName("updateProfile 호출 시 닉네임이 변경된다")
 	fun updateProfile_nicknameIsUpdated() {
-		val member = member()
+		val member = Member.create(Email("test@example.com"), "홍길동", "길동이")
 
 		member.updateProfile("새닉네임")
 
@@ -90,7 +89,7 @@ class MemberTest {
 	@Test
 	@DisplayName("닉네임이 2자 미만이면 예외가 발생한다")
 	fun updateProfile_withTooShortNickname_throwsException() {
-		val member = member()
+		val member = Member.create(Email("test@example.com"), "홍길동", "길동이")
 
 		assertThatThrownBy { member.updateProfile("a") }
 			.isInstanceOf(BusinessException::class.java)
@@ -101,7 +100,7 @@ class MemberTest {
 	@Test
 	@DisplayName("닉네임이 10자 초과이면 예외가 발생한다")
 	fun updateProfile_withTooLongNickname_throwsException() {
-		val member = member()
+		val member = Member.create(Email("test@example.com"), "홍길동", "길동이")
 
 		assertThatThrownBy { member.updateProfile("a".repeat(11)) }
 			.isInstanceOf(BusinessException::class.java)
@@ -112,7 +111,7 @@ class MemberTest {
 	@Test
 	@DisplayName("닉네임 앞뒤에 공백이 있으면 예외가 발생한다")
 	fun updateProfile_withLeadingOrTrailingWhitespace_throwsException() {
-		val member = member()
+		val member = Member.create(Email("test@example.com"), "홍길동", "길동이")
 
 		assertThatThrownBy { member.updateProfile(" 새닉네임 ") }
 			.isInstanceOf(BusinessException::class.java)
@@ -123,7 +122,7 @@ class MemberTest {
 	@Test
 	@DisplayName("PENDING 상태가 아닌 멤버가 completeOnboarding을 호출하면 예외가 발생한다")
 	fun completeOnboarding_whenAlreadyOnboarded_throwsException() {
-		val member = member(role = Role.MEMBER)
+		val member = Member.create(Email("test@example.com"), "홍길동", "길동이", Role.MEMBER)
 
 		assertThatThrownBy { member.completeOnboarding("새닉네임") }
 			.isInstanceOf(IllegalStateException::class.java)
@@ -133,7 +132,7 @@ class MemberTest {
 	@Test
 	@DisplayName("changeProfileImage 호출 시 profileImageKey가 변경된다")
 	fun changeProfileImage_keyIsUpdated() {
-		val member = member()
+		val member = Member.create(Email("test@example.com"), "홍길동", "길동이")
 
 		member.changeProfileImage("images/profile/new-key.png")
 
@@ -143,7 +142,7 @@ class MemberTest {
 	@Test
 	@DisplayName("빈 objectKey로 changeProfileImage 호출 시 예외가 발생한다")
 	fun changeProfileImage_withBlankKey_throwsException() {
-		val member = member()
+		val member = Member.create(Email("test@example.com"), "홍길동", "길동이")
 
 		assertThatThrownBy { member.changeProfileImage(" ") }
 			.isInstanceOf(IllegalArgumentException::class.java)
@@ -166,7 +165,7 @@ class MemberTest {
 	@Test
 	@DisplayName("isDeleted는 DELETED 상태일 때만 true를 반환한다")
 	fun isDeleted_returnsTrueOnlyWhenDeleted() {
-		val member = member()
+		val member = Member.create(Email("test@example.com"), "홍길동", "길동이")
 
 		assertThat(member.isDeleted()).isFalse()
 
@@ -174,11 +173,4 @@ class MemberTest {
 
 		assertThat(member.isDeleted()).isTrue()
 	}
-
-	private fun member(
-		email: String = "test@example.com",
-		name: String? = "홍길동",
-		nickname: String = "길동이",
-		role: Role = Role.MEMBER,
-	): Member = Member.create(TestIdFactory.memberId(), Email(email), name, nickname, role)
 }
