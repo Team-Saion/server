@@ -73,7 +73,6 @@ class InvitationService(
 		return IssuedInvitationResult(
 			invitationId = invitation.id.toString(),
 			token = invitation.token.value,
-			inviteUrl = "https://saion.app/i/${invitation.token.value}",
 			expiresAt = invitation.expiresAt,
 		)
 	}

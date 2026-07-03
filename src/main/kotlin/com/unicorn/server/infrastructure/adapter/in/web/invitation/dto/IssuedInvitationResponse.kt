@@ -6,11 +6,10 @@ import java.time.LocalDateTime
 data class IssuedInvitationResponse(
 	val invitationId: String,
 	val token: String,
-	val inviteUrl: String,
 	val expiresAt: LocalDateTime,
 ) {
 	companion object {
 		fun from(result: IssuedInvitationResult): IssuedInvitationResponse =
-			IssuedInvitationResponse(result.invitationId, result.token, result.inviteUrl, result.expiresAt)
+			IssuedInvitationResponse(result.invitationId, result.token, result.expiresAt)
 	}
 }
