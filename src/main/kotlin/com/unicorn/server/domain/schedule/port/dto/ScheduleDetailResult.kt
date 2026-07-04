@@ -21,6 +21,6 @@ data class ScheduleDetailResult(
 	val progressRate: Int,
 	val confirmations: List<ConfirmationCountResult>,
 	val myConfirmationType: ConfirmationType?,
-	val createdBy: Long,
+	val createdBy: String,
 	val createdAt: LocalDateTime,
 )

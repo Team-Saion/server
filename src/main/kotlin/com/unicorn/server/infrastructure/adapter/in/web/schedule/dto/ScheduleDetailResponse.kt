@@ -52,8 +52,8 @@ data class ScheduleDetailResponse(
 	@field:Schema(description = "내가 선택한 확인하기 종류. 미등록 또는 needConfirm=false이면 null.", nullable = true)
 	val myConfirmationType: ConfirmationType?,
 
-	@field:Schema(description = "작성자 memberId", example = "123")
-	val createdBy: Long,
+	@field:Schema(description = "작성자 memberId", example = "00000000-0000-0000-0000-000000000001")
+	val createdBy: String,
 
 	@field:Schema(description = "생성 일시", example = "2024-07-01T10:00:00")
 	val createdAt: LocalDateTime,
