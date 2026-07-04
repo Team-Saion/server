@@ -1,0 +1,26 @@
+package com.unicorn.server.domain.schedule.port.dto
+
+import com.unicorn.server.domain.schedule.enums.ConfirmationType
+import com.unicorn.server.domain.schedule.enums.ScheduleStatus
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+
+data class ScheduleDetailResult(
+	val scheduleId: Long,
+	val title: String,
+	val startDate: LocalDate,
+	val endDate: LocalDate,
+	val startTime: LocalTime?,
+	val endTime: LocalTime?,
+	val isAllDay: Boolean,
+	val needConfirm: Boolean,
+	val memo: String?,
+	val status: ScheduleStatus,
+	val dDay: Int?,
+	val progressRate: Int,
+	val confirmations: List<ConfirmationCountResult>,
+	val myConfirmationType: ConfirmationType?,
+	val createdBy: Long,
+	val createdAt: LocalDateTime,
+)
