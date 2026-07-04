@@ -79,8 +79,11 @@ class ScheduleController(
 				endDate = request.endDate,
 				startTime = request.startTime,
 				endTime = request.endTime,
-				needConfirm = request.needConfirm,
+				startTimeProvided = request.startTimeProvided,
+				endTimeProvided = request.endTimeProvided,
+				needConfirm = request.needConfirm!!,
 				memo = request.memo,
+				memoProvided = request.memoProvided,
 			),
 		)
 		return ApiResponse.success()

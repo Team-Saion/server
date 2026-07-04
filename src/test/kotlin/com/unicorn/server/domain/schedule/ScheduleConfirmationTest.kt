@@ -25,8 +25,8 @@ class ScheduleConfirmationTest {
 	}
 
 	@Test
-	@DisplayName("확인하기 종류 변경 시 수정자가 갱신된다")
-	fun changeType_updatesModifier() {
+	@DisplayName("확인하기 종류 변경 시 타입과 수정자가 갱신된다")
+	fun changeType_updatesTypeAndModifier() {
 		val confirmation = ScheduleConfirmation.create(
 			scheduleId = 1,
 			memberId = "member-1",
@@ -34,9 +34,9 @@ class ScheduleConfirmationTest {
 			createdBy = "member-1",
 		)
 
-		confirmation.changeType(ConfirmationType.CONFIRMED, "member-2")
+		confirmation.changeType(ConfirmationType.CANNOT_ATTEND, "member-2")
 
-		assertThat(confirmation.confirmationType).isEqualTo(ConfirmationType.CONFIRMED)
+		assertThat(confirmation.confirmationType).isEqualTo(ConfirmationType.CANNOT_ATTEND)
 		assertThat(confirmation.updatedBy).isEqualTo("member-2")
 	}
 }

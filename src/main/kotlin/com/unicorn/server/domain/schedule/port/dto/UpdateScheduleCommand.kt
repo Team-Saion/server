@@ -12,6 +12,9 @@ data class UpdateScheduleCommand(
 	val endDate: LocalDate?,
 	val startTime: LocalTime?,
 	val endTime: LocalTime?,
+	val startTimeProvided: Boolean,
+	val endTimeProvided: Boolean,
 	val needConfirm: Boolean,
 	val memo: String?,
+	val memoProvided: Boolean,
 )

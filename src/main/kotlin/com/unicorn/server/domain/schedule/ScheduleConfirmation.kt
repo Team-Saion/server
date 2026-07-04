@@ -2,6 +2,7 @@ package com.unicorn.server.domain.schedule
 
 import com.unicorn.server.domain.schedule.enums.ConfirmationType
 import java.time.LocalDateTime
+import java.time.ZoneId
 
 class ScheduleConfirmation private constructor(
 	val id: Long,
@@ -25,10 +26,11 @@ class ScheduleConfirmation private constructor(
 	fun changeType(newType: ConfirmationType, updatedBy: String) {
 		confirmationType = newType
 		this.updatedBy = updatedBy
-		updatedAt = LocalDateTime.now()
+		updatedAt = now()
 	}
 
 	companion object {
+		private val KST: ZoneId = ZoneId.of("Asia/Seoul")
 		private const val UNSAVED_ID = 0L
 
 		fun create(
@@ -37,7 +39,7 @@ class ScheduleConfirmation private constructor(
 			confirmationType: ConfirmationType,
 			createdBy: String,
 		): ScheduleConfirmation {
-			val now = LocalDateTime.now()
+			val now = now()
 			return ScheduleConfirmation(
 				id = UNSAVED_ID,
 				scheduleId = scheduleId,
@@ -69,5 +71,7 @@ class ScheduleConfirmation private constructor(
 			createdAt = createdAt,
 			updatedAt = updatedAt,
 		)
+
+		private fun now(): LocalDateTime = LocalDateTime.now(KST)
 	}
 }

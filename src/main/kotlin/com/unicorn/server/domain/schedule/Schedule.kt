@@ -6,6 +6,7 @@ import com.unicorn.server.domain.schedule.exception.ScheduleErrorCode
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 
 class Schedule private constructor(
@@ -63,17 +64,21 @@ class Schedule private constructor(
 		endDate: LocalDate?,
 		startTime: LocalTime?,
 		endTime: LocalTime?,
+		startTimeProvided: Boolean,
+		endTimeProvided: Boolean,
 		needConfirm: Boolean,
 		memo: String?,
+		memoProvided: Boolean,
 		updatedBy: String,
 	) {
 		val newTitle = title ?: this.title
 		val newStartDate = startDate ?: this.startDate
 		val newEndDate = endDate ?: this.endDate
-		val newStartTime = startTime ?: this.startTime
-		val newEndTime = endTime ?: this.endTime
+		val newStartTime = if (startTimeProvided) startTime else this.startTime
+		val newEndTime = if (endTimeProvided) endTime else this.endTime
+		val newMemo = if (memoProvided) memo else this.memo
 
-		validate(newTitle, newStartDate, newEndDate, newStartTime, newEndTime, memo)
+		validate(newTitle, newStartDate, newEndDate, newStartTime, newEndTime, newMemo)
 
 		this.title = newTitle
 		this.startDate = newStartDate
@@ -81,15 +86,15 @@ class Schedule private constructor(
 		this.startTime = newStartTime
 		this.endTime = newEndTime
 		this.needConfirm = needConfirm
-		this.memo = memo
+		this.memo = newMemo
 		this.updatedBy = updatedBy
-		this.updatedAt = LocalDateTime.now()
+		this.updatedAt = now()
 	}
 
 	fun delete(deletedBy: String) {
 		isDeleted = true
 		updatedBy = deletedBy
-		updatedAt = LocalDateTime.now()
+		updatedAt = now()
 	}
 
 	fun computeStatus(now: LocalDateTime): ScheduleStatus {
@@ -132,9 +137,10 @@ class Schedule private constructor(
 		LocalDateTime.of(startDate, startTime ?: LocalTime.of(0, 0))
 
 	private fun endDateTime(): LocalDateTime =
-		LocalDateTime.of(endDate, endTime ?: LocalTime.of(23, 59))
+		LocalDateTime.of(endDate, endTime ?: LocalTime.of(23, 59, 59))
 
 	companion object {
+		private val KST: ZoneId = ZoneId.of("Asia/Seoul")
 		private const val UNSAVED_ID = 0L
 		private const val MAX_TITLE_LENGTH = 30
 		private const val MAX_MEMO_LENGTH = 500
@@ -152,7 +158,7 @@ class Schedule private constructor(
 		): Schedule {
 			validate(title, startDate, endDate, startTime, endTime, memo)
 
-			val now = LocalDateTime.now()
+			val now = now()
 			return Schedule(
 				id = UNSAVED_ID,
 				circleId = circleId,
@@ -227,5 +233,7 @@ class Schedule private constructor(
 			}
 			if (memo != null && memo.length > MAX_MEMO_LENGTH) throw BusinessException(ScheduleErrorCode.MEMO_TOO_LONG)
 		}
+
+		private fun now(): LocalDateTime = LocalDateTime.now(KST)
 	}
 }
