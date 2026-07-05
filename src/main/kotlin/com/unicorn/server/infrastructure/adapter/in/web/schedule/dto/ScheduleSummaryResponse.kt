@@ -1,5 +1,6 @@
 package com.unicorn.server.infrastructure.adapter.`in`.web.schedule.dto
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.unicorn.server.domain.schedule.enums.ScheduleStatus
 import com.unicorn.server.domain.schedule.port.dto.ScheduleSummaryResult
 import io.swagger.v3.oas.annotations.media.Schema
@@ -27,6 +28,7 @@ data class ScheduleSummaryResponse(
 	val endTime: LocalTime?,
 
 	@field:Schema(description = "종일 일정 여부", example = "false")
+	@get:JsonProperty("isAllDay")
 	val isAllDay: Boolean,
 
 	@field:Schema(description = "확인하기 기능 활성 여부", example = "true")
