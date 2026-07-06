@@ -9,6 +9,7 @@ import com.unicorn.server.domain.schedule.port.`in`.UpdateScheduleInPort
 import com.unicorn.server.domain.schedule.port.dto.CreateScheduleCommand
 import com.unicorn.server.domain.schedule.port.dto.RegisterConfirmationCommand
 import com.unicorn.server.domain.schedule.port.dto.UpdateScheduleCommand
+import com.unicorn.server.domain.schedule.vo.ScheduleId
 import com.unicorn.server.infrastructure.adapter.`in`.web.common.dto.ApiResponse
 import com.unicorn.server.infrastructure.adapter.`in`.web.schedule.dto.CreateScheduleRequest
 import com.unicorn.server.infrastructure.adapter.`in`.web.schedule.dto.RegisterConfirmationRequest
@@ -66,12 +67,12 @@ class ScheduleController(
 	override fun updateSchedule(
 		@AuthenticationPrincipal memberId: String,
 		@PathVariable circleId: String,
-		@PathVariable scheduleId: Long,
+		@PathVariable scheduleId: String,
 		@RequestBody @Valid request: UpdateScheduleRequest,
 	): ApiResponse<Unit> {
 		updateScheduleInPort.update(
 			UpdateScheduleCommand(
-				scheduleId = scheduleId,
+				scheduleId = ScheduleId.of(scheduleId),
 				circleId = circleId,
 				memberId = memberId,
 				title = request.title,
@@ -93,9 +94,9 @@ class ScheduleController(
 	override fun deleteSchedule(
 		@AuthenticationPrincipal memberId: String,
 		@PathVariable circleId: String,
-		@PathVariable scheduleId: Long,
+		@PathVariable scheduleId: String,
 	): ApiResponse<Unit> {
-		deleteScheduleInPort.delete(scheduleId, circleId, memberId)
+		deleteScheduleInPort.delete(ScheduleId.of(scheduleId), circleId, memberId)
 		return ApiResponse.success()
 	}
 
@@ -114,9 +115,9 @@ class ScheduleController(
 	override fun getScheduleDetail(
 		@AuthenticationPrincipal memberId: String,
 		@PathVariable circleId: String,
-		@PathVariable scheduleId: Long,
+		@PathVariable scheduleId: String,
 	): ApiResponse<ScheduleDetailResponse> {
-		val result = getScheduleDetailInPort.getDetail(scheduleId, circleId, memberId)
+		val result = getScheduleDetailInPort.getDetail(ScheduleId.of(scheduleId), circleId, memberId)
 		return ApiResponse.success(ScheduleDetailResponse.from(result))
 	}
 
@@ -124,12 +125,12 @@ class ScheduleController(
 	override fun registerConfirmation(
 		@AuthenticationPrincipal memberId: String,
 		@PathVariable circleId: String,
-		@PathVariable scheduleId: Long,
+		@PathVariable scheduleId: String,
 		@RequestBody @Valid request: RegisterConfirmationRequest,
 	): ApiResponse<RegisterConfirmationResponse> {
 		val type = registerConfirmationInPort.register(
 			RegisterConfirmationCommand(
-				scheduleId = scheduleId,
+				scheduleId = ScheduleId.of(scheduleId),
 				circleId = circleId,
 				memberId = memberId,
 				confirmationType = request.confirmationType,

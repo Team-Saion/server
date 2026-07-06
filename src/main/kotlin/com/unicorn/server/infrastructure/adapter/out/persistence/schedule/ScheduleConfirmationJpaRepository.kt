@@ -9,7 +9,7 @@ import org.springframework.data.repository.query.Param
 
 interface ScheduleConfirmationJpaRepository : JpaRepository<ScheduleConfirmationEntity, Long> {
 
-	fun findByScheduleIdAndMemberId(scheduleId: Long, memberId: String): ScheduleConfirmationEntity?
+	fun findByScheduleIdAndMemberId(scheduleId: String, memberId: String): ScheduleConfirmationEntity?
 
 	@Query(
 		"""
@@ -19,11 +19,11 @@ interface ScheduleConfirmationJpaRepository : JpaRepository<ScheduleConfirmation
 			GROUP BY c.confirmationType
 		""",
 	)
-	fun countGroupByType(@Param("scheduleId") scheduleId: Long): List<ConfirmationTypeCountProjection>
+	fun countGroupByType(@Param("scheduleId") scheduleId: String): List<ConfirmationTypeCountProjection>
 
 	@Modifying(clearAutomatically = true, flushAutomatically = true)
 	@Query("DELETE FROM ScheduleConfirmationEntity c WHERE c.scheduleId = :scheduleId")
-	fun deleteAllByScheduleId(@Param("scheduleId") scheduleId: Long)
+	fun deleteAllByScheduleId(@Param("scheduleId") scheduleId: String)
 }
 
 interface ConfirmationTypeCountProjection {

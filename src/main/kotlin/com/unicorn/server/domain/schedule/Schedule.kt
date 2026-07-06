@@ -3,6 +3,7 @@ package com.unicorn.server.domain.schedule
 import com.unicorn.server.common.exception.BusinessException
 import com.unicorn.server.domain.schedule.enums.ScheduleStatus
 import com.unicorn.server.domain.schedule.exception.ScheduleErrorCode
+import com.unicorn.server.domain.schedule.vo.ScheduleId
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -10,7 +11,7 @@ import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 
 class Schedule private constructor(
-	val id: Long,
+	val id: ScheduleId,
 	val circleId: String,
 	title: String,
 	startDate: LocalDate,
@@ -141,11 +142,11 @@ class Schedule private constructor(
 
 	companion object {
 		private val KST: ZoneId = ZoneId.of("Asia/Seoul")
-		private const val UNSAVED_ID = 0L
 		private const val MAX_TITLE_LENGTH = 30
 		private const val MAX_MEMO_LENGTH = 500
 
 		fun create(
+			id: ScheduleId,
 			circleId: String,
 			title: String,
 			startDate: LocalDate,
@@ -160,7 +161,7 @@ class Schedule private constructor(
 
 			val now = now()
 			return Schedule(
-				id = UNSAVED_ID,
+				id = id,
 				circleId = circleId,
 				title = title,
 				startDate = startDate,
@@ -178,7 +179,7 @@ class Schedule private constructor(
 		}
 
 		fun reconstitute(
-			id: Long,
+			id: ScheduleId,
 			circleId: String,
 			title: String,
 			startDate: LocalDate,

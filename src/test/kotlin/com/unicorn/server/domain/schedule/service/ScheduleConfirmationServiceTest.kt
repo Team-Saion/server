@@ -11,6 +11,7 @@ import com.unicorn.server.domain.schedule.port.dto.SchedulePageCursor
 import com.unicorn.server.domain.schedule.port.out.CircleAccessOutPort
 import com.unicorn.server.domain.schedule.port.out.ScheduleConfirmationOutPort
 import com.unicorn.server.domain.schedule.port.out.ScheduleOutPort
+import com.unicorn.server.domain.schedule.vo.ScheduleId
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.DisplayName
@@ -144,7 +145,7 @@ class ScheduleConfirmationServiceTest {
 		)
 
 	private class FakeScheduleOutPort : ScheduleOutPort {
-		private val store = linkedMapOf<Long, Schedule>()
+		private val store = linkedMapOf<ScheduleId, Schedule>()
 
 		fun seed(schedule: Schedule) {
 			store[schedule.id] = schedule
@@ -152,9 +153,9 @@ class ScheduleConfirmationServiceTest {
 
 		override fun save(schedule: Schedule): Schedule = schedule
 
-		override fun findById(scheduleId: Long): Schedule? = store[scheduleId]
+		override fun findById(scheduleId: ScheduleId): Schedule? = store[scheduleId]
 
-		override fun findActiveByIdAndCircleId(scheduleId: Long, circleId: String): Schedule? =
+		override fun findActiveByIdAndCircleId(scheduleId: ScheduleId, circleId: String): Schedule? =
 			store[scheduleId]?.takeIf { it.circleId == circleId && !it.isDeleted }
 
 		override fun findActiveByCircleId(
@@ -172,7 +173,7 @@ class ScheduleConfirmationServiceTest {
 			store += confirmation
 		}
 
-		override fun findByScheduleIdAndMemberId(scheduleId: Long, memberId: String): ScheduleConfirmation? =
+		override fun findByScheduleIdAndMemberId(scheduleId: ScheduleId, memberId: String): ScheduleConfirmation? =
 			store.firstOrNull { it.scheduleId == scheduleId && it.memberId == memberId }
 
 		override fun save(confirmation: ScheduleConfirmation): ScheduleConfirmation {
@@ -182,9 +183,9 @@ class ScheduleConfirmationServiceTest {
 			return confirmation
 		}
 
-		override fun countGroupByType(scheduleId: Long): List<ConfirmationCountResult> = emptyList()
+		override fun countGroupByType(scheduleId: ScheduleId): List<ConfirmationCountResult> = emptyList()
 
-		override fun deleteAllByScheduleId(scheduleId: Long) {
+		override fun deleteAllByScheduleId(scheduleId: ScheduleId) {
 			store.removeIf { it.scheduleId == scheduleId }
 		}
 	}
@@ -205,7 +206,7 @@ class ScheduleConfirmationServiceTest {
 
 	companion object {
 		private const val CIRCLE_ID = "CC202506010000000001"
-		private const val SCHEDULE_ID = 1L
+		private val SCHEDULE_ID = ScheduleId.of("SC202407070000000001")
 		private const val MEMBER_ID = "member-1"
 	}
 }

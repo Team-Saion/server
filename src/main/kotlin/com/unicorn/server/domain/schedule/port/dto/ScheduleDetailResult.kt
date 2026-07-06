@@ -2,12 +2,13 @@ package com.unicorn.server.domain.schedule.port.dto
 
 import com.unicorn.server.domain.schedule.enums.ConfirmationType
 import com.unicorn.server.domain.schedule.enums.ScheduleStatus
+import com.unicorn.server.domain.schedule.vo.ScheduleId
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 
 data class ScheduleDetailResult(
-	val scheduleId: Long,
+	val scheduleId: ScheduleId,
 	val title: String,
 	val startDate: LocalDate,
 	val endDate: LocalDate,

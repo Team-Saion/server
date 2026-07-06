@@ -1,12 +1,13 @@
 package com.unicorn.server.domain.schedule
 
 import com.unicorn.server.domain.schedule.enums.ConfirmationType
+import com.unicorn.server.domain.schedule.vo.ScheduleId
 import java.time.LocalDateTime
 import java.time.ZoneId
 
 class ScheduleConfirmation private constructor(
 	val id: Long,
-	val scheduleId: Long,
+	val scheduleId: ScheduleId,
 	val memberId: String,
 	confirmationType: ConfirmationType,
 	val createdBy: String,
@@ -34,7 +35,7 @@ class ScheduleConfirmation private constructor(
 		private const val UNSAVED_ID = 0L
 
 		fun create(
-			scheduleId: Long,
+			scheduleId: ScheduleId,
 			memberId: String,
 			confirmationType: ConfirmationType,
 			createdBy: String,
@@ -54,7 +55,7 @@ class ScheduleConfirmation private constructor(
 
 		fun reconstitute(
 			id: Long,
-			scheduleId: Long,
+			scheduleId: ScheduleId,
 			memberId: String,
 			confirmationType: ConfirmationType,
 			createdBy: String,

@@ -13,6 +13,7 @@ import com.unicorn.server.domain.schedule.port.dto.ScheduleSummaryResult
 import com.unicorn.server.domain.schedule.port.out.CircleAccessOutPort
 import com.unicorn.server.domain.schedule.port.out.ScheduleConfirmationOutPort
 import com.unicorn.server.domain.schedule.port.out.ScheduleOutPort
+import com.unicorn.server.domain.schedule.vo.ScheduleId
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -58,7 +59,7 @@ class ScheduleQueryService(
 		)
 	}
 
-	override fun getDetail(scheduleId: Long, circleId: String, memberId: String): ScheduleDetailResult {
+	override fun getDetail(scheduleId: ScheduleId, circleId: String, memberId: String): ScheduleDetailResult {
 		if (!circleAccessOutPort.isMember(circleId, memberId)) {
 			throw BusinessException(ScheduleErrorCode.CIRCLE_ACCESS_DENIED)
 		}

@@ -4,6 +4,7 @@ import com.unicorn.server.common.exception.BusinessException
 import com.unicorn.server.domain.schedule.enums.ScheduleStatus
 import com.unicorn.server.domain.schedule.exception.ScheduleErrorCode
 import com.unicorn.server.domain.schedule.port.dto.SchedulePageCursor
+import com.unicorn.server.domain.schedule.vo.ScheduleId
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.DisplayName
@@ -16,11 +17,11 @@ import java.time.LocalTime
 class ScheduleTest {
 
 	@Test
-	@DisplayName("정상적인 일정 생성 시 미저장 ID와 생성자 정보가 세팅된다")
+	@DisplayName("정상적인 일정 생성 시 지정된 ID와 생성자 정보가 세팅된다")
 	fun create_withValidValues_setsInitialState() {
 		val schedule = createSchedule()
 
-		assertThat(schedule.id).isZero()
+		assertThat(schedule.id).isEqualTo(TEST_SCHEDULE_ID)
 		assertThat(schedule.createdBy).isEqualTo("member-1")
 		assertThat(schedule.updatedBy).isEqualTo("member-1")
 		assertThat(schedule.isDeleted).isFalse()
@@ -208,7 +209,7 @@ class ScheduleTest {
 	@DisplayName("커서는 일정 정렬 키를 인코딩하고 디코딩할 수 있다")
 	fun schedulePageCursor_encodeAndDecode_roundTrips() {
 		val schedule = Schedule.reconstitute(
-			id = 10,
+			id = TEST_SCHEDULE_ID,
 			circleId = "CC202506010000000001",
 			title = "제주도 여행",
 			startDate = LocalDate.of(2024, 8, 1),
@@ -230,7 +231,7 @@ class ScheduleTest {
 			SchedulePageCursor(
 				startDate = LocalDate.of(2024, 8, 1),
 				startTime = LocalTime.of(9, 0),
-				scheduleId = 10,
+				scheduleId = TEST_SCHEDULE_ID,
 			),
 		)
 	}
@@ -244,6 +245,7 @@ class ScheduleTest {
 		needConfirm: Boolean = true,
 		memo: String? = "숙소 체크인 15시",
 	): Schedule = Schedule.create(
+		id = TEST_SCHEDULE_ID,
 		circleId = "CC202506010000000001",
 		title = title,
 		startDate = startDate,
@@ -254,4 +256,8 @@ class ScheduleTest {
 		memo = memo,
 		createdBy = "member-1",
 	)
+
+	companion object {
+		private val TEST_SCHEDULE_ID = ScheduleId.of("SC202407070000000001")
+	}
 }

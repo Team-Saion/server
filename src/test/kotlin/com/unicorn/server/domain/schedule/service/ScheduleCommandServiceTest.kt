@@ -10,7 +10,9 @@ import com.unicorn.server.domain.schedule.port.dto.SchedulePageCursor
 import com.unicorn.server.domain.schedule.port.dto.UpdateScheduleCommand
 import com.unicorn.server.domain.schedule.port.out.CircleAccessOutPort
 import com.unicorn.server.domain.schedule.port.out.ScheduleConfirmationOutPort
+import com.unicorn.server.domain.schedule.port.out.ScheduleIdGenerator
 import com.unicorn.server.domain.schedule.port.out.ScheduleOutPort
+import com.unicorn.server.domain.schedule.vo.ScheduleId
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.DisplayName
@@ -18,6 +20,7 @@ import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.util.concurrent.atomic.AtomicLong
 
 @DisplayName("ScheduleCommandService 단위 테스트")
 class ScheduleCommandServiceTest {
@@ -25,10 +28,12 @@ class ScheduleCommandServiceTest {
 	private val scheduleOutPort = FakeScheduleOutPort()
 	private val confirmationOutPort = FakeScheduleConfirmationOutPort()
 	private val circleAccessOutPort = FakeCircleAccessOutPort()
+	private val scheduleIdGenerator = FakeScheduleIdGenerator()
 	private val scheduleCommandService = ScheduleCommandService(
 		scheduleOutPort,
 		confirmationOutPort,
 		circleAccessOutPort,
+		scheduleIdGenerator,
 	)
 
 	@Test
@@ -40,7 +45,7 @@ class ScheduleCommandServiceTest {
 
 		val scheduleId = scheduleCommandService.create(command)
 
-		assertThat(scheduleId).isEqualTo(1L)
+		assertThat(scheduleId.value).startsWith("SC")
 		assertThat(scheduleOutPort.saved).hasSize(1)
 		assertThat(scheduleOutPort.saved.single().title).isEqualTo("제주도 여행")
 	}
@@ -72,9 +77,9 @@ class ScheduleCommandServiceTest {
 	@DisplayName("작성자는 일정을 수정할 수 있다")
 	fun update_withAuthor_updatesSchedule() {
 		circleAccessOutPort.seedMember(CIRCLE_ID, MEMBER_ID)
-		scheduleOutPort.seed(schedule(id = 1L, createdBy = MEMBER_ID))
+		scheduleOutPort.seed(schedule(id = SCHEDULE_ID, createdBy = MEMBER_ID))
 		val command = UpdateScheduleCommand(
-			scheduleId = 1L,
+			scheduleId = SCHEDULE_ID,
 			circleId = CIRCLE_ID,
 			memberId = MEMBER_ID,
 			title = "수정된 제목",
@@ -91,7 +96,7 @@ class ScheduleCommandServiceTest {
 
 		scheduleCommandService.update(command)
 
-		val updated = scheduleOutPort.findById(1L)
+		val updated = scheduleOutPort.findById(SCHEDULE_ID)
 		assertThat(updated?.title).isEqualTo("수정된 제목")
 		assertThat(updated?.isAllDay).isTrue()
 		assertThat(updated?.needConfirm).isFalse()
@@ -103,9 +108,9 @@ class ScheduleCommandServiceTest {
 	@DisplayName("메모가 요청에 포함되지 않으면 기존 메모를 유지한다")
 	fun update_withoutMemoField_keepsExistingMemo() {
 		circleAccessOutPort.seedMember(CIRCLE_ID, MEMBER_ID)
-		scheduleOutPort.seed(schedule(id = 1L, createdBy = MEMBER_ID))
+		scheduleOutPort.seed(schedule(id = SCHEDULE_ID, createdBy = MEMBER_ID))
 		val command = UpdateScheduleCommand(
-			scheduleId = 1L,
+			scheduleId = SCHEDULE_ID,
 			circleId = CIRCLE_ID,
 			memberId = MEMBER_ID,
 			title = null,
@@ -122,16 +127,16 @@ class ScheduleCommandServiceTest {
 
 		scheduleCommandService.update(command)
 
-		assertThat(scheduleOutPort.findById(1L)?.memo).isEqualTo("숙소 체크인 15시")
+		assertThat(scheduleOutPort.findById(SCHEDULE_ID)?.memo).isEqualTo("숙소 체크인 15시")
 	}
 
 	@Test
 	@DisplayName("작성자도 initiator도 아니면 일정 수정 시 SCHEDULE_MODIFICATION_DENIED 예외가 발생한다")
 	fun update_withoutModificationPermission_throwsScheduleModificationDenied() {
 		circleAccessOutPort.seedMember(CIRCLE_ID, MEMBER_ID)
-		scheduleOutPort.seed(schedule(id = 1L, createdBy = "other-member"))
+		scheduleOutPort.seed(schedule(id = SCHEDULE_ID, createdBy = "other-member"))
 		val command = UpdateScheduleCommand(
-			scheduleId = 1L,
+			scheduleId = SCHEDULE_ID,
 			circleId = CIRCLE_ID,
 			memberId = MEMBER_ID,
 			title = "수정된 제목",
@@ -157,20 +162,20 @@ class ScheduleCommandServiceTest {
 	fun delete_withInitiator_deletesScheduleAndConfirmations() {
 		circleAccessOutPort.seedMember(CIRCLE_ID, MEMBER_ID)
 		circleAccessOutPort.seedInitiator(CIRCLE_ID, MEMBER_ID)
-		scheduleOutPort.seed(schedule(id = 1L, createdBy = "other-member"))
+		scheduleOutPort.seed(schedule(id = SCHEDULE_ID, createdBy = "other-member"))
 		confirmationOutPort.seed(
 			ScheduleConfirmation.create(
-				scheduleId = 1L,
+				scheduleId = SCHEDULE_ID,
 				memberId = MEMBER_ID,
 				confirmationType = com.unicorn.server.domain.schedule.enums.ConfirmationType.CONFIRMED,
 				createdBy = MEMBER_ID,
 			),
 		)
 
-		scheduleCommandService.delete(1L, CIRCLE_ID, MEMBER_ID)
+		scheduleCommandService.delete(SCHEDULE_ID, CIRCLE_ID, MEMBER_ID)
 
-		assertThat(scheduleOutPort.findById(1L)?.isDeleted).isTrue()
-		assertThat(confirmationOutPort.deletedScheduleIds).containsExactly(1L)
+		assertThat(scheduleOutPort.findById(SCHEDULE_ID)?.isDeleted).isTrue()
+		assertThat(confirmationOutPort.deletedScheduleIds).containsExactly(SCHEDULE_ID)
 	}
 
 	private fun createCommand(): CreateScheduleCommand =
@@ -187,7 +192,7 @@ class ScheduleCommandServiceTest {
 		)
 
 	private fun schedule(
-		id: Long,
+		id: ScheduleId,
 		createdBy: String,
 		needConfirm: Boolean = true,
 	): Schedule =
@@ -208,45 +213,28 @@ class ScheduleCommandServiceTest {
 			isDeleted = false,
 		)
 
+	private class FakeScheduleIdGenerator : ScheduleIdGenerator {
+		private val seq = AtomicLong(1)
+		override fun next(): ScheduleId = ScheduleId.generate(seq.getAndIncrement())
+	}
+
 	private class FakeScheduleOutPort : ScheduleOutPort {
-		private val store = linkedMapOf<Long, Schedule>()
+		private val store = linkedMapOf<ScheduleId, Schedule>()
 		val saved = mutableListOf<Schedule>()
-		private var nextId = 1L
 
 		fun seed(schedule: Schedule) {
 			store[schedule.id] = schedule
-			nextId = maxOf(nextId, schedule.id + 1)
 		}
 
 		override fun save(schedule: Schedule): Schedule {
-			val savedSchedule = if (schedule.id == 0L) {
-				Schedule.reconstitute(
-					id = nextId++,
-					circleId = schedule.circleId,
-					title = schedule.title,
-					startDate = schedule.startDate,
-					endDate = schedule.endDate,
-					startTime = schedule.startTime,
-					endTime = schedule.endTime,
-					needConfirm = schedule.needConfirm,
-					memo = schedule.memo,
-					createdBy = schedule.createdBy,
-					updatedBy = schedule.updatedBy,
-					createdAt = schedule.createdAt,
-					updatedAt = schedule.updatedAt,
-					isDeleted = schedule.isDeleted,
-				)
-			} else {
-				schedule
-			}
-			store[savedSchedule.id] = savedSchedule
-			saved += savedSchedule
-			return savedSchedule
+			store[schedule.id] = schedule
+			saved += schedule
+			return schedule
 		}
 
-		override fun findById(scheduleId: Long): Schedule? = store[scheduleId]
+		override fun findById(scheduleId: ScheduleId): Schedule? = store[scheduleId]
 
-		override fun findActiveByIdAndCircleId(scheduleId: Long, circleId: String): Schedule? =
+		override fun findActiveByIdAndCircleId(scheduleId: ScheduleId, circleId: String): Schedule? =
 			store[scheduleId]?.takeIf { it.circleId == circleId && !it.isDeleted }
 
 		override fun findActiveByCircleId(
@@ -258,13 +246,13 @@ class ScheduleCommandServiceTest {
 
 	private class FakeScheduleConfirmationOutPort : ScheduleConfirmationOutPort {
 		private val store = mutableListOf<ScheduleConfirmation>()
-		val deletedScheduleIds = mutableListOf<Long>()
+		val deletedScheduleIds = mutableListOf<ScheduleId>()
 
 		fun seed(confirmation: ScheduleConfirmation) {
 			store += confirmation
 		}
 
-		override fun findByScheduleIdAndMemberId(scheduleId: Long, memberId: String): ScheduleConfirmation? =
+		override fun findByScheduleIdAndMemberId(scheduleId: ScheduleId, memberId: String): ScheduleConfirmation? =
 			store.firstOrNull { it.scheduleId == scheduleId && it.memberId == memberId }
 
 		override fun save(confirmation: ScheduleConfirmation): ScheduleConfirmation {
@@ -273,9 +261,9 @@ class ScheduleCommandServiceTest {
 			return confirmation
 		}
 
-		override fun countGroupByType(scheduleId: Long): List<ConfirmationCountResult> = emptyList()
+		override fun countGroupByType(scheduleId: ScheduleId): List<ConfirmationCountResult> = emptyList()
 
-		override fun deleteAllByScheduleId(scheduleId: Long) {
+		override fun deleteAllByScheduleId(scheduleId: ScheduleId) {
 			deletedScheduleIds += scheduleId
 			store.removeIf { it.scheduleId == scheduleId }
 		}
@@ -309,5 +297,6 @@ class ScheduleCommandServiceTest {
 	companion object {
 		private const val CIRCLE_ID = "CC202506010000000001"
 		private const val MEMBER_ID = "member-1"
+		private val SCHEDULE_ID = ScheduleId.of("SC202407070000000001")
 	}
 }

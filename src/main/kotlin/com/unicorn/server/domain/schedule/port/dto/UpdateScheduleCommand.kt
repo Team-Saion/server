@@ -1,10 +1,11 @@
 package com.unicorn.server.domain.schedule.port.dto
 
+import com.unicorn.server.domain.schedule.vo.ScheduleId
 import java.time.LocalDate
 import java.time.LocalTime
 
 data class UpdateScheduleCommand(
-	val scheduleId: Long,
+	val scheduleId: ScheduleId,
 	val circleId: String,
 	val memberId: String,
 	val title: String?,

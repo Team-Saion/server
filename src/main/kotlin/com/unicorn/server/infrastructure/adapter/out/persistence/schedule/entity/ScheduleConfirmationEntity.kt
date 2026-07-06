@@ -2,6 +2,7 @@ package com.unicorn.server.infrastructure.adapter.out.persistence.schedule.entit
 
 import com.unicorn.server.domain.schedule.ScheduleConfirmation
 import com.unicorn.server.domain.schedule.enums.ConfirmationType
+import com.unicorn.server.domain.schedule.vo.ScheduleId
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -33,8 +34,8 @@ class ScheduleConfirmationEntity protected constructor() {
 	var id: Long? = null
 		protected set
 
-	@Column(name = "schedule_id", nullable = false)
-	var scheduleId: Long = 0
+	@Column(name = "schedule_id", nullable = false, length = 19)
+	var scheduleId: String = ""
 		protected set
 
 	@Column(name = "member_id", nullable = false, length = 100)
@@ -77,7 +78,7 @@ class ScheduleConfirmationEntity protected constructor() {
 
 	fun toDomain(): ScheduleConfirmation = ScheduleConfirmation.reconstitute(
 		id = requireNotNull(id) { "confirmation_id must not be null" },
-		scheduleId = scheduleId,
+		scheduleId = ScheduleId.of(scheduleId),
 		memberId = memberId,
 		confirmationType = confirmationType,
 		createdBy = requireNotNull(createdBy) { "createdBy must not be null" },
@@ -87,7 +88,7 @@ class ScheduleConfirmationEntity protected constructor() {
 	)
 
 	private fun applyDomain(confirmation: ScheduleConfirmation) {
-		scheduleId = confirmation.scheduleId
+		scheduleId = confirmation.scheduleId.value
 		memberId = confirmation.memberId
 		confirmationType = confirmation.confirmationType
 		updatedAt = confirmation.updatedAt

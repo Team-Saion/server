@@ -1,6 +1,7 @@
 package com.unicorn.server.domain.schedule
 
 import com.unicorn.server.domain.schedule.enums.ConfirmationType
+import com.unicorn.server.domain.schedule.vo.ScheduleId
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -12,7 +13,7 @@ class ScheduleConfirmationTest {
 	@DisplayName("확인하기 생성 시 미저장 ID와 생성자 정보가 세팅된다")
 	fun create_setsInitialState() {
 		val confirmation = ScheduleConfirmation.create(
-			scheduleId = 1,
+			scheduleId = ScheduleId.of("SC202407070000000001"),
 			memberId = "member-1",
 			confirmationType = ConfirmationType.CONFIRMED,
 			createdBy = "member-1",
@@ -28,7 +29,7 @@ class ScheduleConfirmationTest {
 	@DisplayName("확인하기 종류 변경 시 타입과 수정자가 갱신된다")
 	fun changeType_updatesTypeAndModifier() {
 		val confirmation = ScheduleConfirmation.create(
-			scheduleId = 1,
+			scheduleId = ScheduleId.of("SC202407070000000001"),
 			memberId = "member-1",
 			confirmationType = ConfirmationType.CONFIRMED,
 			createdBy = "member-1",

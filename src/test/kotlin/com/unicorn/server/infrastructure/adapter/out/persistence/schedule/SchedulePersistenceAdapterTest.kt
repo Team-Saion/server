@@ -2,6 +2,7 @@ package com.unicorn.server.infrastructure.adapter.out.persistence.schedule
 
 import com.unicorn.server.domain.schedule.Schedule
 import com.unicorn.server.domain.schedule.port.dto.SchedulePageCursor
+import com.unicorn.server.domain.schedule.port.out.ScheduleIdGenerator
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -19,6 +20,7 @@ import java.time.LocalTime
 @DisplayName("SchedulePersistenceAdapter 통합 테스트")
 class SchedulePersistenceAdapterTest(
 	@param:Autowired private val schedulePersistenceAdapter: SchedulePersistenceAdapter,
+	@param:Autowired private val scheduleIdGenerator: ScheduleIdGenerator,
 ) {
 
 	@Test
@@ -28,7 +30,7 @@ class SchedulePersistenceAdapterTest(
 
 		val result = schedulePersistenceAdapter.save(schedule)
 
-		assertThat(result.id).isPositive()
+		assertThat(result.id.value).startsWith("SC")
 		assertThat(result.circleId).isEqualTo("CC000000000000000101")
 		assertThat(result.title).isEqualTo("제주도 여행")
 		assertThat(result.createdBy).isEqualTo("member-1")
@@ -102,6 +104,7 @@ class SchedulePersistenceAdapterTest(
 		startTime: LocalTime? = LocalTime.of(9, 0),
 	): Schedule =
 		Schedule.create(
+			id = scheduleIdGenerator.next(),
 			circleId = circleId,
 			title = title,
 			startDate = startDate,

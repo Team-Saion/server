@@ -7,9 +7,9 @@ import org.springframework.data.repository.query.Param
 import java.time.LocalDate
 import java.time.LocalTime
 
-interface ScheduleJpaRepository : JpaRepository<ScheduleEntity, Long> {
+interface ScheduleJpaRepository : JpaRepository<ScheduleEntity, String> {
 
-	fun findByIdAndCircleIdAndDelYn(id: Long, circleId: String, delYn: String = "N"): ScheduleEntity?
+	fun findByIdAndCircleIdAndDelYn(id: String, circleId: String, delYn: String = "N"): ScheduleEntity?
 
 	@Query(
 		value = """
@@ -51,7 +51,7 @@ interface ScheduleJpaRepository : JpaRepository<ScheduleEntity, Long> {
 		@Param("circleId") circleId: String,
 		@Param("cursorDate") cursorDate: LocalDate,
 		@Param("cursorTime") cursorTime: LocalTime,
-		@Param("cursorId") cursorId: Long,
+		@Param("cursorId") cursorId: String,
 		@Param("size") size: Int,
 	): List<ScheduleEntity>
 }

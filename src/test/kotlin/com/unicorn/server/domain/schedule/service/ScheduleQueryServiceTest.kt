@@ -11,6 +11,7 @@ import com.unicorn.server.domain.schedule.port.dto.SchedulePageCursor
 import com.unicorn.server.domain.schedule.port.out.CircleAccessOutPort
 import com.unicorn.server.domain.schedule.port.out.ScheduleConfirmationOutPort
 import com.unicorn.server.domain.schedule.port.out.ScheduleOutPort
+import com.unicorn.server.domain.schedule.vo.ScheduleId
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.DisplayName
@@ -35,33 +36,33 @@ class ScheduleQueryServiceTest {
 	@DisplayName("일정 목록 조회 시 size보다 한 건 더 조회해 다음 커서를 만든다")
 	fun getList_withMoreResultsThanSize_returnsNextCursor() {
 		circleAccessOutPort.seedMember(CIRCLE_ID, MEMBER_ID)
-		scheduleOutPort.seed(schedule(id = 1L, startDate = LocalDate.now().plusDays(1)))
-		scheduleOutPort.seed(schedule(id = 2L, startDate = LocalDate.now().plusDays(2)))
+		scheduleOutPort.seed(schedule(id = SCHEDULE_ID_1, startDate = LocalDate.now().plusDays(1)))
+		scheduleOutPort.seed(schedule(id = SCHEDULE_ID_2, startDate = LocalDate.now().plusDays(2)))
 
 		val result = scheduleQueryService.getList(CIRCLE_ID, MEMBER_ID, cursor = null, size = 1)
 
 		assertThat(result.schedules).hasSize(1)
 		assertThat(result.hasNext).isTrue()
-		assertThat(result.nextCursor).isEqualTo(SchedulePageCursor.from(scheduleOutPort.findById(1L)!!).encode())
+		assertThat(result.nextCursor).isEqualTo(SchedulePageCursor.from(scheduleOutPort.findById(SCHEDULE_ID_1)!!).encode())
 	}
 
 	@Test
 	@DisplayName("일정 상세 조회 시 확인하기 카운트와 내 확인하기를 포함한다")
 	fun getDetail_withNeedConfirm_returnsConfirmationData() {
 		circleAccessOutPort.seedMember(CIRCLE_ID, MEMBER_ID)
-		scheduleOutPort.seed(schedule(id = 1L, needConfirm = true, createdBy = "author"))
+		scheduleOutPort.seed(schedule(id = SCHEDULE_ID_1, needConfirm = true, createdBy = "author"))
 		confirmationOutPort.seed(
 			ScheduleConfirmation.create(
-				scheduleId = 1L,
+				scheduleId = SCHEDULE_ID_1,
 				memberId = MEMBER_ID,
 				confirmationType = ConfirmationType.CONFIRMED,
 				createdBy = MEMBER_ID,
 			),
 		)
 
-		val result = scheduleQueryService.getDetail(1L, CIRCLE_ID, MEMBER_ID)
+		val result = scheduleQueryService.getDetail(SCHEDULE_ID_1, CIRCLE_ID, MEMBER_ID)
 
-		assertThat(result.scheduleId).isEqualTo(1L)
+		assertThat(result.scheduleId).isEqualTo(SCHEDULE_ID_1)
 		assertThat(result.confirmations).containsExactly(ConfirmationCountResult(ConfirmationType.CONFIRMED, 1))
 		assertThat(result.myConfirmationType).isEqualTo(ConfirmationType.CONFIRMED)
 		assertThat(result.createdBy).isEqualTo("author")
@@ -71,9 +72,9 @@ class ScheduleQueryServiceTest {
 	@DisplayName("확인하기를 사용하지 않는 일정 상세 조회 시 확인하기 정보는 비어 있다")
 	fun getDetail_withoutNeedConfirm_returnsEmptyConfirmationData() {
 		circleAccessOutPort.seedMember(CIRCLE_ID, MEMBER_ID)
-		scheduleOutPort.seed(schedule(id = 1L, needConfirm = false))
+		scheduleOutPort.seed(schedule(id = SCHEDULE_ID_1, needConfirm = false))
 
-		val result = scheduleQueryService.getDetail(1L, CIRCLE_ID, MEMBER_ID)
+		val result = scheduleQueryService.getDetail(SCHEDULE_ID_1, CIRCLE_ID, MEMBER_ID)
 
 		assertThat(result.confirmations).isEmpty()
 		assertThat(result.myConfirmationType).isNull()
@@ -104,14 +105,14 @@ class ScheduleQueryServiceTest {
 	fun getDetail_withMissingSchedule_throwsScheduleNotFound() {
 		circleAccessOutPort.seedMember(CIRCLE_ID, MEMBER_ID)
 
-		assertThatThrownBy { scheduleQueryService.getDetail(999L, CIRCLE_ID, MEMBER_ID) }
+		assertThatThrownBy { scheduleQueryService.getDetail(ScheduleId.of("SC999999999999999"), CIRCLE_ID, MEMBER_ID) }
 			.isInstanceOf(BusinessException::class.java)
 			.extracting { (it as BusinessException).errorCode }
 			.isEqualTo(ScheduleErrorCode.SCHEDULE_NOT_FOUND)
 	}
 
 	private fun schedule(
-		id: Long,
+		id: ScheduleId,
 		startDate: LocalDate = LocalDate.now().plusDays(1),
 		needConfirm: Boolean = true,
 		createdBy: String = "author",
@@ -134,7 +135,7 @@ class ScheduleQueryServiceTest {
 		)
 
 	private class FakeScheduleOutPort : ScheduleOutPort {
-		private val store = linkedMapOf<Long, Schedule>()
+		private val store = linkedMapOf<ScheduleId, Schedule>()
 
 		fun seed(schedule: Schedule) {
 			store[schedule.id] = schedule
@@ -145,9 +146,9 @@ class ScheduleQueryServiceTest {
 			return schedule
 		}
 
-		override fun findById(scheduleId: Long): Schedule? = store[scheduleId]
+		override fun findById(scheduleId: ScheduleId): Schedule? = store[scheduleId]
 
-		override fun findActiveByIdAndCircleId(scheduleId: Long, circleId: String): Schedule? =
+		override fun findActiveByIdAndCircleId(scheduleId: ScheduleId, circleId: String): Schedule? =
 			store[scheduleId]?.takeIf { it.circleId == circleId && !it.isDeleted }
 
 		override fun findActiveByCircleId(
@@ -157,31 +158,16 @@ class ScheduleQueryServiceTest {
 		): List<Schedule> =
 			store.values
 				.filter { it.circleId == circleId && !it.isDeleted }
-				.sortedWith(compareBy<Schedule> { it.startDate }.thenBy { it.startTime ?: LocalTime.MIDNIGHT }.thenBy { it.id })
+				.sortedWith(compareBy<Schedule> { it.startDate }.thenBy { it.startTime ?: LocalTime.MIDNIGHT }.thenBy { it.id.value })
 				.dropWhile { cursor != null && !isAfterCursor(it, cursor) }
 				.take(size)
 
-		private fun isAfterCursor(schedule: Schedule, cursor: SchedulePageCursor): Boolean =
-			compareValuesBy(
-				schedule,
-				cursor,
-				{ it.startDate },
-				{ it.startTime ?: LocalTime.MIDNIGHT },
-				{ it.scheduleId },
-			) > 0
-
-		private fun compareValuesBy(
-			schedule: Schedule,
-			cursor: SchedulePageCursor,
-			dateSelector: (Schedule) -> LocalDate,
-			timeSelector: (Schedule) -> LocalTime,
-			idSelector: (SchedulePageCursor) -> Long,
-		): Int {
-			val dateCompare = dateSelector(schedule).compareTo(cursor.startDate)
-			if (dateCompare != 0) return dateCompare
-			val timeCompare = timeSelector(schedule).compareTo(cursor.startTime ?: LocalTime.MIDNIGHT)
-			if (timeCompare != 0) return timeCompare
-			return schedule.id.compareTo(idSelector(cursor))
+		private fun isAfterCursor(schedule: Schedule, cursor: SchedulePageCursor): Boolean {
+			val dateCompare = schedule.startDate.compareTo(cursor.startDate)
+			if (dateCompare != 0) return dateCompare > 0
+			val timeCompare = (schedule.startTime ?: LocalTime.MIDNIGHT).compareTo(cursor.startTime ?: LocalTime.MIDNIGHT)
+			if (timeCompare != 0) return timeCompare > 0
+			return schedule.id.value > cursor.scheduleId.value
 		}
 	}
 
@@ -192,7 +178,7 @@ class ScheduleQueryServiceTest {
 			store += confirmation
 		}
 
-		override fun findByScheduleIdAndMemberId(scheduleId: Long, memberId: String): ScheduleConfirmation? =
+		override fun findByScheduleIdAndMemberId(scheduleId: ScheduleId, memberId: String): ScheduleConfirmation? =
 			store.firstOrNull { it.scheduleId == scheduleId && it.memberId == memberId }
 
 		override fun save(confirmation: ScheduleConfirmation): ScheduleConfirmation {
@@ -200,14 +186,14 @@ class ScheduleQueryServiceTest {
 			return confirmation
 		}
 
-		override fun countGroupByType(scheduleId: Long): List<ConfirmationCountResult> =
+		override fun countGroupByType(scheduleId: ScheduleId): List<ConfirmationCountResult> =
 			store
 				.filter { it.scheduleId == scheduleId }
 				.groupingBy { it.confirmationType }
 				.eachCount()
 				.map { (type, count) -> ConfirmationCountResult(type, count) }
 
-		override fun deleteAllByScheduleId(scheduleId: Long) {
+		override fun deleteAllByScheduleId(scheduleId: ScheduleId) {
 			store.removeIf { it.scheduleId == scheduleId }
 		}
 	}
@@ -229,5 +215,7 @@ class ScheduleQueryServiceTest {
 	companion object {
 		private const val CIRCLE_ID = "CC202506010000000001"
 		private const val MEMBER_ID = "member-1"
+		private val SCHEDULE_ID_1 = ScheduleId.of("SC202407070000000001")
+		private val SCHEDULE_ID_2 = ScheduleId.of("SC202407070000000002")
 	}
 }

@@ -10,7 +10,9 @@ import com.unicorn.server.domain.schedule.port.dto.CreateScheduleCommand
 import com.unicorn.server.domain.schedule.port.dto.UpdateScheduleCommand
 import com.unicorn.server.domain.schedule.port.out.CircleAccessOutPort
 import com.unicorn.server.domain.schedule.port.out.ScheduleConfirmationOutPort
+import com.unicorn.server.domain.schedule.port.out.ScheduleIdGenerator
 import com.unicorn.server.domain.schedule.port.out.ScheduleOutPort
+import com.unicorn.server.domain.schedule.vo.ScheduleId
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -20,9 +22,10 @@ class ScheduleCommandService(
 	private val scheduleOutPort: ScheduleOutPort,
 	private val scheduleConfirmationOutPort: ScheduleConfirmationOutPort,
 	private val circleAccessOutPort: CircleAccessOutPort,
+	private val scheduleIdGenerator: ScheduleIdGenerator,
 ) : CreateScheduleInPort, UpdateScheduleInPort, DeleteScheduleInPort {
 
-	override fun create(command: CreateScheduleCommand): Long {
+	override fun create(command: CreateScheduleCommand): ScheduleId {
 		if (!circleAccessOutPort.existsById(command.circleId)) {
 			throw BusinessException(ScheduleErrorCode.CIRCLE_NOT_FOUND)
 		}
@@ -30,7 +33,9 @@ class ScheduleCommandService(
 			throw BusinessException(ScheduleErrorCode.CIRCLE_ACCESS_DENIED)
 		}
 
+		val scheduleId = scheduleIdGenerator.next()
 		val schedule = Schedule.create(
+			id = scheduleId,
 			circleId = command.circleId,
 			title = command.title,
 			startDate = command.startDate,
@@ -75,7 +80,7 @@ class ScheduleCommandService(
 		scheduleOutPort.save(schedule)
 	}
 
-	override fun delete(scheduleId: Long, circleId: String, memberId: String) {
+	override fun delete(scheduleId: ScheduleId, circleId: String, memberId: String) {
 		if (!circleAccessOutPort.existsById(circleId)) {
 			throw BusinessException(ScheduleErrorCode.CIRCLE_NOT_FOUND)
 		}

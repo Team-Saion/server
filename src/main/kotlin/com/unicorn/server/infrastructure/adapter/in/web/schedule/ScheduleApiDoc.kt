@@ -114,8 +114,8 @@ interface ScheduleApiDoc {
 		@AuthenticationPrincipal memberId: String,
 		@Parameter(description = "써클 ID", example = "CC202506010000000001")
 		@PathVariable circleId: String,
-		@Parameter(description = "일정 ID", example = "1")
-		@PathVariable scheduleId: Long,
+		@Parameter(description = "일정 ID", example = "SC202407070000000001")
+		@PathVariable scheduleId: String,
 		@RequestBody @Valid request: UpdateScheduleRequest,
 	): ApiResponse<Unit>
 
@@ -147,8 +147,8 @@ interface ScheduleApiDoc {
 		@AuthenticationPrincipal memberId: String,
 		@Parameter(description = "써클 ID", example = "CC202506010000000001")
 		@PathVariable circleId: String,
-		@Parameter(description = "일정 ID", example = "1")
-		@PathVariable scheduleId: Long,
+		@Parameter(description = "일정 ID", example = "SC202407070000000001")
+		@PathVariable scheduleId: String,
 	): ApiResponse<Unit>
 
 	@Operation(
@@ -239,8 +239,8 @@ interface ScheduleApiDoc {
 		@AuthenticationPrincipal memberId: String,
 		@Parameter(description = "써클 ID", example = "CC202506010000000001")
 		@PathVariable circleId: String,
-		@Parameter(description = "일정 ID", example = "1")
-		@PathVariable scheduleId: Long,
+		@Parameter(description = "일정 ID", example = "SC202407070000000001")
+		@PathVariable scheduleId: String,
 	): ApiResponse<ScheduleDetailResponse>
 
 	@Operation(
@@ -279,8 +279,8 @@ interface ScheduleApiDoc {
 		@AuthenticationPrincipal memberId: String,
 		@Parameter(description = "써클 ID", example = "CC202506010000000001")
 		@PathVariable circleId: String,
-		@Parameter(description = "일정 ID", example = "1")
-		@PathVariable scheduleId: Long,
+		@Parameter(description = "일정 ID", example = "SC202407070000000001")
+		@PathVariable scheduleId: String,
 		@RequestBody @Valid request: RegisterConfirmationRequest,
 	): ApiResponse<RegisterConfirmationResponse>
 }

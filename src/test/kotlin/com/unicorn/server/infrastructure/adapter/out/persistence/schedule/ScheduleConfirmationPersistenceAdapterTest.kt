@@ -3,6 +3,7 @@ package com.unicorn.server.infrastructure.adapter.out.persistence.schedule
 import com.unicorn.server.domain.schedule.Schedule
 import com.unicorn.server.domain.schedule.ScheduleConfirmation
 import com.unicorn.server.domain.schedule.enums.ConfirmationType
+import com.unicorn.server.domain.schedule.port.out.ScheduleIdGenerator
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -20,6 +21,7 @@ import java.time.LocalTime
 class ScheduleConfirmationPersistenceAdapterTest(
 	@param:Autowired private val schedulePersistenceAdapter: SchedulePersistenceAdapter,
 	@param:Autowired private val scheduleConfirmationPersistenceAdapter: ScheduleConfirmationPersistenceAdapter,
+	@param:Autowired private val scheduleIdGenerator: ScheduleIdGenerator,
 ) {
 
 	@Test
@@ -95,6 +97,7 @@ class ScheduleConfirmationPersistenceAdapterTest(
 
 	private fun schedule(circleId: String): Schedule =
 		Schedule.create(
+			id = scheduleIdGenerator.next(),
 			circleId = circleId,
 			title = "제주도 여행",
 			startDate = LocalDate.of(2024, 8, 1),

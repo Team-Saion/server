@@ -404,7 +404,7 @@ class ScheduleControllerTest(
 	private fun memberToken(memberId: String): String =
 		jwtProvider.issue(memberId, Role.MEMBER).accessToken
 
-	private fun createSchedule(token: String, requestJson: String): Long {
+	private fun createSchedule(token: String, requestJson: String): String {
 		val response = mockMvc.perform(
 			post(BASE_URL)
 				.header(HttpHeaders.AUTHORIZATION, "Bearer $token")
@@ -413,10 +413,10 @@ class ScheduleControllerTest(
 		)
 			.andExpect(status().isCreated)
 			.andExpect(jsonPath("$.success").value(true))
-			.andExpect(jsonPath("$.data.scheduleId").isNumber)
+			.andExpect(jsonPath("$.data.scheduleId").isString)
 			.andReturn()
 			.response.contentAsString
-		return objectMapper.readTree(response).path("data").path("scheduleId").asLong()
+		return objectMapper.readTree(response).path("data").path("scheduleId").asText()
 	}
 
 	private fun createRequestJson(

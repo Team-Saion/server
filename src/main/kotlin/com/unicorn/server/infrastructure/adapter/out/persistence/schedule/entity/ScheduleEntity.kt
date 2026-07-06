@@ -1,10 +1,9 @@
 package com.unicorn.server.infrastructure.adapter.out.persistence.schedule.entity
 
 import com.unicorn.server.domain.schedule.Schedule
+import com.unicorn.server.domain.schedule.vo.ScheduleId
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Index
 import jakarta.persistence.Table
@@ -23,9 +22,8 @@ import java.time.LocalTime
 class ScheduleEntity protected constructor() {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@Column(name = "schedule_id", nullable = false)
-	var id: Long? = null
+	@Column(name = "schedule_id", nullable = false, length = 19)
+	var id: String = ""
 		protected set
 
 	@Column(name = "circle_id", nullable = false, length = 21)
@@ -81,9 +79,7 @@ class ScheduleEntity protected constructor() {
 		protected set
 
 	constructor(schedule: Schedule) : this() {
-		if (schedule.id != UNSAVED_ID) {
-			id = schedule.id
-		}
+		id = schedule.id.value
 		applyDomain(schedule)
 		createdAt = schedule.createdAt
 		createdBy = schedule.createdBy
@@ -94,7 +90,7 @@ class ScheduleEntity protected constructor() {
 	}
 
 	fun toDomain(): Schedule = Schedule.reconstitute(
-		id = requireNotNull(id) { "schedule_id must not be null" },
+		id = ScheduleId.of(id),
 		circleId = circleId,
 		title = title,
 		startDate = startDate,
@@ -122,9 +118,5 @@ class ScheduleEntity protected constructor() {
 		delYn = if (schedule.isDeleted) "Y" else "N"
 		updatedAt = schedule.updatedAt
 		updatedBy = schedule.updatedBy
-	}
-
-	companion object {
-		private const val UNSAVED_ID = 0L
 	}
 }

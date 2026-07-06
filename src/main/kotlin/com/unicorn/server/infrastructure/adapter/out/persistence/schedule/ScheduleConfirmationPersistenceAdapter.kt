@@ -4,6 +4,7 @@ import com.unicorn.server.common.annotation.PersistenceAdapter
 import com.unicorn.server.domain.schedule.ScheduleConfirmation
 import com.unicorn.server.domain.schedule.port.dto.ConfirmationCountResult
 import com.unicorn.server.domain.schedule.port.out.ScheduleConfirmationOutPort
+import com.unicorn.server.domain.schedule.vo.ScheduleId
 import com.unicorn.server.infrastructure.adapter.out.persistence.schedule.entity.ScheduleConfirmationEntity
 import org.springframework.transaction.annotation.Transactional
 
@@ -13,8 +14,8 @@ class ScheduleConfirmationPersistenceAdapter(
 ) : ScheduleConfirmationOutPort {
 
 	@Transactional(readOnly = true)
-	override fun findByScheduleIdAndMemberId(scheduleId: Long, memberId: String): ScheduleConfirmation? =
-		scheduleConfirmationJpaRepository.findByScheduleIdAndMemberId(scheduleId, memberId)?.toDomain()
+	override fun findByScheduleIdAndMemberId(scheduleId: ScheduleId, memberId: String): ScheduleConfirmation? =
+		scheduleConfirmationJpaRepository.findByScheduleIdAndMemberId(scheduleId.value, memberId)?.toDomain()
 
 	@Transactional
 	override fun save(confirmation: ScheduleConfirmation): ScheduleConfirmation {
@@ -30,13 +31,13 @@ class ScheduleConfirmationPersistenceAdapter(
 	}
 
 	@Transactional(readOnly = true)
-	override fun countGroupByType(scheduleId: Long): List<ConfirmationCountResult> =
-		scheduleConfirmationJpaRepository.countGroupByType(scheduleId)
+	override fun countGroupByType(scheduleId: ScheduleId): List<ConfirmationCountResult> =
+		scheduleConfirmationJpaRepository.countGroupByType(scheduleId.value)
 			.map { ConfirmationCountResult(type = it.getType(), count = it.getCount().toInt()) }
 
 	@Transactional
-	override fun deleteAllByScheduleId(scheduleId: Long) {
-		scheduleConfirmationJpaRepository.deleteAllByScheduleId(scheduleId)
+	override fun deleteAllByScheduleId(scheduleId: ScheduleId) {
+		scheduleConfirmationJpaRepository.deleteAllByScheduleId(scheduleId.value)
 	}
 
 	companion object {

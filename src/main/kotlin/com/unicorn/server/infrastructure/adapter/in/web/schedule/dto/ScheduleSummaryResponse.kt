@@ -9,8 +9,8 @@ import java.time.LocalTime
 
 @Schema(description = "일정 요약 정보")
 data class ScheduleSummaryResponse(
-	@field:Schema(description = "일정 ID", example = "1")
-	val scheduleId: Long,
+	@field:Schema(description = "일정 ID", example = "SC202407070000000001")
+	val scheduleId: String,
 
 	@field:Schema(description = "일정 제목", example = "제주도 여행")
 	val title: String,
@@ -83,7 +83,7 @@ data class ScheduleSummaryResponse(
 ) {
 	companion object {
 		fun from(result: ScheduleSummaryResult) = ScheduleSummaryResponse(
-			scheduleId = result.scheduleId,
+			scheduleId = result.scheduleId.value,
 			title = result.title,
 			startDate = result.startDate,
 			endDate = result.endDate,
