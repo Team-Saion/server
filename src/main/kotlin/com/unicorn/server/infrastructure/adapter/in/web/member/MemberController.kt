@@ -1,5 +1,6 @@
 package com.unicorn.server.infrastructure.adapter.`in`.web.member
 
+import com.unicorn.server.domain.member.Member
 import com.unicorn.server.domain.member.port.`in`.CompleteOnboardingInPort
 import com.unicorn.server.domain.member.port.`in`.GetMemberInPort
 import com.unicorn.server.domain.member.port.`in`.GetOnboardingInfoInPort
@@ -17,6 +18,7 @@ import com.unicorn.server.infrastructure.adapter.`in`.web.member.dto.OnboardingI
 import com.unicorn.server.infrastructure.adapter.`in`.web.member.dto.TokenResponse
 import com.unicorn.server.infrastructure.adapter.`in`.web.member.dto.UpdateProfileRequest
 import jakarta.validation.Valid
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.MediaType
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -40,6 +42,7 @@ class MemberController(
 	private val logoutInPort: LogoutInPort,
 	private val withdrawMemberInPort: WithdrawMemberInPort,
 	private val completeOnboardingInPort: CompleteOnboardingInPort,
+	@param:Value("\${app.server.url}") private val serverUrl: String,
 ) : MemberApiDoc {
 
 	// GET /api/v1/members/me - 내 프로필을 조회한다.
@@ -48,7 +51,7 @@ class MemberController(
 		@AuthenticationPrincipal memberId: String,
 	): ApiResponse<MemberResponse> {
 		val member = getMemberInPort.getById(memberId)
-		return ApiResponse.success(MemberResponse.from(member))
+		return ApiResponse.success(toMemberResponse(member))
 	}
 
 	// GET /api/v1/members/me/onboarding-info - 온보딩 사전정보를 조회한다.
@@ -80,7 +83,7 @@ class MemberController(
 		@RequestBody @Valid request: UpdateProfileRequest,
 	): ApiResponse<MemberResponse> {
 		val member = updateProfileInPort.updateProfile(memberId, UpdateProfileCommand(request.nickname))
-		return ApiResponse.success(MemberResponse.from(member))
+		return ApiResponse.success(toMemberResponse(member))
 	}
 
 	// POST /api/v1/members/me/profile-image - 프로필 이미지를 업로드한다.
@@ -96,7 +99,7 @@ class MemberController(
 			inputStream = image.inputStream,
 		)
 		val member = uploadProfileImageInPort.uploadProfileImage(memberId, command)
-		return ApiResponse.success(MemberResponse.from(member))
+		return ApiResponse.success(toMemberResponse(member))
 	}
 
 	// POST /api/v1/members/me/logout - 리프레시 토큰을 무효화하고 로그아웃한다.
@@ -116,4 +119,8 @@ class MemberController(
 		withdrawMemberInPort.withdraw(memberId)
 		return ApiResponse.success()
 	}
+
+	// profileImageKey를 서버 baseUrl과 조합해 조회 가능한 URL로 변환해 응답 DTO를 만든다.
+	private fun toMemberResponse(member: Member): MemberResponse =
+		MemberResponse.from(member, member.profileImageKey?.let { "$serverUrl/$it" })
 }
