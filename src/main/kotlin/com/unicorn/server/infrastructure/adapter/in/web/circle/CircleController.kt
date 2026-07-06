@@ -5,6 +5,7 @@ import com.unicorn.server.domain.circle.port.`in`.CircleInPort
 import com.unicorn.server.infrastructure.adapter.`in`.web.circle.dto.CircleSummaryResponse
 import com.unicorn.server.infrastructure.adapter.`in`.web.circle.dto.CreateCircleRequest
 import com.unicorn.server.infrastructure.adapter.`in`.web.common.dto.ApiResponse
+import jakarta.validation.Valid
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
@@ -26,7 +27,7 @@ class CircleController(
 	@PostMapping
 	override fun create(
 		@AuthenticationPrincipal memberId: String,
-		@RequestBody request: CreateCircleRequest,
+		@RequestBody @Valid request: CreateCircleRequest,
 	): ApiResponse<CircleSummaryResponse> =
 		ApiResponse.created(CircleSummaryResponse.from(circleInPort.create(memberId, CreateCircleCommand(request.name))))
 }
