@@ -46,6 +46,16 @@ class CircleMember internal constructor(
 		updatedAt = LocalDateTime.now()
 	}
 
+	fun rejoin(newNickname: String) {
+		if (status != CircleMemberStatus.LEFT) {
+			throw BusinessException(CircleErrorCode.ALREADY_JOINED)
+		}
+		status = CircleMemberStatus.ACTIVE
+		nickname = validateNickname(newNickname)
+		leftAt = null
+		updatedAt = LocalDateTime.now()
+	}
+
 	companion object {
 		fun createInitiator(id: CircleMemberId, circleId: CircleId, memberId: MemberId, nickname: String): CircleMember {
 			val now = LocalDateTime.now()

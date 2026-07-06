@@ -69,6 +69,7 @@ class CircleServiceTest {
 		}
 		override fun findById(circleId: CircleId): Circle? = circles[circleId]
 		override fun findAllByOwnerId(ownerId: MemberId): List<Circle> = circles.values.filter { it.ownerId == ownerId }
+		override fun findAllByIds(circleIds: Collection<CircleId>): Map<CircleId, Circle> = circles.filter { it.key in circleIds }
 	}
 
 	private class FakeCircleMemberOutPort : CircleMemberOutPort {
@@ -82,6 +83,7 @@ class CircleServiceTest {
 		override fun findAllActiveByCircleId(circleId: CircleId) = members.filter { it.circleId == circleId }
 		override fun findAllActiveByMemberId(memberId: MemberId) = members.filter { it.memberId == memberId }
 		override fun existsByCircleAndMember(circleId: CircleId, memberId: MemberId) = members.any { it.circleId == circleId && it.memberId == memberId }
+		override fun existsActiveByCircleAndMember(circleId: CircleId, memberId: MemberId) = members.any { it.circleId == circleId && it.memberId == memberId && it.status == com.unicorn.server.domain.circle.enums.CircleMemberStatus.ACTIVE && !it.deleted }
 		override fun countActiveByCircleId(circleId: CircleId) = members.count { it.circleId == circleId }.toLong()
 	}
 

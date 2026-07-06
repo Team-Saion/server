@@ -8,4 +8,5 @@ interface CircleOutPort {
 	fun save(circle: Circle): Circle
 	fun findById(circleId: CircleId): Circle?
 	fun findAllByOwnerId(ownerId: MemberId): List<Circle>
+	fun findAllByIds(circleIds: Collection<CircleId>): Map<CircleId, Circle>
 }
