@@ -16,11 +16,11 @@ class SequenceGenerator(
 	}
 
 	fun nextValue(sequenceName: String): Long {
-		return if (usesNextValueFor) {
-			entityManager.createNativeQuery("CREATE SEQUENCE IF NOT EXISTS $sequenceName START WITH 1 INCREMENT BY 1").executeUpdate()
-			(entityManager.createNativeQuery("SELECT NEXT VALUE FOR $sequenceName").singleResult as Number).toLong()
+		val sql = if (usesNextValueFor) {
+			"SELECT NEXT VALUE FOR $sequenceName"
 		} else {
-			(entityManager.createNativeQuery("SELECT nextval('$sequenceName')").singleResult as Number).toLong()
+			"SELECT nextval('$sequenceName')"
 		}
+		return (entityManager.createNativeQuery(sql).singleResult as Number).toLong()
 	}
 }

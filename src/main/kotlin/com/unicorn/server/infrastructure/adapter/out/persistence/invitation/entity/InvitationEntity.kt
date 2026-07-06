@@ -29,7 +29,7 @@ class InvitationEntity internal constructor() : AuditableJpaEntity() {
 
 	@Enumerated(EnumType.STRING)
 	@Column(name = "type", nullable = false, length = 20)
-	lateinit var type: InvitationType
+	var type: InvitationType = InvitationType.CIRCLE
 		internal set
 
 	@Column(name = "target_id", nullable = false, length = 21)
@@ -54,11 +54,11 @@ class InvitationEntity internal constructor() : AuditableJpaEntity() {
 
 	@Enumerated(EnumType.STRING)
 	@Column(name = "status", nullable = false, length = 20)
-	lateinit var status: InvitationStatus
+	var status: InvitationStatus = InvitationStatus.ACTIVE
 		internal set
 
 	@Column(name = "expires_at", nullable = false)
-	lateinit var expiresAt: LocalDateTime
+	var expiresAt: LocalDateTime = LocalDateTime.MIN
 		internal set
 
 	@Column(name = "del_yn", nullable = false, length = 1)
