@@ -5,12 +5,15 @@ import com.unicorn.server.common.port.out.storage.ObjectStorage
 import com.unicorn.server.common.port.out.storage.ObjectType
 import com.unicorn.server.common.port.out.storage.ObjectUploadCommand
 import com.unicorn.server.domain.member.Member
+import com.unicorn.server.domain.member.enums.MemberStatus
+import com.unicorn.server.domain.member.enums.Role
 import com.unicorn.server.domain.member.event.MemberWithdrawnEvent
 import com.unicorn.server.domain.member.exception.MemberNotFoundException
 import com.unicorn.server.domain.member.exception.WithdrawnMemberException
 import com.unicorn.server.domain.member.port.`in`.GetMemberInPort
 import com.unicorn.server.domain.member.port.`in`.GetMemberProfileInPort
 import com.unicorn.server.domain.member.port.`in`.GetOnboardingInfoInPort
+import com.unicorn.server.domain.member.port.`in`.UpdateMemberStateInPort
 import com.unicorn.server.domain.member.port.`in`.UpdateProfileInPort
 import com.unicorn.server.domain.member.port.`in`.UploadProfileImageInPort
 import com.unicorn.server.domain.member.port.`in`.WithdrawMemberInPort
@@ -35,7 +38,7 @@ class MemberProfileService(
 	private val socialAccountOutPort: SocialAccountOutPort,
 	private val eventPublisher: EventPublisher,
 	private val objectStorage: ObjectStorage,
-) : GetMemberInPort, GetMemberProfileInPort, GetOnboardingInfoInPort, UpdateProfileInPort, WithdrawMemberInPort, UploadProfileImageInPort {
+) : GetMemberInPort, GetMemberProfileInPort, GetOnboardingInfoInPort, UpdateProfileInPort, WithdrawMemberInPort, UploadProfileImageInPort, UpdateMemberStateInPort {
 
 	// 멤버 식별자로 저장된 멤버를 조회한다.
 	override fun getById(memberId: String): Member = findMemberOrThrow(memberId)
@@ -146,6 +149,17 @@ class MemberProfileService(
 	private fun deleteQuietly(objectKey: String) {
 		runCatching { objectStorage.delete(objectKey) }
 			.onFailure { e -> log.warn("Failed to delete stale profile image - objectKey={}", objectKey, e) }
+	}
+
+	// 멤버 상태/역할을 강제로 변경한다. 탈퇴 상태에서도 재활성화할 수 있도록 탈퇴 가드를 우회해 직접 조회한다.
+	@Transactional
+	override fun updateMemberState(memberId: String, status: MemberStatus?, role: Role?): Member {
+		val member = memberOutPort.findById(MemberId.of(memberId)) ?: throw MemberNotFoundException(memberId)
+
+		status?.let { member.changeStatus(it) }
+		role?.let { member.changeRole(it) }
+
+		return memberOutPort.save(member)
 	}
 
 	companion object {
