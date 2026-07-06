@@ -209,7 +209,7 @@ class ScheduleTest {
 	fun schedulePageCursor_encodeAndDecode_roundTrips() {
 		val schedule = Schedule.reconstitute(
 			id = 10,
-			circleId = 1,
+			circleId = "CC202506010000000001",
 			title = "제주도 여행",
 			startDate = LocalDate.of(2024, 8, 1),
 			endDate = LocalDate.of(2024, 8, 3),
@@ -244,7 +244,7 @@ class ScheduleTest {
 		needConfirm: Boolean = true,
 		memo: String? = "숙소 체크인 15시",
 	): Schedule = Schedule.create(
-		circleId = 1,
+		circleId = "CC202506010000000001",
 		title = title,
 		startDate = startDate,
 		endDate = endDate,

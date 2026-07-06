@@ -28,7 +28,7 @@ class ScheduleQueryService(
 ) : GetScheduleListInPort, GetScheduleDetailInPort {
 
 	override fun getList(
-		circleId: Long,
+		circleId: String,
 		memberId: String,
 		cursor: String?,
 		size: Int,
@@ -58,7 +58,7 @@ class ScheduleQueryService(
 		)
 	}
 
-	override fun getDetail(scheduleId: Long, circleId: Long, memberId: String): ScheduleDetailResult {
+	override fun getDetail(scheduleId: Long, circleId: String, memberId: String): ScheduleDetailResult {
 		if (!circleAccessOutPort.isMember(circleId, memberId)) {
 			throw BusinessException(ScheduleErrorCode.CIRCLE_ACCESS_DENIED)
 		}

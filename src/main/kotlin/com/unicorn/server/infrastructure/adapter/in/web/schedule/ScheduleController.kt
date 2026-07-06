@@ -43,7 +43,7 @@ class ScheduleController(
 	@PostMapping
 	override fun createSchedule(
 		@AuthenticationPrincipal memberId: String,
-		@PathVariable circleId: Long,
+		@PathVariable circleId: String,
 		@RequestBody @Valid request: CreateScheduleRequest,
 	): ApiResponse<ScheduleIdResponse> {
 		val scheduleId = createScheduleInPort.create(
@@ -65,7 +65,7 @@ class ScheduleController(
 	@PatchMapping("/{scheduleId}")
 	override fun updateSchedule(
 		@AuthenticationPrincipal memberId: String,
-		@PathVariable circleId: Long,
+		@PathVariable circleId: String,
 		@PathVariable scheduleId: Long,
 		@RequestBody @Valid request: UpdateScheduleRequest,
 	): ApiResponse<Unit> {
@@ -92,7 +92,7 @@ class ScheduleController(
 	@DeleteMapping("/{scheduleId}")
 	override fun deleteSchedule(
 		@AuthenticationPrincipal memberId: String,
-		@PathVariable circleId: Long,
+		@PathVariable circleId: String,
 		@PathVariable scheduleId: Long,
 	): ApiResponse<Unit> {
 		deleteScheduleInPort.delete(scheduleId, circleId, memberId)
@@ -102,7 +102,7 @@ class ScheduleController(
 	@GetMapping
 	override fun getScheduleList(
 		@AuthenticationPrincipal memberId: String,
-		@PathVariable circleId: Long,
+		@PathVariable circleId: String,
 		@RequestParam cursor: String?,
 		@RequestParam(defaultValue = "20") size: Int,
 	): ApiResponse<ScheduleListResponse> {
@@ -113,7 +113,7 @@ class ScheduleController(
 	@GetMapping("/{scheduleId}")
 	override fun getScheduleDetail(
 		@AuthenticationPrincipal memberId: String,
-		@PathVariable circleId: Long,
+		@PathVariable circleId: String,
 		@PathVariable scheduleId: Long,
 	): ApiResponse<ScheduleDetailResponse> {
 		val result = getScheduleDetailInPort.getDetail(scheduleId, circleId, memberId)
@@ -123,7 +123,7 @@ class ScheduleController(
 	@PostMapping("/{scheduleId}/confirmations")
 	override fun registerConfirmation(
 		@AuthenticationPrincipal memberId: String,
-		@PathVariable circleId: Long,
+		@PathVariable circleId: String,
 		@PathVariable scheduleId: Long,
 		@RequestBody @Valid request: RegisterConfirmationRequest,
 	): ApiResponse<RegisterConfirmationResponse> {

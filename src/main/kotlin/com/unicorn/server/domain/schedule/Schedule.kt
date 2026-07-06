@@ -11,7 +11,7 @@ import java.time.temporal.ChronoUnit
 
 class Schedule private constructor(
 	val id: Long,
-	val circleId: Long,
+	val circleId: String,
 	title: String,
 	startDate: LocalDate,
 	endDate: LocalDate,
@@ -146,7 +146,7 @@ class Schedule private constructor(
 		private const val MAX_MEMO_LENGTH = 500
 
 		fun create(
-			circleId: Long,
+			circleId: String,
 			title: String,
 			startDate: LocalDate,
 			endDate: LocalDate,
@@ -179,7 +179,7 @@ class Schedule private constructor(
 
 		fun reconstitute(
 			id: Long,
-			circleId: Long,
+			circleId: String,
 			title: String,
 			startDate: LocalDate,
 			endDate: LocalDate,

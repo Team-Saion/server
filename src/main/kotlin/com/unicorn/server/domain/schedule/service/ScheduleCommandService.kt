@@ -75,7 +75,7 @@ class ScheduleCommandService(
 		scheduleOutPort.save(schedule)
 	}
 
-	override fun delete(scheduleId: Long, circleId: Long, memberId: String) {
+	override fun delete(scheduleId: Long, circleId: String, memberId: String) {
 		if (!circleAccessOutPort.existsById(circleId)) {
 			throw BusinessException(ScheduleErrorCode.CIRCLE_NOT_FOUND)
 		}
@@ -94,6 +94,6 @@ class ScheduleCommandService(
 		scheduleConfirmationOutPort.deleteAllByScheduleId(scheduleId)
 	}
 
-	private fun canModify(createdBy: String, circleId: Long, memberId: String): Boolean =
+	private fun canModify(createdBy: String, circleId: String, memberId: String): Boolean =
 		createdBy == memberId || circleAccessOutPort.isInitiator(circleId, memberId)
 }

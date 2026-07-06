@@ -1,15 +1,15 @@
 package com.unicorn.server.infrastructure.adapter.out.persistence.schedule
 
-import com.unicorn.server.infrastructure.adapter.out.persistence.schedule.entity.ScheduleJpaEntity
+import com.unicorn.server.infrastructure.adapter.out.persistence.schedule.entity.ScheduleEntity
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import java.time.LocalDate
 import java.time.LocalTime
 
-interface ScheduleJpaRepository : JpaRepository<ScheduleJpaEntity, Long> {
+interface ScheduleJpaRepository : JpaRepository<ScheduleEntity, Long> {
 
-	fun findByIdAndCircleIdAndDelYn(id: Long, circleId: Long, delYn: String = "N"): ScheduleJpaEntity?
+	fun findByIdAndCircleIdAndDelYn(id: Long, circleId: String, delYn: String = "N"): ScheduleEntity?
 
 	@Query(
 		value = """
@@ -25,9 +25,9 @@ interface ScheduleJpaRepository : JpaRepository<ScheduleJpaEntity, Long> {
 		nativeQuery = true,
 	)
 	fun findFirstPage(
-		@Param("circleId") circleId: Long,
+		@Param("circleId") circleId: String,
 		@Param("size") size: Int,
-	): List<ScheduleJpaEntity>
+	): List<ScheduleEntity>
 
 	@Query(
 		value = """
@@ -48,10 +48,10 @@ interface ScheduleJpaRepository : JpaRepository<ScheduleJpaEntity, Long> {
 		nativeQuery = true,
 	)
 	fun findAfterCursor(
-		@Param("circleId") circleId: Long,
+		@Param("circleId") circleId: String,
 		@Param("cursorDate") cursorDate: LocalDate,
 		@Param("cursorTime") cursorTime: LocalTime,
 		@Param("cursorId") cursorId: Long,
 		@Param("size") size: Int,
-	): List<ScheduleJpaEntity>
+	): List<ScheduleEntity>
 }

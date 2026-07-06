@@ -246,11 +246,11 @@ class ScheduleCommandServiceTest {
 
 		override fun findById(scheduleId: Long): Schedule? = store[scheduleId]
 
-		override fun findActiveByIdAndCircleId(scheduleId: Long, circleId: Long): Schedule? =
+		override fun findActiveByIdAndCircleId(scheduleId: Long, circleId: String): Schedule? =
 			store[scheduleId]?.takeIf { it.circleId == circleId && !it.isDeleted }
 
 		override fun findActiveByCircleId(
-			circleId: Long,
+			circleId: String,
 			cursor: SchedulePageCursor?,
 			size: Int,
 		): List<Schedule> = store.values.filter { it.circleId == circleId && !it.isDeleted }.take(size)
@@ -282,32 +282,32 @@ class ScheduleCommandServiceTest {
 	}
 
 	private class FakeCircleAccessOutPort : CircleAccessOutPort {
-		private val circles = mutableSetOf<Long>()
-		private val members = mutableSetOf<Pair<Long, String>>()
-		private val initiators = mutableSetOf<Pair<Long, String>>()
+		private val circles = mutableSetOf<String>()
+		private val members = mutableSetOf<Pair<String, String>>()
+		private val initiators = mutableSetOf<Pair<String, String>>()
 
-		fun seedCircle(circleId: Long) {
+		fun seedCircle(circleId: String) {
 			circles += circleId
 		}
 
-		fun seedMember(circleId: Long, memberId: String) {
+		fun seedMember(circleId: String, memberId: String) {
 			seedCircle(circleId)
 			members += circleId to memberId
 		}
 
-		fun seedInitiator(circleId: Long, memberId: String) {
+		fun seedInitiator(circleId: String, memberId: String) {
 			initiators += circleId to memberId
 		}
 
-		override fun existsById(circleId: Long): Boolean = circleId in circles
+		override fun existsById(circleId: String): Boolean = circleId in circles
 
-		override fun isMember(circleId: Long, memberId: String): Boolean = circleId to memberId in members
+		override fun isMember(circleId: String, memberId: String): Boolean = circleId to memberId in members
 
-		override fun isInitiator(circleId: Long, memberId: String): Boolean = circleId to memberId in initiators
+		override fun isInitiator(circleId: String, memberId: String): Boolean = circleId to memberId in initiators
 	}
 
 	companion object {
-		private const val CIRCLE_ID = 1L
+		private const val CIRCLE_ID = "CC202506010000000001"
 		private const val MEMBER_ID = "member-1"
 	}
 }

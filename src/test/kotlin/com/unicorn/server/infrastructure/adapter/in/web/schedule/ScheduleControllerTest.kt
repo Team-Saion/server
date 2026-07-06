@@ -50,12 +50,12 @@ class ScheduleControllerTest(
 		@Bean
 		@Primary
 		fun fakeCircleAccessOutPort(): CircleAccessOutPort = object : CircleAccessOutPort {
-			override fun existsById(circleId: Long): Boolean = circleId == CIRCLE_ID
+			override fun existsById(circleId: String): Boolean = circleId == CIRCLE_ID
 
-			override fun isMember(circleId: Long, memberId: String): Boolean =
+			override fun isMember(circleId: String, memberId: String): Boolean =
 				circleId == CIRCLE_ID && memberId in setOf(AUTHOR_ID, INITIATOR_ID, OTHER_MEMBER_ID)
 
-			override fun isInitiator(circleId: Long, memberId: String): Boolean =
+			override fun isInitiator(circleId: String, memberId: String): Boolean =
 				circleId == CIRCLE_ID && memberId == INITIATOR_ID
 		}
 	}
@@ -440,7 +440,7 @@ class ScheduleControllerTest(
 	)
 
 	companion object {
-		private const val CIRCLE_ID = 1L
+		private const val CIRCLE_ID = "CC202506010000000001"
 		private const val BASE_URL = "/api/v1/circles/$CIRCLE_ID/schedules"
 		private const val AUTHOR_ID = "00000000-0000-0000-0000-000000000001"
 		private const val INITIATOR_ID = "00000000-0000-0000-0000-000000000002"

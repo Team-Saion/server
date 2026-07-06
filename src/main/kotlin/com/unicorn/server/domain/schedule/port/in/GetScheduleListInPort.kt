@@ -4,7 +4,7 @@ import com.unicorn.server.domain.schedule.port.dto.ScheduleListResult
 
 interface GetScheduleListInPort {
 	fun getList(
-		circleId: Long,
+		circleId: String,
 		memberId: String,
 		cursor: String?,
 		size: Int,

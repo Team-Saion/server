@@ -24,12 +24,12 @@ class SchedulePersistenceAdapterTest(
 	@Test
 	@DisplayName("일정을 저장하고 도메인으로 복원한다")
 	fun save_persistsAndReturnsDomain() {
-		val schedule = schedule(circleId = 101L, title = "제주도 여행")
+		val schedule = schedule(circleId = "CC000000000000000101", title = "제주도 여행")
 
 		val result = schedulePersistenceAdapter.save(schedule)
 
 		assertThat(result.id).isPositive()
-		assertThat(result.circleId).isEqualTo(101L)
+		assertThat(result.circleId).isEqualTo("CC000000000000000101")
 		assertThat(result.title).isEqualTo("제주도 여행")
 		assertThat(result.createdBy).isEqualTo("member-1")
 		assertThat(result.updatedBy).isEqualTo("member-1")
@@ -38,7 +38,7 @@ class SchedulePersistenceAdapterTest(
 	@Test
 	@DisplayName("기존 일정을 저장하면 같은 row를 갱신한다")
 	fun save_withExistingSchedule_updatesRow() {
-		val saved = schedulePersistenceAdapter.save(schedule(circleId = 102L, title = "제주도 여행"))
+		val saved = schedulePersistenceAdapter.save(schedule(circleId = "CC000000000000000102", title = "제주도 여행"))
 		saved.update(
 			title = "수정된 제목",
 			startDate = null,
@@ -66,11 +66,11 @@ class SchedulePersistenceAdapterTest(
 	@Test
 	@DisplayName("삭제되지 않은 일정만 circleId와 scheduleId로 조회한다")
 	fun findActiveByIdAndCircleId_excludesDeletedSchedule() {
-		val saved = schedulePersistenceAdapter.save(schedule(circleId = 103L, title = "제주도 여행"))
+		val saved = schedulePersistenceAdapter.save(schedule(circleId = "CC000000000000000103", title = "제주도 여행"))
 		saved.delete("member-1")
 		schedulePersistenceAdapter.save(saved)
 
-		val result = schedulePersistenceAdapter.findActiveByIdAndCircleId(saved.id, 103L)
+		val result = schedulePersistenceAdapter.findActiveByIdAndCircleId(saved.id, "CC000000000000000103")
 
 		assertThat(result).isNull()
 	}
@@ -79,24 +79,24 @@ class SchedulePersistenceAdapterTest(
 	@DisplayName("커서 이후 일정을 정렬 순서대로 조회한다")
 	fun findActiveByCircleId_withCursor_returnsSchedulesAfterCursor() {
 		val first = schedulePersistenceAdapter.save(
-			schedule(circleId = 104L, title = "첫 번째", startDate = LocalDate.of(2024, 8, 1), startTime = null),
+			schedule(circleId = "CC000000000000000104", title = "첫 번째", startDate = LocalDate.of(2024, 8, 1), startTime = null),
 		)
 		val second = schedulePersistenceAdapter.save(
-			schedule(circleId = 104L, title = "두 번째", startDate = LocalDate.of(2024, 8, 2), startTime = LocalTime.of(9, 0)),
+			schedule(circleId = "CC000000000000000104", title = "두 번째", startDate = LocalDate.of(2024, 8, 2), startTime = LocalTime.of(9, 0)),
 		)
 		val third = schedulePersistenceAdapter.save(
-			schedule(circleId = 104L, title = "세 번째", startDate = LocalDate.of(2024, 8, 3), startTime = LocalTime.of(9, 0)),
+			schedule(circleId = "CC000000000000000104", title = "세 번째", startDate = LocalDate.of(2024, 8, 3), startTime = LocalTime.of(9, 0)),
 		)
 
-		val firstPage = schedulePersistenceAdapter.findActiveByCircleId(104L, null, 2)
-		val secondPage = schedulePersistenceAdapter.findActiveByCircleId(104L, SchedulePageCursor.from(second), 2)
+		val firstPage = schedulePersistenceAdapter.findActiveByCircleId("CC000000000000000104", null, 2)
+		val secondPage = schedulePersistenceAdapter.findActiveByCircleId("CC000000000000000104", SchedulePageCursor.from(second), 2)
 
 		assertThat(firstPage.map { it.id }).containsExactly(first.id, second.id)
 		assertThat(secondPage.map { it.id }).containsExactly(third.id)
 	}
 
 	private fun schedule(
-		circleId: Long,
+		circleId: String,
 		title: String,
 		startDate: LocalDate = LocalDate.of(2024, 8, 1),
 		startTime: LocalTime? = LocalTime.of(9, 0),

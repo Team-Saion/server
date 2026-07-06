@@ -5,7 +5,7 @@ import java.time.LocalTime
 
 data class CreateScheduleCommand(
 	val memberId: String,
-	val circleId: Long,
+	val circleId: String,
 	val title: String,
 	val startDate: LocalDate,
 	val endDate: LocalDate,

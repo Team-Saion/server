@@ -5,7 +5,7 @@ import java.time.LocalTime
 
 data class UpdateScheduleCommand(
 	val scheduleId: Long,
-	val circleId: Long,
+	val circleId: String,
 	val memberId: String,
 	val title: String?,
 	val startDate: LocalDate?,

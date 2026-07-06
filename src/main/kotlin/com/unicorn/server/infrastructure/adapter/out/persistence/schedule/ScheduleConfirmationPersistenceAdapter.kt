@@ -4,7 +4,7 @@ import com.unicorn.server.common.annotation.PersistenceAdapter
 import com.unicorn.server.domain.schedule.ScheduleConfirmation
 import com.unicorn.server.domain.schedule.port.dto.ConfirmationCountResult
 import com.unicorn.server.domain.schedule.port.out.ScheduleConfirmationOutPort
-import com.unicorn.server.infrastructure.adapter.out.persistence.schedule.entity.ScheduleConfirmationJpaEntity
+import com.unicorn.server.infrastructure.adapter.out.persistence.schedule.entity.ScheduleConfirmationEntity
 import org.springframework.transaction.annotation.Transactional
 
 @PersistenceAdapter
@@ -19,11 +19,11 @@ class ScheduleConfirmationPersistenceAdapter(
 	@Transactional
 	override fun save(confirmation: ScheduleConfirmation): ScheduleConfirmation {
 		val entity = if (confirmation.id == UNSAVED_ID) {
-			ScheduleConfirmationJpaEntity(confirmation)
+			ScheduleConfirmationEntity(confirmation)
 		} else {
 			scheduleConfirmationJpaRepository.findById(confirmation.id)
 				.map { it.apply { update(confirmation) } }
-				.orElseGet { ScheduleConfirmationJpaEntity(confirmation) }
+				.orElseGet { ScheduleConfirmationEntity(confirmation) }
 		}
 
 		return scheduleConfirmationJpaRepository.save(entity).toDomain()

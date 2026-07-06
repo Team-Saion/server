@@ -20,7 +20,7 @@ import java.time.LocalTime
 		Index(name = "idx_schedule_circle_sort", columnList = "circle_id, del_yn, start_date, start_time, schedule_id"),
 	],
 )
-class ScheduleJpaEntity protected constructor() {
+class ScheduleEntity protected constructor() {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,8 +28,8 @@ class ScheduleJpaEntity protected constructor() {
 	var id: Long? = null
 		protected set
 
-	@Column(name = "circle_id", nullable = false)
-	var circleId: Long = 0
+	@Column(name = "circle_id", nullable = false, length = 21)
+	var circleId: String = ""
 		protected set
 
 	@Column(name = "title", nullable = false, length = 30)

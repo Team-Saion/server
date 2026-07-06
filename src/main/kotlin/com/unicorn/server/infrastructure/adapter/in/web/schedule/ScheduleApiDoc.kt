@@ -54,7 +54,7 @@ interface ScheduleApiDoc {
 	fun createSchedule(
 		@Parameter(hidden = true)
 		@AuthenticationPrincipal memberId: String,
-		@PathVariable circleId: Long,
+		@PathVariable circleId: String,
 		@RequestBody @Valid request: CreateScheduleRequest,
 	): ApiResponse<ScheduleIdResponse>
 
@@ -82,7 +82,7 @@ interface ScheduleApiDoc {
 	fun updateSchedule(
 		@Parameter(hidden = true)
 		@AuthenticationPrincipal memberId: String,
-		@PathVariable circleId: Long,
+		@PathVariable circleId: String,
 		@PathVariable scheduleId: Long,
 		@RequestBody @Valid request: UpdateScheduleRequest,
 	): ApiResponse<Unit>
@@ -106,7 +106,7 @@ interface ScheduleApiDoc {
 	fun deleteSchedule(
 		@Parameter(hidden = true)
 		@AuthenticationPrincipal memberId: String,
-		@PathVariable circleId: Long,
+		@PathVariable circleId: String,
 		@PathVariable scheduleId: Long,
 	): ApiResponse<Unit>
 
@@ -130,7 +130,7 @@ interface ScheduleApiDoc {
 	fun getScheduleList(
 		@Parameter(hidden = true)
 		@AuthenticationPrincipal memberId: String,
-		@PathVariable circleId: Long,
+		@PathVariable circleId: String,
 		@Parameter(description = "커서. 최초 요청 시 생략.")
 		@RequestParam cursor: String?,
 		@Parameter(description = "페이지 크기. 기본값 20, 최대 50.")
@@ -156,7 +156,7 @@ interface ScheduleApiDoc {
 	fun getScheduleDetail(
 		@Parameter(hidden = true)
 		@AuthenticationPrincipal memberId: String,
-		@PathVariable circleId: Long,
+		@PathVariable circleId: String,
 		@PathVariable scheduleId: Long,
 	): ApiResponse<ScheduleDetailResponse>
 
@@ -183,7 +183,7 @@ interface ScheduleApiDoc {
 	fun registerConfirmation(
 		@Parameter(hidden = true)
 		@AuthenticationPrincipal memberId: String,
-		@PathVariable circleId: Long,
+		@PathVariable circleId: String,
 		@PathVariable scheduleId: Long,
 		@RequestBody @Valid request: RegisterConfirmationRequest,
 	): ApiResponse<RegisterConfirmationResponse>

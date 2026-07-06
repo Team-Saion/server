@@ -4,7 +4,7 @@ import com.unicorn.server.common.annotation.PersistenceAdapter
 import com.unicorn.server.domain.schedule.Schedule
 import com.unicorn.server.domain.schedule.port.dto.SchedulePageCursor
 import com.unicorn.server.domain.schedule.port.out.ScheduleOutPort
-import com.unicorn.server.infrastructure.adapter.out.persistence.schedule.entity.ScheduleJpaEntity
+import com.unicorn.server.infrastructure.adapter.out.persistence.schedule.entity.ScheduleEntity
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalTime
 
@@ -16,11 +16,11 @@ class SchedulePersistenceAdapter(
 	@Transactional
 	override fun save(schedule: Schedule): Schedule {
 		val entity = if (schedule.id == UNSAVED_ID) {
-			ScheduleJpaEntity(schedule)
+			ScheduleEntity(schedule)
 		} else {
 			scheduleJpaRepository.findById(schedule.id)
 				.map { it.apply { update(schedule) } }
-				.orElseGet { ScheduleJpaEntity(schedule) }
+				.orElseGet { ScheduleEntity(schedule) }
 		}
 
 		return scheduleJpaRepository.save(entity).toDomain()
@@ -33,12 +33,12 @@ class SchedulePersistenceAdapter(
 			.orElse(null)
 
 	@Transactional(readOnly = true)
-	override fun findActiveByIdAndCircleId(scheduleId: Long, circleId: Long): Schedule? =
+	override fun findActiveByIdAndCircleId(scheduleId: Long, circleId: String): Schedule? =
 		scheduleJpaRepository.findByIdAndCircleIdAndDelYn(scheduleId, circleId)?.toDomain()
 
 	@Transactional(readOnly = true)
 	override fun findActiveByCircleId(
-		circleId: Long,
+		circleId: String,
 		cursor: SchedulePageCursor?,
 		size: Int,
 	): List<Schedule> {

@@ -25,7 +25,7 @@ class ScheduleConfirmationPersistenceAdapterTest(
 	@Test
 	@DisplayName("확인하기를 저장하고 도메인으로 복원한다")
 	fun save_persistsAndReturnsDomain() {
-		val schedule = schedulePersistenceAdapter.save(schedule(circleId = 201L))
+		val schedule = schedulePersistenceAdapter.save(schedule(circleId = "CC000000000000000201"))
 		val confirmation = ScheduleConfirmation.create(
 			scheduleId = schedule.id,
 			memberId = "member-1",
@@ -44,7 +44,7 @@ class ScheduleConfirmationPersistenceAdapterTest(
 	@Test
 	@DisplayName("같은 일정과 멤버의 확인하기를 저장하면 기존 row를 갱신한다")
 	fun save_withExistingScheduleAndMember_updatesRow() {
-		val schedule = schedulePersistenceAdapter.save(schedule(circleId = 202L))
+		val schedule = schedulePersistenceAdapter.save(schedule(circleId = "CC000000000000000202"))
 		val saved = scheduleConfirmationPersistenceAdapter.save(
 			ScheduleConfirmation.create(
 				scheduleId = schedule.id,
@@ -64,7 +64,7 @@ class ScheduleConfirmationPersistenceAdapterTest(
 	@Test
 	@DisplayName("확인하기 타입별 카운트를 조회한다")
 	fun countGroupByType_returnsCountsByType() {
-		val schedule = schedulePersistenceAdapter.save(schedule(circleId = 203L))
+		val schedule = schedulePersistenceAdapter.save(schedule(circleId = "CC000000000000000203"))
 		scheduleConfirmationPersistenceAdapter.save(
 			ScheduleConfirmation.create(schedule.id, "member-1", ConfirmationType.CONFIRMED, "member-1"),
 		)
@@ -83,7 +83,7 @@ class ScheduleConfirmationPersistenceAdapterTest(
 	@Test
 	@DisplayName("일정의 모든 확인하기를 삭제한다")
 	fun deleteAllByScheduleId_deletesConfirmations() {
-		val schedule = schedulePersistenceAdapter.save(schedule(circleId = 204L))
+		val schedule = schedulePersistenceAdapter.save(schedule(circleId = "CC000000000000000204"))
 		scheduleConfirmationPersistenceAdapter.save(
 			ScheduleConfirmation.create(schedule.id, "member-1", ConfirmationType.CONFIRMED, "member-1"),
 		)
@@ -93,7 +93,7 @@ class ScheduleConfirmationPersistenceAdapterTest(
 		assertThat(scheduleConfirmationPersistenceAdapter.findByScheduleIdAndMemberId(schedule.id, "member-1")).isNull()
 	}
 
-	private fun schedule(circleId: Long): Schedule =
+	private fun schedule(circleId: String): Schedule =
 		Schedule.create(
 			circleId = circleId,
 			title = "제주도 여행",

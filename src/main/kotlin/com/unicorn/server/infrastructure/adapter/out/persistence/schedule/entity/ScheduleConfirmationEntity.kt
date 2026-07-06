@@ -25,7 +25,7 @@ import java.time.LocalDateTime
 		Index(name = "idx_schedule_confirmation_schedule", columnList = "schedule_id"),
 	],
 )
-class ScheduleConfirmationJpaEntity protected constructor() {
+class ScheduleConfirmationEntity protected constructor() {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -8,10 +8,10 @@ interface ScheduleOutPort {
 
 	fun findById(scheduleId: Long): Schedule?
 
-	fun findActiveByIdAndCircleId(scheduleId: Long, circleId: Long): Schedule?
+	fun findActiveByIdAndCircleId(scheduleId: Long, circleId: String): Schedule?
 
 	fun findActiveByCircleId(
-		circleId: Long,
+		circleId: String,
 		cursor: SchedulePageCursor?,
 		size: Int,
 	): List<Schedule>
