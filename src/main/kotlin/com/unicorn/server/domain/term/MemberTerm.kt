@@ -5,7 +5,7 @@ import com.unicorn.server.domain.term.vo.MemberTermId
 import com.unicorn.server.domain.term.vo.TermId
 import java.time.LocalDateTime
 
-class MemberTerm private constructor(
+class MemberTerm internal constructor(
 	val id: MemberTermId?,
 	val memberId: MemberId,
 	val termId: TermId,
@@ -18,12 +18,5 @@ class MemberTerm private constructor(
 			termId = termId,
 			agreedAt = LocalDateTime.now(),
 		)
-
-		fun reconstitute(
-			id: MemberTermId,
-			memberId: MemberId,
-			termId: TermId,
-			agreedAt: LocalDateTime,
-		): MemberTerm = MemberTerm(id, memberId, termId, agreedAt)
 	}
 }

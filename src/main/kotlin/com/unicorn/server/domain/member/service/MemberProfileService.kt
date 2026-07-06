@@ -9,10 +9,12 @@ import com.unicorn.server.domain.member.event.MemberWithdrawnEvent
 import com.unicorn.server.domain.member.exception.MemberNotFoundException
 import com.unicorn.server.domain.member.exception.WithdrawnMemberException
 import com.unicorn.server.domain.member.port.`in`.GetMemberInPort
+import com.unicorn.server.domain.member.port.`in`.GetMemberProfileInPort
 import com.unicorn.server.domain.member.port.`in`.GetOnboardingInfoInPort
 import com.unicorn.server.domain.member.port.`in`.UpdateProfileInPort
 import com.unicorn.server.domain.member.port.`in`.UploadProfileImageInPort
 import com.unicorn.server.domain.member.port.`in`.WithdrawMemberInPort
+import com.unicorn.server.domain.member.port.dto.MemberProfileDto
 import com.unicorn.server.domain.member.port.dto.OnboardingInfoResult
 import com.unicorn.server.domain.member.port.dto.UpdateProfileCommand
 import com.unicorn.server.domain.member.port.dto.UploadProfileImageCommand
@@ -33,10 +35,22 @@ class MemberProfileService(
 	private val socialAccountOutPort: SocialAccountOutPort,
 	private val eventPublisher: EventPublisher,
 	private val objectStorage: ObjectStorage,
-) : GetMemberInPort, GetOnboardingInfoInPort, UpdateProfileInPort, WithdrawMemberInPort, UploadProfileImageInPort {
+) : GetMemberInPort, GetMemberProfileInPort, GetOnboardingInfoInPort, UpdateProfileInPort, WithdrawMemberInPort, UploadProfileImageInPort {
 
 	// 멤버 식별자로 저장된 멤버를 조회한다.
 	override fun getById(memberId: String): Member = findMemberOrThrow(memberId)
+
+	override fun getMemberProfile(memberId: String): MemberProfileDto? {
+		val member = memberOutPort.findById(MemberId.of(memberId)) ?: return null
+		val socialAccount = socialAccountOutPort.findByMemberId(member.id)
+		return MemberProfileDto(
+			memberId = member.id.toString(),
+			nickname = member.nickname,
+			avatarColor = member.avatarColor.name,
+			kakaoNickname = socialAccount?.kakaoNickname,
+			active = !member.isDeleted(),
+		)
+	}
 
 	// 온보딩 화면 표시를 위한 소셜 계정 정보와 멤버 기본 색상을 조회한다.
 	override fun getOnboardingInfo(memberId: String): OnboardingInfoResult {

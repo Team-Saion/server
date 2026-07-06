@@ -1,0 +1,1 @@
+-- reverted: member-related ids remain UUID-based varchar(36)

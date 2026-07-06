@@ -15,7 +15,7 @@ import java.time.LocalDateTime
 - TB_TERM은 append-only로 운영된다(기존 row를 UPDATE하지 않고 새 버전 row를 추가).
   따라서 이 객체도 일단 만들어지면 불변으로 다루는 것이 자연스럽다.
 */
-class Term private constructor(
+class Term internal constructor(
 	val id: TermId,
 	val termCode: TermCode,
 	val title: String,
@@ -25,19 +25,4 @@ class Term private constructor(
 	val effectiveAt: LocalDateTime,
 	val createdAt: LocalDateTime,
 	val updatedAt: LocalDateTime,
-) {
-	companion object {
-		// 저장소의 원시 상태를 도메인 객체로 복원한다.
-		fun reconstitute(
-			id: TermId,
-			termCode: TermCode,
-			title: String,
-			contentUrl: String?,
-			version: Int,
-			required: Boolean,
-			effectiveAt: LocalDateTime,
-			createdAt: LocalDateTime,
-			updatedAt: LocalDateTime,
-		): Term = Term(id, termCode, title, contentUrl, version, required, effectiveAt, createdAt, updatedAt)
-	}
-}
+)
