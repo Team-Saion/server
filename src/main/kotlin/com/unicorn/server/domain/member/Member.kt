@@ -78,6 +78,19 @@ class Member internal constructor(
 		updatedAt = LocalDateTime.now()
 	}
 
+	// 멤버 상태를 강제로 변경한다. DELETED로 전환 시 soft delete 시각을 기록하고, 그 외 상태에서는 비운다.
+	fun changeStatus(status: MemberStatus) {
+		this.status = status
+		deletedAt = if (status == MemberStatus.DELETED) deletedAt ?: LocalDateTime.now() else null
+		updatedAt = LocalDateTime.now()
+	}
+
+	// 멤버 역할을 강제로 변경한다.
+	fun changeRole(role: Role) {
+		this.role = role
+		updatedAt = LocalDateTime.now()
+	}
+
 	// 멤버가 탈퇴 상태인지 확인한다.
 	fun isDeleted(): Boolean = status == MemberStatus.DELETED
 
