@@ -5,7 +5,15 @@ import io.swagger.v3.oas.annotations.media.Schema
 
 @Schema(description = "확인하기 등록/변경 응답")
 data class RegisterConfirmationResponse(
-	@field:Schema(description = "최종 반영된 확인하기 종류", example = "CONFIRMED")
+	@field:Schema(
+		description = """
+			최종 반영된 확인하기 종류.
+			- CONFIRMED: 참석
+			- CANNOT_ATTEND: 불참
+		""",
+		example = "CONFIRMED",
+		allowableValues = ["CONFIRMED", "CANNOT_ATTEND"],
+	)
 	val confirmationType: ConfirmationType,
 ) {
 	companion object {

@@ -14,7 +14,7 @@ interface ScheduleJpaRepository : JpaRepository<ScheduleEntity, Long> {
 	@Query(
 		value = """
 			SELECT *
-			FROM tb_schedule
+			FROM schedule
 			WHERE circle_id = :circleId
 			  AND del_yn = 'N'
 			ORDER BY start_date ASC,
@@ -32,7 +32,7 @@ interface ScheduleJpaRepository : JpaRepository<ScheduleEntity, Long> {
 	@Query(
 		value = """
 			SELECT *
-			FROM tb_schedule
+			FROM schedule
 			WHERE circle_id = :circleId
 			  AND del_yn = 'N'
 			  AND (

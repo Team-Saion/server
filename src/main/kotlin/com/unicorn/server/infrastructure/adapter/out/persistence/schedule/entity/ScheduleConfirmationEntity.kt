@@ -17,7 +17,7 @@ import java.time.LocalDateTime
 // JpaConfig의 AuditorAware가 "system"을 반환하므로 확인하기 작성자 memberId를 보존하기 위해 감사 컬럼을 직접 매핑한다.
 @Entity
 @Table(
-	name = "tb_schedule_confirmation",
+	name = "schedule_confirmation",
 	uniqueConstraints = [
 		UniqueConstraint(name = "uq_schedule_confirmation_schedule_member", columnNames = ["schedule_id", "member_id"]),
 	],

@@ -15,7 +15,7 @@ import java.time.LocalTime
 // JpaConfig의 AuditorAware가 "system"을 반환하므로 작성자 권한 검증에 필요한 memberId를 보존하기 위해 감사 컬럼을 직접 매핑한다.
 @Entity
 @Table(
-	name = "tb_schedule",
+	name = "schedule",
 	indexes = [
 		Index(name = "idx_schedule_circle_sort", columnList = "circle_id, del_yn, start_date, start_time, schedule_id"),
 	],
