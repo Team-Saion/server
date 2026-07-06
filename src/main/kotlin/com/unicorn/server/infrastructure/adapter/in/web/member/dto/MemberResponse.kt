@@ -53,6 +53,13 @@ data class MemberResponse(
 	val profileImageKey: String?,
 
 	@field:Schema(
+		description = "프로필 이미지 객체 URL. 설정하지 않았으면 null이다.",
+		example = "https://dev.saion.app/images/profile/00000000-0000-0000-0000-000000000001.png",
+		nullable = true,
+	)
+	val profileImageUrl: String?,
+
+	@field:Schema(
 		description = "멤버 상태",
 		example = "ACTIVE",
 		allowableValues = ["ACTIVE", "DELETED"],
@@ -66,8 +73,8 @@ data class MemberResponse(
 	val createdAt: LocalDateTime,
 ) {
 	companion object {
-		// 도메인 멤버를 응답 DTO로 변환한다.
-		fun from(member: Member): MemberResponse = MemberResponse(
+		// 도메인 멤버를 응답 DTO로 변환한다. profileImageUrl은 objectKey로부터 호출부(어댑터)에서 미리 변환해 전달한다.
+		fun from(member: Member, profileImageUrl: String?): MemberResponse = MemberResponse(
 			id = member.id.toString(),
 			email = member.email?.value,
 			name = member.name,
@@ -75,6 +82,7 @@ data class MemberResponse(
 			role = member.role,
 			avatarColor = AvatarColorResponse.from(member.avatarColor),
 			profileImageKey = member.profileImageKey,
+			profileImageUrl = profileImageUrl,
 			status = member.status,
 			createdAt = member.createdAt,
 		)
