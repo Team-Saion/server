@@ -98,6 +98,7 @@ class HomeQueryServiceTest {
 		override fun join(circleId: String, memberId: String) = error("not used")
 		override fun isCircleMember(circleId: String, memberId: String): Boolean =
 			getCircleMembers(circleId).any { it.memberId == memberId && it.active }
+		override fun transferInitiator(circleId: String, currentInitiatorId: String, newInitiatorId: String) = error("not used")
 		fun put(circleId: String, dto: CircleMemberDto) { memberships.computeIfAbsent(circleId) { mutableListOf() }.add(dto) }
 	}
 

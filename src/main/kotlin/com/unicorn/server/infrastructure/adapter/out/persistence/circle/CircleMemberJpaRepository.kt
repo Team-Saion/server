@@ -9,5 +9,11 @@ interface CircleMemberJpaRepository : JpaRepository<CircleMemberEntity, String> 
 	fun findAllByCircleIdAndStatusAndDelYn(circleId: String, status: CircleMemberStatus, delYn: String): List<CircleMemberEntity>
 	fun findAllByMemberIdAndStatusAndDelYn(memberId: String, status: CircleMemberStatus, delYn: String): List<CircleMemberEntity>
 	fun existsByCircleIdAndMemberId(circleId: String, memberId: String): Boolean
+	fun existsByCircleIdAndMemberIdAndStatusAndDelYn(
+		circleId: String,
+		memberId: String,
+		status: CircleMemberStatus,
+		delYn: String,
+	): Boolean
 	fun countByCircleIdAndStatusAndDelYn(circleId: String, status: CircleMemberStatus, delYn: String): Long
 }

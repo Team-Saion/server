@@ -20,9 +20,17 @@ class CirclePolicyTest {
 	}
 
 	@Test
-	@DisplayName("특수문자가 포함된 써클 이름으로 생성 시 예외가 발생한다")
-	fun create_withInvalidCharset_throwsException() {
-		assertThatThrownBy { Circle.create(TestIdFactory.circleId(), "비니네!", TestIdFactory.memberId()) }
+	@DisplayName("이모지와 특수문자가 포함된 써클 이름으로 생성할 수 있다")
+	fun create_withSpecialCharactersAndEmoji_success() {
+		val circle = Circle.create(TestIdFactory.circleId(), "비니네! 🎉 #1", TestIdFactory.memberId())
+
+		assertThat(circle.name).isEqualTo("비니네! 🎉 #1")
+	}
+
+	@Test
+	@DisplayName("보안상 허용되지 않는 문자가 포함된 써클 이름으로 생성 시 예외가 발생한다")
+	fun create_withForbiddenCharacters_throwsException() {
+		assertThatThrownBy { Circle.create(TestIdFactory.circleId(), "비니네<script>", TestIdFactory.memberId()) }
 			.isInstanceOf(BusinessException::class.java)
 			.extracting("errorCode")
 			.isEqualTo(CircleErrorCode.CIRCLE_NAME_INVALID_CHARSET)
@@ -35,6 +43,15 @@ class CirclePolicyTest {
 			.isInstanceOf(BusinessException::class.java)
 			.extracting("errorCode")
 			.isEqualTo(CircleErrorCode.CIRCLE_NAME_BLANK)
+	}
+
+	@Test
+	@DisplayName("20자를 초과하는 써클 이름으로 생성 시 예외가 발생한다")
+	fun create_withTooLongName_throwsException() {
+		assertThatThrownBy { Circle.create(TestIdFactory.circleId(), "😀".repeat(21), TestIdFactory.memberId()) }
+			.isInstanceOf(BusinessException::class.java)
+			.extracting("errorCode")
+			.isEqualTo(CircleErrorCode.CIRCLE_NAME_TOO_LONG)
 	}
 
 	@Test

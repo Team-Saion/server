@@ -10,5 +10,6 @@ interface CircleMemberOutPort {
 	fun findAllActiveByCircleId(circleId: CircleId): List<CircleMember>
 	fun findAllActiveByMemberId(memberId: MemberId): List<CircleMember>
 	fun existsByCircleAndMember(circleId: CircleId, memberId: MemberId): Boolean
+	fun existsActiveByCircleAndMember(circleId: CircleId, memberId: MemberId): Boolean
 	fun countActiveByCircleId(circleId: CircleId): Long
 }

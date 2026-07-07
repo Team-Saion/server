@@ -2,6 +2,7 @@ package com.unicorn.server.domain.invitation.service
 
 import com.unicorn.server.common.exception.BusinessException
 import com.unicorn.server.common.port.out.event.EventPublisher
+import com.unicorn.server.domain.circle.exception.CircleErrorCode
 import com.unicorn.server.domain.circle.port.`in`.CircleInPort
 import com.unicorn.server.domain.circle.port.`in`.CircleMemberInPort
 import com.unicorn.server.domain.invitation.Invitation
@@ -57,6 +58,14 @@ class InvitationService(
 			throw BusinessException(InvitationErrorCode.INVITATION_NOT_AUTHORIZED)
 		}
 		val inviterId = MemberId.of(inviterMemberId)
+		if (circleMemberInPort.getCircleMembers(command.targetId).size >= MAX_MEMBERS) {
+			throw BusinessException(CircleErrorCode.CIRCLE_MEMBER_LIMIT_EXCEEDED)
+		}
+		invitationOutPort.findAllActiveByTypeAndTargetIdAndInviterId(command.type, command.targetId, inviterId)
+			.forEach {
+				it.markExpired()
+				invitationOutPort.save(it)
+			}
 
 		val invitation = invitationOutPort.save(
 			Invitation.create(
@@ -105,7 +114,7 @@ class InvitationService(
 		)
 	}
 
-	override fun accept(token: String, memberId: String): AcceptResult {
+		override fun accept(token: String, memberId: String): AcceptResult {
 		val invitation = invitationOutPort.findByToken(InvitationToken(token)) ?: throw InvitationNotFoundException(token)
 		val now = LocalDateTime.now()
 		if (invitation.status == InvitationStatus.ACTIVE && invitation.isExpired(now)) {
@@ -120,6 +129,8 @@ class InvitationService(
 		}
 		val redeemerMemberId = MemberId.of(memberId)
 		invitation.ensureNotSelfApproval(redeemerMemberId)
+		val redeemer = getMemberProfileInPort.getMemberProfile(memberId) ?: throw MemberNotFoundException(memberId)
+		val circle = circleInPort.getCircleSummary(invitation.targetId)
 
 		val joinResult = circleMemberInPort.join(invitation.targetId, memberId)
 		eventPublisher.publish(
@@ -127,9 +138,16 @@ class InvitationService(
 				invitationId = invitation.id.toString(),
 				type = invitation.type,
 				targetId = invitation.targetId,
+				inviterMemberId = invitation.inviterId.toString(),
 				redeemerMemberId = memberId,
+				circleName = circle.name,
+				redeemerNickname = redeemer.nickname,
 			),
 		)
 		return AcceptResult(joinResult.circleId)
+	}
+
+	companion object {
+		private const val MAX_MEMBERS = 10
 	}
 }

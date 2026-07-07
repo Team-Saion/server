@@ -40,16 +40,16 @@ class CircleMemberEntity internal constructor() : AuditableJpaEntity() {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false, length = 20)
-    lateinit var role: CircleRole
+    var role: CircleRole = CircleRole.MEMBER
         internal set
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
-    lateinit var status: CircleMemberStatus
+    var status: CircleMemberStatus = CircleMemberStatus.ACTIVE
         internal set
 
     @Column(name = "joined_at", nullable = false)
-    lateinit var joinedAt: LocalDateTime
+    var joinedAt: LocalDateTime = LocalDateTime.MIN
         internal set
 
     @Column(name = "left_at")
