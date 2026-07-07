@@ -7,6 +7,7 @@ import com.unicorn.server.domain.circle.port.`in`.CircleInPort
 import com.unicorn.server.domain.home.port.`in`.HomeQueryInPort
 import com.unicorn.server.domain.invitation.enums.InvitationChannel
 import com.unicorn.server.domain.invitation.enums.InvitationType
+import com.unicorn.server.domain.invitation.exception.InvitationExpiredException
 import com.unicorn.server.domain.invitation.exception.InvitationSelfApprovalForbiddenException
 import com.unicorn.server.domain.invitation.port.dto.DispatchInvitationCommand
 import com.unicorn.server.domain.invitation.port.dto.IssueInvitationCommand
@@ -70,6 +71,27 @@ class CircleInvitationFlowIntegrationTest : BaseTest() {
 		assertThat(invitationDispatchLogJpaRepository.count() - initialDispatchCount).isEqualTo(1)
 		assertThat(invitationClickLogJpaRepository.count() - initialClickCount).isEqualTo(1)
 		assertThat(invitationRedemptionLogJpaRepository.count() - initialRedemptionCount).isEqualTo(2)
+	}
+
+	@Test
+	@DisplayName("같은 발급자가 초대장을 재발급하면 이전 링크는 즉시 만료된다")
+	fun reissue_expiresPreviousLink() {
+		val owner = memberOutPort.save(member("OwnerReissue", "ownerR"))
+		val circle = circleInPort.create(owner.id.toString(), CreateCircleCommand("재발급통합테스트"))
+
+		val firstIssued = issueInvitationInPort.issue(
+			owner.id.toString(),
+			IssueInvitationCommand(InvitationType.CIRCLE, circle.id, null, null),
+		)
+		val secondIssued = issueInvitationInPort.issue(
+			owner.id.toString(),
+			IssueInvitationCommand(InvitationType.CIRCLE, circle.id, null, null),
+		)
+
+		assertThatThrownBy { getInvitationByTokenInPort.getByToken(firstIssued.token) }
+			.isInstanceOf(InvitationExpiredException::class.java)
+		assertThat(getInvitationByTokenInPort.getByToken(secondIssued.token).circleName)
+			.isEqualTo("재발급통합테스트")
 	}
 
 	@Test

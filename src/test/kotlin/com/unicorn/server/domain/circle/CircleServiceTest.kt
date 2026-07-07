@@ -1,8 +1,10 @@
 package com.unicorn.server.domain.circle
 
 import com.unicorn.server.TestIdFactory
+import com.unicorn.server.common.exception.BusinessException
 import com.unicorn.server.common.port.out.event.EventPublisher
 import com.unicorn.server.common.vo.Email
+import com.unicorn.server.domain.circle.exception.CircleErrorCode
 import com.unicorn.server.domain.circle.port.dto.CreateCircleCommand
 import com.unicorn.server.domain.circle.port.out.CircleIdGenerator
 import com.unicorn.server.domain.circle.port.out.CircleMemberIdGenerator
@@ -16,6 +18,7 @@ import com.unicorn.server.domain.member.port.`in`.GetMemberProfileInPort
 import com.unicorn.server.domain.member.port.out.MemberOutPort
 import com.unicorn.server.domain.member.vo.MemberId
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
@@ -41,6 +44,20 @@ class CircleServiceTest {
 		assertThat(result.name).isEqualTo("비니네")
 		assertThat(circleMemberOutPort.members).hasSize(1)
 		assertThat(circleMemberOutPort.members.first().memberId).isEqualTo(owner.id)
+	}
+
+	@Test
+	@DisplayName("현재 활성 써클이 있으면 새 써클을 생성할 수 없다")
+	fun create_withActiveCircle_throwsException() {
+		val owner = Member.create(Email("owner2@example.com"), "Owner2", "비니", role = com.unicorn.server.domain.member.enums.Role.MEMBER)
+		memberQueryInPort.save(owner)
+		val existingCircle = circleOutPort.save(Circle.create(TestIdFactory.circleId(), "기존써클", owner.id))
+		circleMemberOutPort.save(com.unicorn.server.domain.circle.CircleMember.createInitiator(TestIdFactory.circleMemberId(), existingCircle.id, owner.id, owner.nickname))
+
+		assertThatThrownBy { circleService.create(owner.id.toString(), CreateCircleCommand("새써클")) }
+			.isInstanceOf(BusinessException::class.java)
+			.extracting("errorCode")
+			.isEqualTo(CircleErrorCode.ALREADY_HAS_ACTIVE_CIRCLE)
 	}
 
 	@Test
@@ -80,11 +97,11 @@ class CircleServiceTest {
 			return circleMember
 		}
 		override fun findByCircleAndMember(circleId: CircleId, memberId: MemberId) = members.firstOrNull { it.circleId == circleId && it.memberId == memberId }
-		override fun findAllActiveByCircleId(circleId: CircleId) = members.filter { it.circleId == circleId }
-		override fun findAllActiveByMemberId(memberId: MemberId) = members.filter { it.memberId == memberId }
+		override fun findAllActiveByCircleId(circleId: CircleId) = members.filter { it.circleId == circleId && it.status == com.unicorn.server.domain.circle.enums.CircleMemberStatus.ACTIVE && !it.deleted }
+		override fun findAllActiveByMemberId(memberId: MemberId) = members.filter { it.memberId == memberId && it.status == com.unicorn.server.domain.circle.enums.CircleMemberStatus.ACTIVE && !it.deleted }
 		override fun existsByCircleAndMember(circleId: CircleId, memberId: MemberId) = members.any { it.circleId == circleId && it.memberId == memberId }
 		override fun existsActiveByCircleAndMember(circleId: CircleId, memberId: MemberId) = members.any { it.circleId == circleId && it.memberId == memberId && it.status == com.unicorn.server.domain.circle.enums.CircleMemberStatus.ACTIVE && !it.deleted }
-		override fun countActiveByCircleId(circleId: CircleId) = members.count { it.circleId == circleId }.toLong()
+		override fun countActiveByCircleId(circleId: CircleId) = members.count { it.circleId == circleId && it.status == com.unicorn.server.domain.circle.enums.CircleMemberStatus.ACTIVE && !it.deleted }.toLong()
 	}
 
 	private class FakeMemberQueryInPort : GetMemberProfileInPort {

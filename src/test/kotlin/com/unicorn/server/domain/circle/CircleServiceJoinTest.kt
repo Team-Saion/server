@@ -75,6 +75,48 @@ class CircleServiceJoinTest {
 	}
 
 	@Test
+	@DisplayName("현재 활성 써클이 있으면 다른 써클에 참여할 수 없다")
+	fun join_withAnotherActiveCircle_throwsException() {
+		val owner = Member.create(Email("owner5@example.com"), "Owner", "owner5", role = Role.MEMBER)
+		val friend = Member.create(Email("friend4@example.com"), "Friend", "friend4", role = Role.MEMBER)
+		memberQueryInPort.save(owner)
+		memberQueryInPort.save(friend)
+
+		val joinedCircle = Circle.create(TestIdFactory.circleId(), "참여중써클", owner.id)
+		val targetCircle = Circle.create(TestIdFactory.circleId(), "대상써클", owner.id)
+		circleOutPort.save(joinedCircle)
+		circleOutPort.save(targetCircle)
+		circleMemberOutPort.save(CircleMember.createMember(TestIdFactory.circleMemberId(), joinedCircle.id, friend.id, friend.nickname))
+
+		assertThatThrownBy { circleService.join(targetCircle.id.toString(), friend.id.toString()) }
+			.isInstanceOf(BusinessException::class.java)
+			.extracting("errorCode")
+			.isEqualTo(CircleErrorCode.ALREADY_HAS_ACTIVE_CIRCLE)
+	}
+
+	@Test
+	@DisplayName("구성원이 10명인 써클에는 추가로 참여할 수 없다")
+	fun join_withFullCircle_throwsException() {
+		val owner = Member.create(Email("owner6@example.com"), "Owner", "owner6", role = Role.MEMBER)
+		val friend = Member.create(Email("friend5@example.com"), "Friend", "friend5", role = Role.MEMBER)
+		memberQueryInPort.save(owner)
+		memberQueryInPort.save(friend)
+
+		val circle = Circle.create(TestIdFactory.circleId(), "만원써클", owner.id)
+		circleOutPort.save(circle)
+		repeat(10) { index ->
+			val member = Member.create(Email("full$index@example.com"), "Full$index", "full$index", role = Role.MEMBER)
+			memberQueryInPort.save(member)
+			circleMemberOutPort.save(CircleMember.createMember(TestIdFactory.circleMemberId(), circle.id, member.id, member.nickname))
+		}
+
+		assertThatThrownBy { circleService.join(circle.id.toString(), friend.id.toString()) }
+			.isInstanceOf(BusinessException::class.java)
+			.extracting("errorCode")
+			.isEqualTo(CircleErrorCode.CIRCLE_MEMBER_LIMIT_EXCEEDED)
+	}
+
+	@Test
 	@DisplayName("탈퇴한 사용자는 isCircleMember에서 false를 반환한다")
 	fun isCircleMember_leftMember_returnsFalse() {
 		val owner = Member.create(Email("owner4@example.com"), "Owner", "owner4", role = Role.MEMBER)
@@ -105,11 +147,11 @@ class CircleServiceJoinTest {
 		val members = mutableListOf<CircleMember>()
 		override fun save(circleMember: CircleMember): CircleMember { members.removeIf { it.id == circleMember.id }; members.add(circleMember); return circleMember }
 		override fun findByCircleAndMember(circleId: CircleId, memberId: MemberId): CircleMember? = members.firstOrNull { it.circleId == circleId && it.memberId == memberId }
-		override fun findAllActiveByCircleId(circleId: CircleId): List<CircleMember> = members.filter { it.circleId == circleId }
-		override fun findAllActiveByMemberId(memberId: MemberId): List<CircleMember> = members.filter { it.memberId == memberId }
+		override fun findAllActiveByCircleId(circleId: CircleId): List<CircleMember> = members.filter { it.circleId == circleId && it.status == CircleMemberStatus.ACTIVE && !it.deleted }
+		override fun findAllActiveByMemberId(memberId: MemberId): List<CircleMember> = members.filter { it.memberId == memberId && it.status == CircleMemberStatus.ACTIVE && !it.deleted }
 		override fun existsByCircleAndMember(circleId: CircleId, memberId: MemberId): Boolean = members.any { it.circleId == circleId && it.memberId == memberId }
 		override fun existsActiveByCircleAndMember(circleId: CircleId, memberId: MemberId): Boolean = members.any { it.circleId == circleId && it.memberId == memberId && it.status == com.unicorn.server.domain.circle.enums.CircleMemberStatus.ACTIVE && !it.deleted }
-		override fun countActiveByCircleId(circleId: CircleId): Long = members.count { it.circleId == circleId }.toLong()
+		override fun countActiveByCircleId(circleId: CircleId): Long = members.count { it.circleId == circleId && it.status == CircleMemberStatus.ACTIVE && !it.deleted }.toLong()
 	}
 
 	private class FakeMemberQueryInPort : GetMemberProfileInPort {
