@@ -35,9 +35,9 @@ class ScheduleConfirmationTest {
 			createdBy = "member-1",
 		)
 
-		confirmation.changeType(ConfirmationType.CANNOT_ATTEND, "member-2")
+		confirmation.changeType(ConfirmationType.ETC, "member-2")
 
-		assertThat(confirmation.confirmationType).isEqualTo(ConfirmationType.CANNOT_ATTEND)
+		assertThat(confirmation.confirmationType).isEqualTo(ConfirmationType.ETC)
 		assertThat(confirmation.updatedBy).isEqualTo("member-2")
 	}
 }

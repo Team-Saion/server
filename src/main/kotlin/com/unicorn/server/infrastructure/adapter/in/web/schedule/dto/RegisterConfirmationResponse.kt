@@ -8,11 +8,11 @@ data class RegisterConfirmationResponse(
 	@field:Schema(
 		description = """
 			최종 반영된 확인하기 종류.
-			- CONFIRMED: 참석
-			- CANNOT_ATTEND: 불참
+			- CONFIRMED: 확인했어요
+			- ETC: 기타
 		""",
 		example = "CONFIRMED",
-		allowableValues = ["CONFIRMED", "CANNOT_ATTEND"],
+		allowableValues = ["CONFIRMED", "ETC"],
 	)
 	val confirmationType: ConfirmationType,
 ) {

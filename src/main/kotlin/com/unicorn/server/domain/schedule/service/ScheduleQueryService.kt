@@ -6,6 +6,7 @@ import com.unicorn.server.domain.schedule.Schedule
 import com.unicorn.server.domain.schedule.exception.ScheduleErrorCode
 import com.unicorn.server.domain.schedule.port.`in`.GetScheduleDetailInPort
 import com.unicorn.server.domain.schedule.port.`in`.GetScheduleListInPort
+import com.unicorn.server.domain.schedule.port.dto.MyConfirmationInfo
 import com.unicorn.server.domain.schedule.port.dto.ScheduleDetailResult
 import com.unicorn.server.domain.schedule.port.dto.ScheduleListResult
 import com.unicorn.server.domain.schedule.port.dto.SchedulePageCursor
@@ -71,8 +72,9 @@ class ScheduleQueryService(
 		} else {
 			emptyList()
 		}
-		val myConfirmationType = if (schedule.needConfirm) {
-			scheduleConfirmationOutPort.findByScheduleIdAndMemberId(scheduleId, memberId)?.confirmationType
+		val myConfirmation = if (schedule.needConfirm) {
+			scheduleConfirmationOutPort.findByScheduleIdAndMemberId(scheduleId, memberId)
+				?.let { MyConfirmationInfo(it.id, it.confirmationType) }
 		} else {
 			null
 		}
@@ -91,7 +93,7 @@ class ScheduleQueryService(
 			dDay = schedule.computeDDay(today()),
 			progressRate = schedule.computeProgressRate(nowDateTime()),
 			confirmations = confirmations,
-			myConfirmationType = myConfirmationType,
+			myConfirmation = myConfirmation,
 			createdBy = schedule.createdBy,
 			createdAt = schedule.createdAt,
 		)

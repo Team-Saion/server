@@ -1,6 +1,5 @@
 package com.unicorn.server.domain.schedule.port.dto
 
-import com.unicorn.server.domain.schedule.enums.ConfirmationType
 import com.unicorn.server.domain.schedule.enums.ScheduleStatus
 import com.unicorn.server.domain.schedule.vo.ScheduleId
 import java.time.LocalDate
@@ -21,7 +20,7 @@ data class ScheduleDetailResult(
 	val dDay: Int?,
 	val progressRate: Int,
 	val confirmations: List<ConfirmationCountResult>,
-	val myConfirmationType: ConfirmationType?,
+	val myConfirmation: MyConfirmationInfo?,
 	val createdBy: String,
 	val createdAt: LocalDateTime,
 )

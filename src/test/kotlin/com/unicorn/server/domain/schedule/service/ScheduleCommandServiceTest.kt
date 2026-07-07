@@ -252,6 +252,9 @@ class ScheduleCommandServiceTest {
 			store += confirmation
 		}
 
+		override fun findById(id: Long): ScheduleConfirmation? =
+			store.firstOrNull { it.id == id }
+
 		override fun findByScheduleIdAndMemberId(scheduleId: ScheduleId, memberId: String): ScheduleConfirmation? =
 			store.firstOrNull { it.scheduleId == scheduleId && it.memberId == memberId }
 
@@ -259,6 +262,10 @@ class ScheduleCommandServiceTest {
 			store.removeIf { it.scheduleId == confirmation.scheduleId && it.memberId == confirmation.memberId }
 			store += confirmation
 			return confirmation
+		}
+
+		override fun deleteById(id: Long) {
+			store.removeIf { it.id == id }
 		}
 
 		override fun countGroupByType(scheduleId: ScheduleId): List<ConfirmationCountResult> = emptyList()

@@ -55,12 +55,12 @@ class ScheduleConfirmationPersistenceAdapterTest(
 				createdBy = "member-1",
 			),
 		)
-		saved.changeType(ConfirmationType.CANNOT_ATTEND, "member-1")
+		saved.changeType(ConfirmationType.ETC, "member-1")
 
 		val result = scheduleConfirmationPersistenceAdapter.save(saved)
 
 		assertThat(result.id).isEqualTo(saved.id)
-		assertThat(result.confirmationType).isEqualTo(ConfirmationType.CANNOT_ATTEND)
+		assertThat(result.confirmationType).isEqualTo(ConfirmationType.ETC)
 	}
 
 	@Test
@@ -71,7 +71,7 @@ class ScheduleConfirmationPersistenceAdapterTest(
 			ScheduleConfirmation.create(schedule.id, "member-1", ConfirmationType.CONFIRMED, "member-1"),
 		)
 		scheduleConfirmationPersistenceAdapter.save(
-			ScheduleConfirmation.create(schedule.id, "member-2", ConfirmationType.CANNOT_ATTEND, "member-2"),
+			ScheduleConfirmation.create(schedule.id, "member-2", ConfirmationType.ETC, "member-2"),
 		)
 
 		val result = scheduleConfirmationPersistenceAdapter.countGroupByType(schedule.id)
@@ -79,13 +79,26 @@ class ScheduleConfirmationPersistenceAdapterTest(
 		assertThat(result).hasSize(2)
 		assertThat(result.associate { it.type to it.count })
 			.containsEntry(ConfirmationType.CONFIRMED, 1)
-			.containsEntry(ConfirmationType.CANNOT_ATTEND, 1)
+			.containsEntry(ConfirmationType.ETC, 1)
+	}
+
+	@Test
+	@DisplayName("ID 기준으로 확인하기를 삭제한다")
+	fun deleteById_deletesConfirmation() {
+		val schedule = schedulePersistenceAdapter.save(schedule(circleId = "CC000000000000000204"))
+		val confirmation = scheduleConfirmationPersistenceAdapter.save(
+			ScheduleConfirmation.create(schedule.id, "member-1", ConfirmationType.CONFIRMED, "member-1"),
+		)
+
+		scheduleConfirmationPersistenceAdapter.deleteById(confirmation.id)
+
+		assertThat(scheduleConfirmationPersistenceAdapter.findByScheduleIdAndMemberId(schedule.id, "member-1")).isNull()
 	}
 
 	@Test
 	@DisplayName("일정의 모든 확인하기를 삭제한다")
 	fun deleteAllByScheduleId_deletesConfirmations() {
-		val schedule = schedulePersistenceAdapter.save(schedule(circleId = "CC000000000000000204"))
+		val schedule = schedulePersistenceAdapter.save(schedule(circleId = "CC000000000000000205"))
 		scheduleConfirmationPersistenceAdapter.save(
 			ScheduleConfirmation.create(schedule.id, "member-1", ConfirmationType.CONFIRMED, "member-1"),
 		)

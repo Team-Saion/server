@@ -21,6 +21,9 @@ class ScheduleConfirmationService(
 ) : RegisterConfirmationInPort {
 
 	override fun register(command: RegisterConfirmationCommand): ConfirmationType {
+		if (!command.confirmationType.available) {
+			throw BusinessException(ScheduleErrorCode.INVALID_CONFIRMATION_TYPE)
+		}
 		if (!circleAccessOutPort.isMember(command.circleId, command.memberId)) {
 			throw BusinessException(ScheduleErrorCode.CIRCLE_ACCESS_DENIED)
 		}

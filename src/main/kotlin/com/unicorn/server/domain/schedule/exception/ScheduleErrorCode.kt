@@ -25,4 +25,5 @@ enum class ScheduleErrorCode(
 	CONFIRMATION_ACCESS_DENIED("S403_3", "Only circle members can register confirmation", HttpStatus.FORBIDDEN),
 	CIRCLE_NOT_FOUND("S404_1", "Circle not found", HttpStatus.NOT_FOUND),
 	SCHEDULE_NOT_FOUND("S404_2", "Schedule not found", HttpStatus.NOT_FOUND),
+	CONFIRMATION_NOT_FOUND("S404_3", "Confirmation not found", HttpStatus.NOT_FOUND),
 }

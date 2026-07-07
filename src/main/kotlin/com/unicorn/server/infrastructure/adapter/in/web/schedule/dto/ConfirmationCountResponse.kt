@@ -9,11 +9,11 @@ data class ConfirmationCountResponse(
 	@field:Schema(
 		description = """
 			확인하기 종류.
-			- CONFIRMED: 참석
-			- CANNOT_ATTEND: 불참
+			- CONFIRMED: 확인했어요
+			- ETC: 기타
 		""",
 		example = "CONFIRMED",
-		allowableValues = ["CONFIRMED", "CANNOT_ATTEND"],
+		allowableValues = ["CONFIRMED", "ETC"],
 	)
 	val type: ConfirmationType,
 

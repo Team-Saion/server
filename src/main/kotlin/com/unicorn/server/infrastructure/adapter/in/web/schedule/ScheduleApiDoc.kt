@@ -6,6 +6,7 @@ import com.unicorn.server.infrastructure.adapter.`in`.web.common.dto.ApiResponse
 import com.unicorn.server.infrastructure.adapter.`in`.web.common.swagger.annotation.ApiErrorCodeExample
 import com.unicorn.server.infrastructure.adapter.`in`.web.common.swagger.annotation.ApiErrorCodeExamples
 import com.unicorn.server.infrastructure.adapter.`in`.web.common.swagger.annotation.ApiSuccessCodeExample
+import com.unicorn.server.infrastructure.adapter.`in`.web.schedule.dto.ConfirmationTypesListResponse
 import com.unicorn.server.infrastructure.adapter.`in`.web.schedule.dto.CreateScheduleRequest
 import com.unicorn.server.infrastructure.adapter.`in`.web.schedule.dto.RegisterConfirmationRequest
 import com.unicorn.server.infrastructure.adapter.`in`.web.schedule.dto.RegisterConfirmationResponse
@@ -219,10 +220,11 @@ interface ScheduleApiDoc {
 			**confirmations (확인하기 종류별 카운트)**
 			- needConfirm=true인 일정에서만 데이터가 채워집니다.
 			- needConfirm=false이면 빈 배열([])을 반환합니다.
-			- type: CONFIRMED(참석) / CANNOT_ATTEND(불참)
+			- type: CONFIRMED(확인했어요) / ETC(기타)
 
-			**myConfirmationType**
-			- 내가 등록한 확인하기 종류. CONFIRMED(참석) / CANNOT_ATTEND(불참)
+			**myConfirmation**
+			- 내가 등록한 확인하기 정보입니다.
+			- confirmationId와 confirmationType(CONFIRMED/ETC)을 포함합니다.
 			- 등록한 확인하기가 없거나 needConfirm=false이면 null
 		""",
 	)
@@ -251,14 +253,14 @@ interface ScheduleApiDoc {
 			**권한**: 써클 구성원(MEMBER 이상)만 등록 가능합니다.
 
 			**확인하기 종류 (confirmationType)**
-			- CONFIRMED: 참석
-			- CANNOT_ATTEND: 불참
+			- 일정 확인 종류 조회 통해 조회할 수 있습니다.
+			- 서버 내부에서 Enum으로 관리 중입니다.
 
 			**처리 방식**
 			- 멤버당 확인하기는 1건만 유지됩니다.
 			- 기존 확인하기가 없으면 새로 생성합니다.
 			- 기존과 다른 종류를 전달하면 해당 종류로 변경합니다.
-			- 기존과 같은 종류를 전달하면 그대로 유지합니다 (멱등).
+			- 기존과 같은 종류를 전달하면 그대로 유지합니다.
 
 			**응답**: 최종 반영된 confirmationType을 반환합니다.
 		""",
@@ -269,6 +271,7 @@ interface ScheduleApiDoc {
 		// 요청 바디 유효성
 		ApiErrorCodeExample(codeType = CommonErrorCode::class, code = "INVALID_INPUT"),        // confirmationType 값이 enum에 없는 문자열
 		ApiErrorCodeExample(codeType = ScheduleErrorCode::class, code = "CONFIRMATION_NOT_SUPPORTED"), // S400_11: needConfirm=false인 일정
+		ApiErrorCodeExample(codeType = ScheduleErrorCode::class, code = "INVALID_CONFIRMATION_TYPE"), // S400_12: available=false인 확인 종류
 		// 권한 / 존재 여부
 		ApiErrorCodeExample(codeType = ScheduleErrorCode::class, code = "CIRCLE_ACCESS_DENIED"), // S403_1: 써클 구성원이 아님
 		ApiErrorCodeExample(codeType = ScheduleErrorCode::class, code = "SCHEDULE_NOT_FOUND"), // S404_2: 존재하지 않거나 삭제된 일정 ID
@@ -283,4 +286,50 @@ interface ScheduleApiDoc {
 		@PathVariable scheduleId: String,
 		@RequestBody @Valid request: RegisterConfirmationRequest,
 	): ApiResponse<RegisterConfirmationResponse>
+
+	@Operation(
+		summary = "확인하기 취소",
+		description = """
+			내가 등록한 확인하기를 취소합니다.
+
+			**권한**: 써클 구성원이며 해당 확인하기를 등록한 멤버만 취소 가능합니다.
+		""",
+	)
+	@ApiErrorCodeExamples(
+		ApiErrorCodeExample(codeType = CommonErrorCode::class, code = "UNAUTHORIZED"),
+		ApiErrorCodeExample(codeType = ScheduleErrorCode::class, code = "CIRCLE_ACCESS_DENIED"),
+		ApiErrorCodeExample(codeType = ScheduleErrorCode::class, code = "CONFIRMATION_ACCESS_DENIED"),
+		ApiErrorCodeExample(codeType = ScheduleErrorCode::class, code = "SCHEDULE_NOT_FOUND"),
+		ApiErrorCodeExample(codeType = ScheduleErrorCode::class, code = "CONFIRMATION_NOT_FOUND"),
+	)
+	fun cancelConfirmation(
+		@Parameter(hidden = true)
+		@AuthenticationPrincipal memberId: String,
+		@Parameter(description = "써클 ID", example = "CC202506010000000001")
+		@PathVariable circleId: String,
+		@Parameter(description = "일정 ID", example = "SC202407070000000001")
+		@PathVariable scheduleId: String,
+		@Parameter(description = "확인하기 ID", example = "1")
+		@PathVariable confirmationId: Long,
+	): ApiResponse<Unit>
+
+	@Operation(
+		summary = "일정 확인 종류 조회",
+		description = """
+
+		일정에 등록할 수 있는 확인 종류를 반환합니다.
+		서버 내부에서 Enum으로 관리하며, value, label 쌍으로 반환합니다.
+
+		available=false인 값은 반환하지 않습니다.
+
+	""")
+	@ApiErrorCodeExamples(
+		ApiErrorCodeExample(codeType = CommonErrorCode::class, code = "UNAUTHORIZED"),
+	)
+	@ApiSuccessCodeExample(ConfirmationTypesListResponse::class)
+	fun getConfirmationTypes(
+		@Parameter(hidden = true)
+		@AuthenticationPrincipal memberId: String,
+	): ApiResponse<ConfirmationTypesListResponse>
+
 }

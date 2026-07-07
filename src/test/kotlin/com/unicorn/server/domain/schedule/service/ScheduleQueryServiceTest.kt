@@ -52,7 +52,8 @@ class ScheduleQueryServiceTest {
 		circleAccessOutPort.seedMember(CIRCLE_ID, MEMBER_ID)
 		scheduleOutPort.seed(schedule(id = SCHEDULE_ID_1, needConfirm = true, createdBy = "author"))
 		confirmationOutPort.seed(
-			ScheduleConfirmation.create(
+			confirmation(
+				id = 1L,
 				scheduleId = SCHEDULE_ID_1,
 				memberId = MEMBER_ID,
 				confirmationType = ConfirmationType.CONFIRMED,
@@ -64,7 +65,8 @@ class ScheduleQueryServiceTest {
 
 		assertThat(result.scheduleId).isEqualTo(SCHEDULE_ID_1)
 		assertThat(result.confirmations).containsExactly(ConfirmationCountResult(ConfirmationType.CONFIRMED, 1))
-		assertThat(result.myConfirmationType).isEqualTo(ConfirmationType.CONFIRMED)
+		assertThat(result.myConfirmation?.confirmationId).isEqualTo(1L)
+		assertThat(result.myConfirmation?.confirmationType).isEqualTo(ConfirmationType.CONFIRMED)
 		assertThat(result.createdBy).isEqualTo("author")
 	}
 
@@ -77,7 +79,7 @@ class ScheduleQueryServiceTest {
 		val result = scheduleQueryService.getDetail(SCHEDULE_ID_1, CIRCLE_ID, MEMBER_ID)
 
 		assertThat(result.confirmations).isEmpty()
-		assertThat(result.myConfirmationType).isNull()
+		assertThat(result.myConfirmation).isNull()
 	}
 
 	@Test
@@ -134,6 +136,24 @@ class ScheduleQueryServiceTest {
 			isDeleted = false,
 		)
 
+	private fun confirmation(
+		id: Long,
+		scheduleId: ScheduleId,
+		memberId: String,
+		confirmationType: ConfirmationType,
+		createdBy: String,
+	): ScheduleConfirmation =
+		ScheduleConfirmation.reconstitute(
+			id = id,
+			scheduleId = scheduleId,
+			memberId = memberId,
+			confirmationType = confirmationType,
+			createdBy = createdBy,
+			updatedBy = createdBy,
+			createdAt = LocalDateTime.of(2024, 7, 1, 10, 0),
+			updatedAt = LocalDateTime.of(2024, 7, 1, 10, 0),
+		)
+
 	private class FakeScheduleOutPort : ScheduleOutPort {
 		private val store = linkedMapOf<ScheduleId, Schedule>()
 
@@ -178,12 +198,19 @@ class ScheduleQueryServiceTest {
 			store += confirmation
 		}
 
+		override fun findById(id: Long): ScheduleConfirmation? =
+			store.firstOrNull { it.id == id }
+
 		override fun findByScheduleIdAndMemberId(scheduleId: ScheduleId, memberId: String): ScheduleConfirmation? =
 			store.firstOrNull { it.scheduleId == scheduleId && it.memberId == memberId }
 
 		override fun save(confirmation: ScheduleConfirmation): ScheduleConfirmation {
 			store += confirmation
 			return confirmation
+		}
+
+		override fun deleteById(id: Long) {
+			store.removeIf { it.id == id }
 		}
 
 		override fun countGroupByType(scheduleId: ScheduleId): List<ConfirmationCountResult> =

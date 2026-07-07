@@ -6,7 +6,6 @@ import com.unicorn.server.domain.schedule.ScheduleConfirmation
 import com.unicorn.server.domain.schedule.enums.ConfirmationType
 import com.unicorn.server.domain.schedule.exception.ScheduleErrorCode
 import com.unicorn.server.domain.schedule.port.dto.ConfirmationCountResult
-import com.unicorn.server.domain.schedule.port.dto.RegisterConfirmationCommand
 import com.unicorn.server.domain.schedule.port.dto.SchedulePageCursor
 import com.unicorn.server.domain.schedule.port.out.CircleAccessOutPort
 import com.unicorn.server.domain.schedule.port.out.ScheduleConfirmationOutPort
@@ -20,113 +19,57 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 
-@DisplayName("ScheduleConfirmationService 단위 테스트")
-class ScheduleConfirmationServiceTest {
+@DisplayName("CancelConfirmationService 단위 테스트")
+class CancelConfirmationServiceTest {
 
 	private val scheduleOutPort = FakeScheduleOutPort()
 	private val confirmationOutPort = FakeScheduleConfirmationOutPort()
 	private val circleAccessOutPort = FakeCircleAccessOutPort()
-	private val scheduleConfirmationService = ScheduleConfirmationService(
+	private val cancelConfirmationService = CancelConfirmationService(
 		scheduleOutPort,
 		confirmationOutPort,
 		circleAccessOutPort,
 	)
 
 	@Test
-	@DisplayName("확인하기가 없으면 새로 생성한다")
-	fun register_withoutExistingConfirmation_createsConfirmation() {
+	@DisplayName("본인이 등록한 확인하기를 취소한다")
+	fun cancel_withOwnConfirmation_deletesConfirmation() {
 		circleAccessOutPort.seedMember(CIRCLE_ID, MEMBER_ID)
-		scheduleOutPort.seed(schedule(needConfirm = true))
-		val command = command()
+		scheduleOutPort.seed(schedule())
+		confirmationOutPort.seed(confirmation(id = CONFIRMATION_ID, memberId = MEMBER_ID))
 
-		val type = scheduleConfirmationService.register(command)
+		cancelConfirmationService.cancel(CONFIRMATION_ID, SCHEDULE_ID, CIRCLE_ID, MEMBER_ID)
 
-		assertThat(type).isEqualTo(ConfirmationType.CONFIRMED)
-		assertThat(confirmationOutPort.saved).hasSize(1)
-		assertThat(confirmationOutPort.saved.single().memberId).isEqualTo(MEMBER_ID)
+		assertThat(confirmationOutPort.deletedIds).containsExactly(CONFIRMATION_ID)
+		assertThat(confirmationOutPort.findById(CONFIRMATION_ID)).isNull()
 	}
 
 	@Test
-	@DisplayName("기존 확인하기와 같은 종류면 저장하지 않고 멱등 처리한다")
-	fun register_withSameExistingConfirmation_doesNotSave() {
+	@DisplayName("확인하기가 없으면 CONFIRMATION_NOT_FOUND 예외가 발생한다")
+	fun cancel_withMissingConfirmation_throwsConfirmationNotFound() {
 		circleAccessOutPort.seedMember(CIRCLE_ID, MEMBER_ID)
-		scheduleOutPort.seed(schedule(needConfirm = true))
-		confirmationOutPort.seed(
-			ScheduleConfirmation.create(
-				scheduleId = SCHEDULE_ID,
-				memberId = MEMBER_ID,
-				confirmationType = ConfirmationType.CONFIRMED,
-				createdBy = MEMBER_ID,
-			),
-		)
-		val command = command()
+		scheduleOutPort.seed(schedule())
 
-		val type = scheduleConfirmationService.register(command)
-
-		assertThat(type).isEqualTo(ConfirmationType.CONFIRMED)
-		assertThat(confirmationOutPort.saved).isEmpty()
-	}
-
-	@Test
-	@DisplayName("기존 확인하기와 다른 종류면 타입을 변경해 저장한다")
-	fun register_withDifferentExistingConfirmation_updatesConfirmation() {
-		circleAccessOutPort.seedMember(CIRCLE_ID, MEMBER_ID)
-		scheduleOutPort.seed(schedule(needConfirm = true))
-		confirmationOutPort.seed(
-			ScheduleConfirmation.create(
-				scheduleId = SCHEDULE_ID,
-				memberId = MEMBER_ID,
-				confirmationType = ConfirmationType.CONFIRMED,
-				createdBy = MEMBER_ID,
-			),
-		)
-		val command = RegisterConfirmationCommand(
-			scheduleId = SCHEDULE_ID,
-			circleId = CIRCLE_ID,
-			memberId = MEMBER_ID,
-			confirmationType = ConfirmationType.ETC,
-		)
-
-		val type = scheduleConfirmationService.register(command)
-
-		assertThat(type).isEqualTo(ConfirmationType.ETC)
-		assertThat(confirmationOutPort.saved.single().confirmationType).isEqualTo(ConfirmationType.ETC)
-	}
-
-	@Test
-	@DisplayName("확인하기를 지원하지 않는 일정이면 CONFIRMATION_NOT_SUPPORTED 예외가 발생한다")
-	fun register_withScheduleNotSupportingConfirmation_throwsConfirmationNotSupported() {
-		circleAccessOutPort.seedMember(CIRCLE_ID, MEMBER_ID)
-		scheduleOutPort.seed(schedule(needConfirm = false))
-		val command = command()
-
-		assertThatThrownBy { scheduleConfirmationService.register(command) }
+		assertThatThrownBy { cancelConfirmationService.cancel(CONFIRMATION_ID, SCHEDULE_ID, CIRCLE_ID, MEMBER_ID) }
 			.isInstanceOf(BusinessException::class.java)
 			.extracting { (it as BusinessException).errorCode }
-			.isEqualTo(ScheduleErrorCode.CONFIRMATION_NOT_SUPPORTED)
+			.isEqualTo(ScheduleErrorCode.CONFIRMATION_NOT_FOUND)
 	}
 
 	@Test
-	@DisplayName("써클 구성원이 아니면 CIRCLE_ACCESS_DENIED 예외가 발생한다")
-	fun register_withNonMember_throwsCircleAccessDenied() {
-		scheduleOutPort.seed(schedule(needConfirm = true))
-		val command = command()
+	@DisplayName("다른 멤버의 확인하기면 CONFIRMATION_ACCESS_DENIED 예외가 발생한다")
+	fun cancel_withOtherMemberConfirmation_throwsConfirmationAccessDenied() {
+		circleAccessOutPort.seedMember(CIRCLE_ID, MEMBER_ID)
+		scheduleOutPort.seed(schedule())
+		confirmationOutPort.seed(confirmation(id = CONFIRMATION_ID, memberId = "member-2"))
 
-		assertThatThrownBy { scheduleConfirmationService.register(command) }
+		assertThatThrownBy { cancelConfirmationService.cancel(CONFIRMATION_ID, SCHEDULE_ID, CIRCLE_ID, MEMBER_ID) }
 			.isInstanceOf(BusinessException::class.java)
 			.extracting { (it as BusinessException).errorCode }
-			.isEqualTo(ScheduleErrorCode.CIRCLE_ACCESS_DENIED)
+			.isEqualTo(ScheduleErrorCode.CONFIRMATION_ACCESS_DENIED)
 	}
 
-	private fun command(): RegisterConfirmationCommand =
-		RegisterConfirmationCommand(
-			scheduleId = SCHEDULE_ID,
-			circleId = CIRCLE_ID,
-			memberId = MEMBER_ID,
-			confirmationType = ConfirmationType.CONFIRMED,
-		)
-
-	private fun schedule(needConfirm: Boolean): Schedule =
+	private fun schedule(): Schedule =
 		Schedule.reconstitute(
 			id = SCHEDULE_ID,
 			circleId = CIRCLE_ID,
@@ -135,13 +78,25 @@ class ScheduleConfirmationServiceTest {
 			endDate = LocalDate.of(2024, 8, 1),
 			startTime = LocalTime.of(9, 0),
 			endTime = LocalTime.of(18, 0),
-			needConfirm = needConfirm,
+			needConfirm = true,
 			memo = null,
 			createdBy = "author",
 			updatedBy = "author",
 			createdAt = LocalDateTime.of(2024, 7, 1, 10, 0),
 			updatedAt = LocalDateTime.of(2024, 7, 1, 10, 0),
 			isDeleted = false,
+		)
+
+	private fun confirmation(id: Long, memberId: String): ScheduleConfirmation =
+		ScheduleConfirmation.reconstitute(
+			id = id,
+			scheduleId = SCHEDULE_ID,
+			memberId = memberId,
+			confirmationType = ConfirmationType.CONFIRMED,
+			createdBy = memberId,
+			updatedBy = memberId,
+			createdAt = LocalDateTime.of(2024, 7, 1, 10, 0),
+			updatedAt = LocalDateTime.of(2024, 7, 1, 10, 0),
 		)
 
 	private class FakeScheduleOutPort : ScheduleOutPort {
@@ -167,7 +122,7 @@ class ScheduleConfirmationServiceTest {
 
 	private class FakeScheduleConfirmationOutPort : ScheduleConfirmationOutPort {
 		private val store = mutableListOf<ScheduleConfirmation>()
-		val saved = mutableListOf<ScheduleConfirmation>()
+		val deletedIds = mutableListOf<Long>()
 
 		fun seed(confirmation: ScheduleConfirmation) {
 			store += confirmation
@@ -180,13 +135,13 @@ class ScheduleConfirmationServiceTest {
 			store.firstOrNull { it.scheduleId == scheduleId && it.memberId == memberId }
 
 		override fun save(confirmation: ScheduleConfirmation): ScheduleConfirmation {
-			store.removeIf { it.scheduleId == confirmation.scheduleId && it.memberId == confirmation.memberId }
+			store.removeIf { it.id == confirmation.id }
 			store += confirmation
-			saved += confirmation
 			return confirmation
 		}
 
 		override fun deleteById(id: Long) {
+			deletedIds += id
 			store.removeIf { it.id == id }
 		}
 
@@ -215,5 +170,6 @@ class ScheduleConfirmationServiceTest {
 		private const val CIRCLE_ID = "CC202506010000000001"
 		private val SCHEDULE_ID = ScheduleId.of("SC202407070000000001")
 		private const val MEMBER_ID = "member-1"
+		private const val CONFIRMATION_ID = 1L
 	}
 }

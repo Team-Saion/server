@@ -14,6 +14,12 @@ class ScheduleConfirmationPersistenceAdapter(
 ) : ScheduleConfirmationOutPort {
 
 	@Transactional(readOnly = true)
+	override fun findById(id: Long): ScheduleConfirmation? =
+		scheduleConfirmationJpaRepository.findById(id)
+			.map { it.toDomain() }
+			.orElse(null)
+
+	@Transactional(readOnly = true)
 	override fun findByScheduleIdAndMemberId(scheduleId: ScheduleId, memberId: String): ScheduleConfirmation? =
 		scheduleConfirmationJpaRepository.findByScheduleIdAndMemberId(scheduleId.value, memberId)?.toDomain()
 
@@ -28,6 +34,11 @@ class ScheduleConfirmationPersistenceAdapter(
 		}
 
 		return scheduleConfirmationJpaRepository.save(entity).toDomain()
+	}
+
+	@Transactional
+	override fun deleteById(id: Long) {
+		scheduleConfirmationJpaRepository.deleteById(id)
 	}
 
 	@Transactional(readOnly = true)

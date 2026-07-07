@@ -1,5 +1,7 @@
 package com.unicorn.server.infrastructure.adapter.`in`.web.schedule
 
+import com.unicorn.server.domain.schedule.enums.ConfirmationType
+import com.unicorn.server.domain.schedule.port.`in`.CancelConfirmationInPort
 import com.unicorn.server.domain.schedule.port.`in`.CreateScheduleInPort
 import com.unicorn.server.domain.schedule.port.`in`.DeleteScheduleInPort
 import com.unicorn.server.domain.schedule.port.`in`.GetScheduleDetailInPort
@@ -11,6 +13,7 @@ import com.unicorn.server.domain.schedule.port.dto.RegisterConfirmationCommand
 import com.unicorn.server.domain.schedule.port.dto.UpdateScheduleCommand
 import com.unicorn.server.domain.schedule.vo.ScheduleId
 import com.unicorn.server.infrastructure.adapter.`in`.web.common.dto.ApiResponse
+import com.unicorn.server.infrastructure.adapter.`in`.web.schedule.dto.ConfirmationTypesListResponse
 import com.unicorn.server.infrastructure.adapter.`in`.web.schedule.dto.CreateScheduleRequest
 import com.unicorn.server.infrastructure.adapter.`in`.web.schedule.dto.RegisterConfirmationRequest
 import com.unicorn.server.infrastructure.adapter.`in`.web.schedule.dto.RegisterConfirmationResponse
@@ -39,6 +42,7 @@ class ScheduleController(
 	private val getScheduleListInPort: GetScheduleListInPort,
 	private val getScheduleDetailInPort: GetScheduleDetailInPort,
 	private val registerConfirmationInPort: RegisterConfirmationInPort,
+	private val cancelConfirmationInPort: CancelConfirmationInPort,
 ) : ScheduleApiDoc {
 
 	@PostMapping
@@ -137,5 +141,24 @@ class ScheduleController(
 			),
 		)
 		return ApiResponse.success(RegisterConfirmationResponse.of(type))
+	}
+
+	@DeleteMapping("/{scheduleId}/confirmations/{confirmationId}")
+	override fun cancelConfirmation(
+		@AuthenticationPrincipal memberId: String,
+		@PathVariable circleId: String,
+		@PathVariable scheduleId: String,
+		@PathVariable confirmationId: Long,
+	): ApiResponse<Unit> {
+		cancelConfirmationInPort.cancel(confirmationId, ScheduleId.of(scheduleId), circleId, memberId)
+		return ApiResponse.success()
+	}
+
+	@GetMapping("/confirmations")
+	override fun getConfirmationTypes(
+		@AuthenticationPrincipal memberId: String,
+	): ApiResponse<ConfirmationTypesListResponse> {
+		val types = ConfirmationType.entries.filter { it.available }
+		return ApiResponse.success(ConfirmationTypesListResponse.from(types))
 	}
 }

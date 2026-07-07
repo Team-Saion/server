@@ -1,7 +1,6 @@
 package com.unicorn.server.infrastructure.adapter.`in`.web.schedule.dto
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.unicorn.server.domain.schedule.enums.ConfirmationType
 import com.unicorn.server.domain.schedule.enums.ScheduleStatus
 import com.unicorn.server.domain.schedule.port.dto.ScheduleDetailResult
 import io.swagger.v3.oas.annotations.media.Schema
@@ -94,22 +93,19 @@ data class ScheduleDetailResponse(
 		description = """
 			확인하기 종류별 카운트 목록.
 			needConfirm=false이면 빈 배열([])을 반환합니다.
-			각 항목의 type: CONFIRMED(참석) / CANNOT_ATTEND(불참)
+			각 항목의 type: CONFIRMED(확인했어요) / ETC(기타)
 		""",
 	)
 	val confirmations: List<ConfirmationCountResponse>,
 
 	@field:Schema(
 		description = """
-			내가 등록한 확인하기 종류.
-			- CONFIRMED: 참석
-			- CANNOT_ATTEND: 불참
+			내가 등록한 확인하기 정보.
 			등록한 확인하기가 없거나 needConfirm=false이면 null.
 		""",
 		nullable = true,
-		allowableValues = ["CONFIRMED", "CANNOT_ATTEND"],
 	)
-	val myConfirmationType: ConfirmationType?,
+	val myConfirmation: MyConfirmationResponse?,
 
 	@field:Schema(description = "일정을 생성한 멤버 ID", example = "00000000-0000-0000-0000-000000000001")
 	val createdBy: String,
@@ -132,7 +128,7 @@ data class ScheduleDetailResponse(
 			progressRate = result.progressRate,
 			memo = result.memo,
 			confirmations = result.confirmations.map { ConfirmationCountResponse.from(it) },
-			myConfirmationType = result.myConfirmationType,
+			myConfirmation = result.myConfirmation?.let { MyConfirmationResponse.from(it) },
 			createdBy = result.createdBy,
 			createdAt = result.createdAt,
 		)

@@ -104,7 +104,7 @@ class ScheduleControllerTest(
 			.andExpect(jsonPath("$.data.dDay").value(10))
 			.andExpect(jsonPath("$.data.progressRate").value(0))
 			.andExpect(jsonPath("$.data.confirmations").isEmpty)
-			.andExpect(jsonPath("$.data.myConfirmationType").doesNotExist())
+			.andExpect(jsonPath("$.data.myConfirmation").doesNotExist())
 			.andExpect(jsonPath("$.data.createdBy").value(AUTHOR_ID))
 	}
 
@@ -352,24 +352,26 @@ class ScheduleControllerTest(
 	}
 
 	@Test
-	@DisplayName("확인하기는 멤버당 1건으로 유지되고 재등록은 멱등하다")
-	fun registerConfirmation_registersAndKeepsSingleRowPerMember() {
+	@DisplayName("확인하기를 등록하고 DELETE API로 취소한다")
+	fun cancelConfirmation_withOwnConfirmation_deletesConfirmation() {
 		val token = memberToken(AUTHOR_ID)
 		val scheduleId = createSchedule(
 			token,
 			createRequestJson(startDate = today.plusDays(3), needConfirm = true),
 		)
 
-		repeat(2) {
-			mockMvc.perform(
-				post("$BASE_URL/$scheduleId/confirmations")
-					.header(HttpHeaders.AUTHORIZATION, "Bearer $token")
-					.contentType(MediaType.APPLICATION_JSON)
-					.content("""{"confirmationType":"CONFIRMED"}"""),
-			)
-				.andExpect(status().isOk)
-				.andExpect(jsonPath("$.data.confirmationType").value("CONFIRMED"))
-		}
+		mockMvc.perform(
+			post("$BASE_URL/$scheduleId/confirmations")
+				.header(HttpHeaders.AUTHORIZATION, "Bearer $token")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("""{"confirmationType":"CONFIRMED"}"""),
+		)
+			.andExpect(status().isOk)
+			.andExpect(jsonPath("$.data.confirmationType").value("CONFIRMED"))
+
+		val confirmationId = requireNotNull(
+			scheduleConfirmationJpaRepository.findByScheduleIdAndMemberId(scheduleId, AUTHOR_ID)?.id,
+		)
 
 		mockMvc.perform(
 			get("$BASE_URL/$scheduleId")
@@ -377,9 +379,22 @@ class ScheduleControllerTest(
 		)
 			.andExpect(status().isOk)
 			.andExpect(jsonPath("$.data.confirmations.length()").value(1))
-			.andExpect(jsonPath("$.data.confirmations[0].type").value("CONFIRMED"))
-			.andExpect(jsonPath("$.data.confirmations[0].count").value(1))
-			.andExpect(jsonPath("$.data.myConfirmationType").value("CONFIRMED"))
+			.andExpect(jsonPath("$.data.myConfirmation.confirmationId").value(confirmationId))
+			.andExpect(jsonPath("$.data.myConfirmation.confirmationType").value("CONFIRMED"))
+
+		mockMvc.perform(
+			delete("$BASE_URL/$scheduleId/confirmations/$confirmationId")
+				.header(HttpHeaders.AUTHORIZATION, "Bearer $token"),
+		)
+			.andExpect(status().isOk)
+
+		mockMvc.perform(
+			get("$BASE_URL/$scheduleId")
+				.header(HttpHeaders.AUTHORIZATION, "Bearer $token"),
+		)
+			.andExpect(status().isOk)
+			.andExpect(jsonPath("$.data.confirmations").isEmpty)
+			.andExpect(jsonPath("$.data.myConfirmation").doesNotExist())
 	}
 
 	@Test
