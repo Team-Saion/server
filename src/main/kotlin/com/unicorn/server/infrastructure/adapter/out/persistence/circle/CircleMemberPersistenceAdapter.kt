@@ -39,6 +39,15 @@ class CircleMemberPersistenceAdapter(
 		circleMemberJpaRepository.existsByCircleIdAndMemberId(circleId.toString(), memberId.toString())
 
 	@Transactional(readOnly = true)
+	override fun existsActiveByCircleAndMember(circleId: CircleId, memberId: MemberId): Boolean =
+		circleMemberJpaRepository.existsByCircleIdAndMemberIdAndStatusAndDelYn(
+			circleId.toString(),
+			memberId.toString(),
+			CircleMemberStatus.ACTIVE,
+			"N",
+		)
+
+	@Transactional(readOnly = true)
 	override fun countActiveByCircleId(circleId: CircleId): Long =
 		circleMemberJpaRepository.countByCircleIdAndStatusAndDelYn(circleId.toString(), CircleMemberStatus.ACTIVE, "N")
 }

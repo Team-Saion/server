@@ -26,4 +26,12 @@ class CirclePersistenceAdapter(
 	@Transactional(readOnly = true)
 	override fun findAllByOwnerId(ownerId: MemberId): List<Circle> =
 		circleJpaRepository.findAllByOwnerId(ownerId.toString()).map { it.toDomain() }
+
+	@Transactional(readOnly = true)
+	override fun findAllByIds(circleIds: Collection<CircleId>): Map<CircleId, Circle> {
+		val ids = circleIds.map { it.toString() }
+		return circleJpaRepository.findAllByIdIn(ids)
+			.map { it.toDomain() }
+			.associateBy { it.id }
+	}
 }

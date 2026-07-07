@@ -2,6 +2,8 @@ package com.unicorn.server.infrastructure.adapter.`in`.web.member
 
 import com.unicorn.server.common.exception.CommonErrorCode
 import com.unicorn.server.common.port.out.storage.exception.ObjectStorageErrorCode
+import com.unicorn.server.domain.member.enums.MemberStatus
+import com.unicorn.server.domain.member.enums.Role
 import com.unicorn.server.domain.member.exception.MemberErrorCode
 import com.unicorn.server.domain.term.exception.TermErrorCode
 import com.unicorn.server.infrastructure.adapter.`in`.web.common.dto.ApiResponse
@@ -19,6 +21,7 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RequestPart
 import org.springframework.web.multipart.MultipartFile
 
@@ -195,4 +198,30 @@ interface MemberApiDoc {
 		@Parameter(hidden = true)
 		@AuthenticationPrincipal memberId: String,
 	): ApiResponse<Unit>
+
+	@Operation(
+		summary = "(임시) 멤버 상태/역할 강제 변경",
+		description = """
+			클라이언트 개발/테스트 편의를 위해 멤버 상태와 역할을 강제로 변경합니다. 정식 API가 아니며 추후 제거될 수 있습니다.
+
+			- MEMBER, ADMIN 역할만 접근할 수 있습니다. PENDING 역할은 403을 반환합니다.
+			- `status`, `role`은 각각 선택 값이며, 전달하지 않은 필드는 변경되지 않습니다.
+			- 탈퇴(DELETED) 상태에서도 호출할 수 있으며, ACTIVE로 되돌리는 것도 가능합니다.
+			- 회원탈퇴(`DELETE /me`)와 달리 부가 이벤트(예: refresh token 무효화)는 발생하지 않습니다.
+		""",
+	)
+	@ApiErrorCodeExamples(
+		ApiErrorCodeExample(codeType = CommonErrorCode::class, code = "UNAUTHORIZED"),
+		ApiErrorCodeExample(codeType = CommonErrorCode::class, code = "FORBIDDEN"),
+		ApiErrorCodeExample(codeType = MemberErrorCode::class, code = "MEMBER_NOT_FOUND"),
+	)
+	@ApiSuccessCodeExample(MemberResponse::class)
+	fun changeState(
+		@Parameter(hidden = true)
+		@AuthenticationPrincipal memberId: String,
+		@Parameter(description = "변경할 멤버 상태 (선택)", example = "ACTIVE")
+		@RequestParam(required = false) status: MemberStatus?,
+		@Parameter(description = "변경할 멤버 역할 (선택)", example = "MEMBER")
+		@RequestParam(required = false) role: Role?,
+	): ApiResponse<MemberResponse>
 }

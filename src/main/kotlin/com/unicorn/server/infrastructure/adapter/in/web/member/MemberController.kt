@@ -1,10 +1,13 @@
 package com.unicorn.server.infrastructure.adapter.`in`.web.member
 
 import com.unicorn.server.domain.member.Member
+import com.unicorn.server.domain.member.enums.MemberStatus
+import com.unicorn.server.domain.member.enums.Role
 import com.unicorn.server.domain.member.port.`in`.CompleteOnboardingInPort
 import com.unicorn.server.domain.member.port.`in`.GetMemberInPort
 import com.unicorn.server.domain.member.port.`in`.GetOnboardingInfoInPort
 import com.unicorn.server.domain.member.port.`in`.LogoutInPort
+import com.unicorn.server.domain.member.port.`in`.UpdateMemberStateInPort
 import com.unicorn.server.domain.member.port.`in`.UpdateProfileInPort
 import com.unicorn.server.domain.member.port.`in`.UploadProfileImageInPort
 import com.unicorn.server.domain.member.port.`in`.WithdrawMemberInPort
@@ -27,6 +30,7 @@ import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RequestPart
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
@@ -42,6 +46,7 @@ class MemberController(
 	private val logoutInPort: LogoutInPort,
 	private val withdrawMemberInPort: WithdrawMemberInPort,
 	private val completeOnboardingInPort: CompleteOnboardingInPort,
+	private val updateMemberStateInPort: UpdateMemberStateInPort,
 	@param:Value("\${app.server.url}") private val serverUrl: String,
 ) : MemberApiDoc {
 
@@ -118,6 +123,17 @@ class MemberController(
 	): ApiResponse<Unit> {
 		withdrawMemberInPort.withdraw(memberId)
 		return ApiResponse.success()
+	}
+
+	// PATCH /api/v1/members/me/state - (임시) 클라이언트 개발/테스트용으로 멤버 상태/역할을 강제 변경한다.
+	@PatchMapping("/me/state")
+	override fun changeState(
+		@AuthenticationPrincipal memberId: String,
+		@RequestParam(required = false) status: MemberStatus?,
+		@RequestParam(required = false) role: Role?,
+	): ApiResponse<MemberResponse> {
+		val member = updateMemberStateInPort.updateMemberState(memberId, status, role)
+		return ApiResponse.success(toMemberResponse(member))
 	}
 
 	// profileImageKey를 서버 baseUrl과 조합해 조회 가능한 URL로 변환해 응답 DTO를 만든다.
