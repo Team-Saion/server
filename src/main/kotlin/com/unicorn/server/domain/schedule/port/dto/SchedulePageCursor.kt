@@ -26,15 +26,19 @@ data class SchedulePageCursor(
 			Regex("""\{"startDate":"([^"]+)","startTime":(?:"([^"]+)"|null),"scheduleId":"([^"]+)"}""")
 
 		fun decode(cursor: String): SchedulePageCursor {
-			val raw = String(Base64.getUrlDecoder().decode(cursor), StandardCharsets.UTF_8)
-			val match = CURSOR_PATTERN.matchEntire(raw)
-				?: throw IllegalArgumentException("Invalid schedule page cursor")
+			try {
+				val raw = String(Base64.getUrlDecoder().decode(cursor), StandardCharsets.UTF_8)
+				val match = CURSOR_PATTERN.matchEntire(raw)
+					?: throw IllegalArgumentException("Invalid schedule page cursor")
 
-			return SchedulePageCursor(
-				startDate = LocalDate.parse(match.groupValues[1]),
-				startTime = match.groupValues[2].takeIf { it.isNotEmpty() }?.let { LocalTime.parse(it) },
-				scheduleId = ScheduleId.of(match.groupValues[3]),
-			)
+				return SchedulePageCursor(
+					startDate = LocalDate.parse(match.groupValues[1]),
+					startTime = match.groupValues[2].takeIf { it.isNotEmpty() }?.let { LocalTime.parse(it) },
+					scheduleId = ScheduleId.of(match.groupValues[3]),
+				)
+			} catch (exception: Exception) {
+				throw IllegalArgumentException("Invalid schedule page cursor", exception)
+			}
 		}
 
 		fun from(schedule: Schedule) = SchedulePageCursor(

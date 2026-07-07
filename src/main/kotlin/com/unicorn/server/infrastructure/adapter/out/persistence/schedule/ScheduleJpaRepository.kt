@@ -18,7 +18,7 @@ interface ScheduleJpaRepository : JpaRepository<ScheduleEntity, String> {
 			WHERE circle_id = :circleId
 			  AND del_yn = 'N'
 			ORDER BY start_date ASC,
-			         COALESCE(start_time, TIME '00:00:00') ASC,
+			         start_time_sort ASC,
 			         schedule_id ASC
 			LIMIT :size
 		""",
@@ -37,11 +37,11 @@ interface ScheduleJpaRepository : JpaRepository<ScheduleEntity, String> {
 			  AND del_yn = 'N'
 			  AND (
 			    start_date > :cursorDate
-			    OR (start_date = :cursorDate AND COALESCE(start_time, TIME '00:00:00') > :cursorTime)
-			    OR (start_date = :cursorDate AND COALESCE(start_time, TIME '00:00:00') = :cursorTime AND schedule_id > :cursorId)
+			    OR (start_date = :cursorDate AND start_time_sort > :cursorTime)
+			    OR (start_date = :cursorDate AND start_time_sort = :cursorTime AND schedule_id > :cursorId)
 			  )
 			ORDER BY start_date ASC,
-			         COALESCE(start_time, TIME '00:00:00') ASC,
+			         start_time_sort ASC,
 			         schedule_id ASC
 			LIMIT :size
 		""",

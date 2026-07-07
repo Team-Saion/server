@@ -43,7 +43,7 @@ class ScheduleQueryService(
 			throw BusinessException(CommonErrorCode.INVALID_INPUT, "size=$size")
 		}
 		val pageSize = size
-		val pageCursor = cursor?.let { decodeCursor(it) }
+		val pageCursor = cursor?.takeIf { it.isNotBlank() }?.let { decodeCursor(it) }
 		val results = scheduleOutPort.findActiveByCircleId(circleId, pageCursor, pageSize + 1)
 		val hasNext = results.size > pageSize
 		val schedules = results.take(pageSize)

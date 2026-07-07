@@ -16,7 +16,7 @@ import java.time.LocalTime
 @Table(
 	name = "schedule",
 	indexes = [
-		Index(name = "idx_schedule_circle_sort", columnList = "circle_id, del_yn, start_date, start_time, schedule_id"),
+		Index(name = "idx_schedule_circle_sort", columnList = "circle_id, del_yn, start_date, start_time_sort, schedule_id"),
 	],
 )
 class ScheduleEntity protected constructor() {
@@ -44,6 +44,10 @@ class ScheduleEntity protected constructor() {
 
 	@Column(name = "start_time")
 	var startTime: LocalTime? = null
+		protected set
+
+	@Column(name = "start_time_sort", nullable = false)
+	lateinit var startTimeSort: LocalTime
 		protected set
 
 	@Column(name = "end_time")
@@ -112,6 +116,7 @@ class ScheduleEntity protected constructor() {
 		startDate = schedule.startDate
 		endDate = schedule.endDate
 		startTime = schedule.startTime
+		startTimeSort = schedule.startTime ?: LocalTime.MIDNIGHT
 		endTime = schedule.endTime
 		needConfirm = if (schedule.needConfirm) "Y" else "N"
 		memo = schedule.memo

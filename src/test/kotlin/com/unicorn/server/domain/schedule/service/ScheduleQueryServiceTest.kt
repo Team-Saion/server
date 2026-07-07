@@ -47,6 +47,18 @@ class ScheduleQueryServiceTest {
 	}
 
 	@Test
+	@DisplayName("빈 커서로 일정 목록 조회 시 첫 페이지를 조회한다")
+	fun getList_withBlankCursor_returnsFirstPage() {
+		circleAccessOutPort.seedMember(CIRCLE_ID, MEMBER_ID)
+		scheduleOutPort.seed(schedule(id = SCHEDULE_ID_1, startDate = LocalDate.now().plusDays(1)))
+
+		val result = scheduleQueryService.getList(CIRCLE_ID, MEMBER_ID, cursor = "", size = 20)
+
+		assertThat(result.schedules).hasSize(1)
+		assertThat(result.schedules.single().scheduleId).isEqualTo(SCHEDULE_ID_1)
+	}
+
+	@Test
 	@DisplayName("일정 상세 조회 시 확인하기 카운트와 내 확인하기를 포함한다")
 	fun getDetail_withNeedConfirm_returnsConfirmationData() {
 		circleAccessOutPort.seedMember(CIRCLE_ID, MEMBER_ID)

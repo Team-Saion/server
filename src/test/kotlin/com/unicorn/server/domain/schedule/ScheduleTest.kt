@@ -9,9 +9,11 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import java.nio.charset.StandardCharsets
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.util.Base64
 
 @DisplayName("Schedule 도메인 단위 테스트")
 class ScheduleTest {
@@ -234,6 +236,21 @@ class ScheduleTest {
 				scheduleId = TEST_SCHEDULE_ID,
 			),
 		)
+	}
+
+	@Test
+	@DisplayName("커서 날짜 형식이 잘못되면 IllegalArgumentException이 발생한다")
+	fun schedulePageCursor_decodeWithInvalidDate_throwsIllegalArgumentException() {
+		val cursor = Base64.getUrlEncoder()
+			.withoutPadding()
+			.encodeToString(
+				"""{"startDate":"invalid","startTime":"09:00","scheduleId":"${TEST_SCHEDULE_ID.value}"}"""
+					.toByteArray(StandardCharsets.UTF_8),
+			)
+
+		assertThatThrownBy { SchedulePageCursor.decode(cursor) }
+			.isInstanceOf(IllegalArgumentException::class.java)
+			.hasMessageContaining("Invalid schedule page cursor")
 	}
 
 	private fun createSchedule(
