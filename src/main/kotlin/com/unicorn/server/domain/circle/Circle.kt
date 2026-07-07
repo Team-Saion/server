@@ -44,16 +44,16 @@ class Circle internal constructor(
 			if (trimmed.isBlank()) {
 				throw BusinessException(CircleErrorCode.CIRCLE_NAME_BLANK)
 			}
-			if (trimmed.length > MAX_LENGTH) {
+			if (trimmed.codePointCount(0, trimmed.length) > MAX_LENGTH) {
 				throw BusinessException(CircleErrorCode.CIRCLE_NAME_TOO_LONG)
 			}
-			if (!CHARSET_PATTERN.matches(trimmed)) {
+			if (FORBIDDEN_CHARACTER_PATTERN.containsMatchIn(trimmed)) {
 				throw BusinessException(CircleErrorCode.CIRCLE_NAME_INVALID_CHARSET)
 			}
 			return trimmed
 		}
 
 		private const val MAX_LENGTH = 20
-		private val CHARSET_PATTERN = Regex("^[가-힣a-zA-Z0-9]+$")
+		private val FORBIDDEN_CHARACTER_PATTERN = Regex("[<>&\"'\\\\]|\\p{Cntrl}")
 	}
 }
