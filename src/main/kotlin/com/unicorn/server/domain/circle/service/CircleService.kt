@@ -6,6 +6,7 @@ import com.unicorn.server.domain.circle.Circle
 import com.unicorn.server.domain.circle.CircleMember
 import com.unicorn.server.domain.circle.enums.CircleMemberStatus
 import com.unicorn.server.domain.circle.event.CircleCreatedEvent
+import com.unicorn.server.domain.circle.event.CircleInitiatorTransferredEvent
 import com.unicorn.server.domain.circle.event.CircleMemberJoinedEvent
 import com.unicorn.server.domain.circle.exception.CircleErrorCode
 import com.unicorn.server.domain.circle.exception.CircleNotFoundException
@@ -117,6 +118,43 @@ class CircleService(
 
 	override fun isCircleMember(circleId: String, memberId: String): Boolean =
 		circleMemberOutPort.existsActiveByCircleAndMember(CircleId.of(circleId), MemberId.of(memberId))
+
+	override fun transferInitiator(circleId: String, requesterMemberId: String, targetMemberId: String): CircleSummary {
+		val targetCircleId = CircleId.of(circleId)
+		val requesterId = MemberId.of(requesterMemberId)
+		val targetId = MemberId.of(targetMemberId)
+		if (requesterId == targetId) {
+			throw BusinessException(CircleErrorCode.INITIATOR_DELEGATION_SELF_FORBIDDEN)
+		}
+
+		val circle = circleOutPort.findById(targetCircleId) ?: throw CircleNotFoundException(circleId)
+		val requesterMembership = circleMemberOutPort.findByCircleAndMember(targetCircleId, requesterId)
+			?: throw BusinessException(CircleErrorCode.INITIATOR_DELEGATION_FORBIDDEN)
+		if (requesterMembership.status != CircleMemberStatus.ACTIVE || requesterMembership.deleted || requesterMembership.role != com.unicorn.server.domain.circle.enums.CircleRole.INITIATOR) {
+			throw BusinessException(CircleErrorCode.INITIATOR_DELEGATION_FORBIDDEN)
+		}
+
+		val targetMembership = circleMemberOutPort.findByCircleAndMember(targetCircleId, targetId)
+			?: throw BusinessException(CircleErrorCode.INITIATOR_DELEGATION_TARGET_INVALID)
+		if (targetMembership.status != CircleMemberStatus.ACTIVE || targetMembership.deleted || targetMembership.role != com.unicorn.server.domain.circle.enums.CircleRole.MEMBER) {
+			throw BusinessException(CircleErrorCode.INITIATOR_DELEGATION_TARGET_INVALID)
+		}
+
+		requesterMembership.demoteToMember()
+		targetMembership.promoteToInitiator()
+		circle.transferOwner(targetId)
+		circleMemberOutPort.save(requesterMembership)
+		circleMemberOutPort.save(targetMembership)
+		val savedCircle = circleOutPort.save(circle)
+		eventPublisher.publish(
+			CircleInitiatorTransferredEvent(
+				circleId = savedCircle.id.toString(),
+				previousInitiatorMemberId = requesterId.toString(),
+				newInitiatorMemberId = targetId.toString(),
+			),
+		)
+		return CircleSummary(savedCircle.id.toString(), savedCircle.name, savedCircle.ownerId.toString())
+	}
 
 	private fun assertNoActiveCircle(memberId: MemberId) {
 		if (circleMemberOutPort.findAllActiveByMemberId(memberId).isNotEmpty()) {

@@ -217,6 +217,7 @@ class InvitationServiceTest {
 				CircleMemberDto(memberId = it.second, nickname = it.second, role = "MEMBER", active = true)
 			}
 		override fun isCircleMember(circleId: String, memberId: String): Boolean = members.contains(circleId to memberId)
+		override fun transferInitiator(circleId: String, currentInitiatorId: String, newInitiatorId: String) = error("not used")
 		fun put(circleId: String, memberId: String) { members.add(circleId to memberId) }
 	}
 

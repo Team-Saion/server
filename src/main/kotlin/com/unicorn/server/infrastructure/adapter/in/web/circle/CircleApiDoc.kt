@@ -4,6 +4,7 @@ import com.unicorn.server.common.exception.CommonErrorCode
 import com.unicorn.server.domain.circle.exception.CircleErrorCode
 import com.unicorn.server.infrastructure.adapter.`in`.web.circle.dto.CircleSummaryResponse
 import com.unicorn.server.infrastructure.adapter.`in`.web.circle.dto.CreateCircleRequest
+import com.unicorn.server.infrastructure.adapter.`in`.web.circle.dto.CircleTransferInitiatorRequest
 import com.unicorn.server.infrastructure.adapter.`in`.web.common.dto.ApiResponse
 import com.unicorn.server.infrastructure.adapter.`in`.web.common.swagger.annotation.ApiErrorCodeExample
 import com.unicorn.server.infrastructure.adapter.`in`.web.common.swagger.annotation.ApiErrorCodeExamples
@@ -39,12 +40,12 @@ interface CircleApiDoc {
 
 	@Operation(
 		summary = "써클 생성",
-		description = """
+			description = """
 			인증된 사용자가 새 써클을 생성합니다.
 
 			- Authorization 헤더의 Bearer access token이 필요합니다.
 			- 써클 이름은 1자 이상 20자 이하입니다.
-			- 써클 이름은 한글, 영문, 숫자만 허용합니다.
+			- 써클 이름은 특수문자와 이모지를 허용하되, 보안상 위험한 문자는 제한됩니다.
 			- 생성자는 자동으로 INITIATOR 역할의 circle_member가 됩니다.
 		""",
 	)
@@ -60,5 +61,32 @@ interface CircleApiDoc {
 		@Parameter(hidden = true)
 		@AuthenticationPrincipal memberId: String,
 		@RequestBody @Valid request: CreateCircleRequest,
+	): ApiResponse<CircleSummaryResponse>
+
+	@Operation(
+		summary = "써클 방장 권한 위임",
+		description = """
+			현재 INITIATOR가 같은 써클의 다른 활성 구성원에게 방장 권한을 위임합니다.
+
+			- Authorization 헤더의 Bearer access token이 필요합니다.
+			- 현재 방장만 위임할 수 있습니다.
+			- 자기 자신에게는 위임할 수 없습니다.
+			- 같은 써클의 다른 활성 구성원에게만 위임할 수 있습니다.
+		""",
+	)
+	@ApiErrorCodeExamples(
+		ApiErrorCodeExample(codeType = CommonErrorCode::class, code = "UNAUTHORIZED"),
+		ApiErrorCodeExample(codeType = CircleErrorCode::class, code = "INITIATOR_DELEGATION_SELF_FORBIDDEN"),
+		ApiErrorCodeExample(codeType = CircleErrorCode::class, code = "INITIATOR_DELEGATION_TARGET_INVALID"),
+		ApiErrorCodeExample(codeType = CircleErrorCode::class, code = "INITIATOR_DELEGATION_FORBIDDEN"),
+		ApiErrorCodeExample(codeType = CircleErrorCode::class, code = "CIRCLE_NOT_FOUND"),
+	)
+	@ApiSuccessCodeExample(CircleSummaryResponse::class)
+	fun transferInitiator(
+		@Parameter(hidden = true)
+		@AuthenticationPrincipal memberId: String,
+		@Parameter(description = "써클 ID")
+		circleId: String,
+		@RequestBody @Valid request: CircleTransferInitiatorRequest,
 	): ApiResponse<CircleSummaryResponse>
 }

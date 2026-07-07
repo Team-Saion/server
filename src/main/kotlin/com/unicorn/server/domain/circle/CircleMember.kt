@@ -14,7 +14,7 @@ class CircleMember internal constructor(
 	val circleId: CircleId,
 	val memberId: MemberId,
 	nickname: String,
-	val role: CircleRole,
+	role: CircleRole,
 	status: CircleMemberStatus,
 	val joinedAt: LocalDateTime,
 	leftAt: LocalDateTime?,
@@ -23,6 +23,9 @@ class CircleMember internal constructor(
 	updatedAt: LocalDateTime,
 ) {
 	var nickname: String = nickname
+		private set
+
+	var role: CircleRole = role
 		private set
 
 	var status: CircleMemberStatus = status
@@ -53,6 +56,22 @@ class CircleMember internal constructor(
 		status = CircleMemberStatus.ACTIVE
 		nickname = validateNickname(newNickname)
 		leftAt = null
+		updatedAt = LocalDateTime.now()
+	}
+
+	fun promoteToInitiator() {
+		if (status != CircleMemberStatus.ACTIVE || deleted || role != CircleRole.MEMBER) {
+			throw BusinessException(CircleErrorCode.INITIATOR_DELEGATION_TARGET_INVALID)
+		}
+		role = CircleRole.INITIATOR
+		updatedAt = LocalDateTime.now()
+	}
+
+	fun demoteToMember() {
+		if (status != CircleMemberStatus.ACTIVE || deleted || role != CircleRole.INITIATOR) {
+			throw BusinessException(CircleErrorCode.INITIATOR_DELEGATION_FORBIDDEN)
+		}
+		role = CircleRole.MEMBER
 		updatedAt = LocalDateTime.now()
 	}
 

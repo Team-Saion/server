@@ -9,12 +9,15 @@ import java.time.LocalDateTime
 class Circle internal constructor(
 	val id: CircleId,
 	name: String,
-	val ownerId: MemberId,
+	ownerId: MemberId,
 	deleted: Boolean,
 	val createdAt: LocalDateTime,
 	updatedAt: LocalDateTime,
 ) {
 	var name: String = name
+		private set
+
+	var ownerId: MemberId = ownerId
 		private set
 
 	var deleted: Boolean = deleted
@@ -30,6 +33,11 @@ class Circle internal constructor(
 
 	fun softDelete() {
 		deleted = true
+		updatedAt = LocalDateTime.now()
+	}
+
+	fun transferOwner(newOwnerId: MemberId) {
+		ownerId = newOwnerId
 		updatedAt = LocalDateTime.now()
 	}
 
