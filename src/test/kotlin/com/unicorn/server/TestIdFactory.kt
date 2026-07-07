@@ -6,6 +6,7 @@ import com.unicorn.server.domain.invitation.vo.InvitationId
 import com.unicorn.server.domain.invitation.vo.InvitationRedemptionId
 import com.unicorn.server.domain.member.vo.MemberId
 import com.unicorn.server.domain.member.vo.SocialAccountId
+import com.unicorn.server.domain.schedule.vo.ScheduleId
 import java.util.concurrent.atomic.AtomicLong
 
 object TestIdFactory {
@@ -24,4 +25,6 @@ object TestIdFactory {
 	fun invitationId(): InvitationId = InvitationId.generate(nextSequence())
 
 	fun invitationRedemptionId(): InvitationRedemptionId = InvitationRedemptionId.generate(nextSequence())
+
+	fun scheduleId(): ScheduleId = ScheduleId.generate(nextSequence())
 }

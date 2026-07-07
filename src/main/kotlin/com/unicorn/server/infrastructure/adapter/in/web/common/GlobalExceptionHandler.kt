@@ -4,6 +4,7 @@ import com.unicorn.server.common.exception.BusinessException
 import com.unicorn.server.common.exception.CommonErrorCode
 import com.unicorn.server.common.port.out.storage.exception.ObjectStorageErrorCode
 import com.unicorn.server.infrastructure.adapter.`in`.web.common.dto.ApiResponse
+import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
@@ -27,6 +28,10 @@ class GlobalExceptionHandler {
 
 		return ApiResponse.error(CommonErrorCode.INVALID_INPUT, message)
 	}
+
+	@ExceptionHandler(HttpMessageNotReadableException::class)
+	fun handleMessageNotReadable(e: HttpMessageNotReadableException): ApiResponse<Unit> =
+		ApiResponse.error(CommonErrorCode.INVALID_INPUT, "Invalid request body")
 
 	@ExceptionHandler(MaxUploadSizeExceededException::class)
 	fun handleMaxUploadSizeExceeded(e: MaxUploadSizeExceededException): ApiResponse<Unit> =
