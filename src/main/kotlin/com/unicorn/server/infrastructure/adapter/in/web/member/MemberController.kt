@@ -1,14 +1,28 @@
 package com.unicorn.server.infrastructure.adapter.`in`.web.member
 
+import com.unicorn.server.domain.member.Member
+import com.unicorn.server.domain.member.enums.MemberStatus
+import com.unicorn.server.domain.member.enums.Role
+import com.unicorn.server.domain.member.port.`in`.CompleteOnboardingInPort
 import com.unicorn.server.domain.member.port.`in`.GetMemberInPort
+import com.unicorn.server.domain.member.port.`in`.GetOnboardingInfoInPort
 import com.unicorn.server.domain.member.port.`in`.LogoutInPort
+import com.unicorn.server.domain.member.port.`in`.UpdateMemberStateInPort
 import com.unicorn.server.domain.member.port.`in`.UpdateProfileInPort
+import com.unicorn.server.domain.member.port.`in`.UploadProfileImageInPort
 import com.unicorn.server.domain.member.port.`in`.WithdrawMemberInPort
+import com.unicorn.server.domain.member.port.dto.CompleteOnboardingCommand
 import com.unicorn.server.domain.member.port.dto.UpdateProfileCommand
+import com.unicorn.server.domain.member.port.dto.UploadProfileImageCommand
 import com.unicorn.server.infrastructure.adapter.`in`.web.common.dto.ApiResponse
+import com.unicorn.server.infrastructure.adapter.`in`.web.member.dto.CompleteOnboardingRequest
 import com.unicorn.server.infrastructure.adapter.`in`.web.member.dto.MemberResponse
+import com.unicorn.server.infrastructure.adapter.`in`.web.member.dto.OnboardingInfoResponse
+import com.unicorn.server.infrastructure.adapter.`in`.web.member.dto.TokenResponse
 import com.unicorn.server.infrastructure.adapter.`in`.web.member.dto.UpdateProfileRequest
 import jakarta.validation.Valid
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.http.MediaType
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -16,16 +30,24 @@ import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.RequestPart
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.multipart.MultipartFile
 
-// MemberController - 인증된 멤버의 프로필 조회/변경, 로그아웃, 회원탈퇴 엔드포인트를 처리한다.
+// MemberController - 인증된 멤버의 프로필 조회/변경, 프로필 이미지 업로드, 로그아웃, 회원탈퇴 엔드포인트를 처리한다.
 @RestController
-@RequestMapping("/v1/members")
+@RequestMapping("/api/v1/members")
 class MemberController(
 	private val getMemberInPort: GetMemberInPort,
+	private val getOnboardingInfoInPort: GetOnboardingInfoInPort,
 	private val updateProfileInPort: UpdateProfileInPort,
+	private val uploadProfileImageInPort: UploadProfileImageInPort,
 	private val logoutInPort: LogoutInPort,
 	private val withdrawMemberInPort: WithdrawMemberInPort,
+	private val completeOnboardingInPort: CompleteOnboardingInPort,
+	private val updateMemberStateInPort: UpdateMemberStateInPort,
+	@param:Value("\${app.server.url}") private val serverUrl: String,
 ) : MemberApiDoc {
 
 	// GET /api/v1/members/me - 내 프로필을 조회한다.
@@ -34,7 +56,29 @@ class MemberController(
 		@AuthenticationPrincipal memberId: String,
 	): ApiResponse<MemberResponse> {
 		val member = getMemberInPort.getById(memberId)
-		return ApiResponse.success(MemberResponse.from(member))
+		return ApiResponse.success(toMemberResponse(member))
+	}
+
+	// GET /api/v1/members/me/onboarding-info - 온보딩 사전정보를 조회한다.
+	@GetMapping("/me/onboarding-info")
+	override fun getOnboardingInfo(
+		@AuthenticationPrincipal memberId: String,
+	): ApiResponse<OnboardingInfoResponse> {
+		val result = getOnboardingInfoInPort.getOnboardingInfo(memberId)
+		return ApiResponse.success(OnboardingInfoResponse.from(result))
+	}
+
+	// PATCH /api/v1/members/me/onboarding - 온보딩을 완료하고 MEMBER 토큰을 발급한다.
+	@PatchMapping("/me/onboarding")
+	override fun completeOnboarding(
+		@AuthenticationPrincipal memberId: String,
+		@RequestBody @Valid request: CompleteOnboardingRequest,
+	): ApiResponse<TokenResponse> {
+		val tokenPair = completeOnboardingInPort.completeOnboarding(
+			memberId,
+			CompleteOnboardingCommand(nickname = request.nickname),
+		)
+		return ApiResponse.success(TokenResponse.from(tokenPair))
 	}
 
 	// PATCH /api/v1/members/me/profile - 닉네임을 변경한다.
@@ -44,7 +88,23 @@ class MemberController(
 		@RequestBody @Valid request: UpdateProfileRequest,
 	): ApiResponse<MemberResponse> {
 		val member = updateProfileInPort.updateProfile(memberId, UpdateProfileCommand(request.nickname))
-		return ApiResponse.success(MemberResponse.from(member))
+		return ApiResponse.success(toMemberResponse(member))
+	}
+
+	// POST /api/v1/members/me/profile-image - 프로필 이미지를 업로드한다.
+	@PostMapping("/me/profile-image", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
+	override fun uploadProfileImage(
+		@AuthenticationPrincipal memberId: String,
+		@RequestPart("image") image: MultipartFile,
+	): ApiResponse<MemberResponse> {
+		val command = UploadProfileImageCommand(
+			originalFilename = image.originalFilename ?: "",
+			contentType = image.contentType ?: MediaType.APPLICATION_OCTET_STREAM_VALUE,
+			contentLength = image.size,
+			inputStream = image.inputStream,
+		)
+		val member = uploadProfileImageInPort.uploadProfileImage(memberId, command)
+		return ApiResponse.success(toMemberResponse(member))
 	}
 
 	// POST /api/v1/members/me/logout - 리프레시 토큰을 무효화하고 로그아웃한다.
@@ -64,4 +124,19 @@ class MemberController(
 		withdrawMemberInPort.withdraw(memberId)
 		return ApiResponse.success()
 	}
+
+	// PATCH /api/v1/members/me/state - (임시) 클라이언트 개발/테스트용으로 멤버 상태/역할을 강제 변경한다.
+	@PatchMapping("/me/state")
+	override fun changeState(
+		@AuthenticationPrincipal memberId: String,
+		@RequestParam(required = false) status: MemberStatus?,
+		@RequestParam(required = false) role: Role?,
+	): ApiResponse<MemberResponse> {
+		val member = updateMemberStateInPort.updateMemberState(memberId, status, role)
+		return ApiResponse.success(toMemberResponse(member))
+	}
+
+	// profileImageKey를 서버 baseUrl과 조합해 조회 가능한 URL로 변환해 응답 DTO를 만든다.
+	private fun toMemberResponse(member: Member): MemberResponse =
+		MemberResponse.from(member, member.profileImageKey?.let { "$serverUrl/$it" })
 }

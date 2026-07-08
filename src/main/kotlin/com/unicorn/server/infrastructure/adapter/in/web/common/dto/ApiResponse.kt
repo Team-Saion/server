@@ -18,7 +18,7 @@ class ApiResponse<T> private constructor(
 			description = "요청 성공 여부",
 			example = "true",
 		)
-		val isSuccess: Boolean,
+		val success: Boolean,
 
 		@field:Schema(
 			description = "성공 응답 데이터. 에러 응답에서는 null이다.",
@@ -53,7 +53,7 @@ class ApiResponse<T> private constructor(
 		fun <T> success(data: T, status: HttpStatusCode): ApiResponse<T> =
 			ApiResponse(
 				body = Body(
-					isSuccess = true,
+					success = true,
 					data = data,
 					errorCode = null,
 					message = null,
@@ -74,7 +74,7 @@ class ApiResponse<T> private constructor(
 		fun <T> error(errorCode: String, message: String, status: HttpStatusCode): ApiResponse<T> =
 			ApiResponse(
 				body = Body(
-					isSuccess = false,
+					success = false,
 					data = null,
 					errorCode = errorCode,
 					message = message,

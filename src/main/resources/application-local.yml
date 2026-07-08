@@ -3,31 +3,40 @@ spring:
     activate:
       on-profile: local
   datasource:
-    driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://aws-1-ap-northeast-2.pooler.supabase.com:6543/postgres
-    username: postgres.pzangrzjoqsapwkhfmoj
-    password: aCwW718fuuqzD27N
+    driver-class-name: org.h2.Driver
+    username: sa
+    url: jdbc:h2:mem:server-local;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=false
+    password:
   h2:
     console:
-      enabled: false
       path: /h2-console
+      enabled: true
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     properties:
       hibernate:
         format_sql: true
         highlight_sql: true
     open-in-view: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    validate-on-migrate: true
+    clean-disabled: false
+
 logging:
   level:
     com.unicorn.server: debug
     org.hibernate.SQL: debug
     org.hibernate.orm.jdbc.bind: trace
+
 app:
   jwt:
-    secret: 7f2d9a6c4b8e1z3x5v7n9m2q4w6r8t0y
+    secret: ${JWT_SECRET:dev-secret-key-for-local-development-only-min-32-chars}
     access-token-expiration: 2592000
     refresh-token-expiration: 2592000
   kakao:
-    app-key: cdae46869ffd40e31dd33b35c75b9405
+    app-key: ${KAKAO_APP_KEY:dummy-kakao-key}
+  s3:
+    bucket: ${S3_BUCKET:local-dev-bucket}

@@ -23,6 +23,10 @@ spring:
         format_sql: false
     open-in-view: false
 
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
   data:
     redis:
       host: localhost
@@ -37,8 +41,10 @@ app:
   server:
     url: http://localhost
   jwt:
-    secret: test-secret-key-for-jwt-signing-must-be-at-least-32-bytes!!
+    secret: aqr3l4WUSfDEauYcRmAJPH1TXW9ym3Zs5EPMhzekPI3
     access-token-expiration: 3600
     refresh-token-expiration: 2592000
   kakao:
     app-key: test-kakao-app-key
+  s3:
+    bucket: test-bucket

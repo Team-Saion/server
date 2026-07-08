@@ -150,10 +150,8 @@ class ExampleResponseCustomizer : OperationCustomizer {
 		}
 	}
 
-	private fun sampleValue(type: KType, name: String?, depth: Int): Any? {
-		val classifier = type.classifier
-
-		return when (classifier) {
+	private fun sampleValue(type: KType, name: String?, depth: Int): Any? =
+		when (val classifier = type.classifier) {
 			String::class -> sampleString(name)
 			Int::class -> 1
 			Long::class -> 1L
@@ -168,12 +166,11 @@ class ExampleResponseCustomizer : OperationCustomizer {
 			Instant::class -> Instant.parse("${EXAMPLE_TIMESTAMP}Z")
 			OffsetDateTime::class -> OffsetDateTime.parse("${EXAMPLE_TIMESTAMP}+09:00")
 			ZonedDateTime::class -> ZonedDateTime.parse("${EXAMPLE_TIMESTAMP}+09:00[Asia/Seoul]")
-			UUID::class -> UUID.fromString("00000000-0000-0000-0000-000000000001")
+			UUID::class -> UUID.fromString("11111111-1111-1111-1111-111111111111")
 			List::class, Collection::class, Set::class -> sampleCollection(type, name, depth)
 			Map::class -> emptyMap<String, Any?>()
 			else -> sampleNestedObject(classifier, depth)
 		}
-	}
 
 	private fun sampleCollection(type: KType, name: String?, depth: Int): List<Any?> {
 		val elementType = type.arguments.firstOrNull()?.type ?: return emptyList()
@@ -187,7 +184,11 @@ class ExampleResponseCustomizer : OperationCustomizer {
 
 	private fun sampleString(name: String?): String =
 		when (name) {
-			"userId", "id" -> "user-1"
+			"memberId" -> "00000000-0000-0000-0000-000000000001"
+			"circleId", "targetId" -> "CC20260101000000001"
+			"invitationId" -> "IV20260101000000001"
+			"id" -> "00000000-0000-0000-0000-000000000001"
+			"userId" -> "user-1"
 			"email" -> "user@example.com"
 			"username" -> "unicorn"
 			"password" -> "password123"

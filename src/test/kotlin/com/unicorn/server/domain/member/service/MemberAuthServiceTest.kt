@@ -6,6 +6,7 @@ import com.unicorn.server.domain.member.SocialAccount
 import com.unicorn.server.domain.member.enums.Role
 import com.unicorn.server.domain.member.enums.SocialProvider
 import com.unicorn.server.domain.member.exception.DuplicateEmailException
+import com.unicorn.server.domain.member.exception.InvalidRefreshTokenException
 import com.unicorn.server.domain.member.exception.MemberNotFoundException
 import com.unicorn.server.domain.member.exception.WithdrawnMemberException
 import com.unicorn.server.domain.member.port.dto.SocialLoginCommand
@@ -43,20 +44,28 @@ class MemberAuthServiceTest {
 			providerId = "kakao-123",
 			email = "new@example.com",
 			name = "신규유저",
+			kakaoNickname = "카카오닉네임",
+			kakaoProfileImageUrl = "https://example.com/profile.png",
 		)
 
 		val result = memberAuthService.login(command)
 
-		assertThat(result.accessToken).isNotBlank()
-		assertThat(result.refreshToken).isNotBlank()
+		assertThat(result.tokenPair.accessToken).isNotBlank()
+		assertThat(result.tokenPair.refreshToken).isNotBlank()
+		assertThat(result.isNewMember).isTrue()
 		assertThat(memberOutPort.existsByEmail(Email("new@example.com"))).isTrue()
-		assertThat(socialAccountOutPort.findByProviderAndProviderId(SocialProvider.KAKAO, "kakao-123")).isNotNull()
-		assertThat(tokenStore.findMemberIdByRefreshToken(result.refreshToken)).isNotNull()
+		val member = memberOutPort.findByEmail(Email("new@example.com"))!!
+		assertThat(member.role).isEqualTo(Role.PENDING)
+		val socialAccount = socialAccountOutPort.findByProviderAndProviderId(SocialProvider.KAKAO, "kakao-123")
+		assertThat(socialAccount).isNotNull()
+		assertThat(socialAccount!!.kakaoNickname).isEqualTo("카카오닉네임")
+		assertThat(socialAccount.kakaoProfileImageUrl).isEqualTo("https://example.com/profile.png")
+		assertThat(tokenStore.findMemberIdByRefreshToken(result.tokenPair.refreshToken)).isNotNull()
 	}
 
 	@Test
-	@DisplayName("login 호출 시 카카오 이름이 1자이면 닉네임을 2자로 보정한다")
-	fun login_withOneCharacterName_padsNickname() {
+	@DisplayName("login 호출 시 카카오 이름이 1자이면 기본 닉네임으로 보정한다")
+	fun login_withOneCharacterName_usesDefaultNickname() {
 		val command = SocialLoginCommand(
 			provider = SocialProvider.KAKAO,
 			providerId = "kakao-short-name",
@@ -67,13 +76,32 @@ class MemberAuthServiceTest {
 		memberAuthService.login(command)
 
 		val member = memberOutPort.findByEmail(Email("short@example.com"))!!
-		assertThat(member.nickname).isEqualTo("김_")
+		assertThat(member.nickname).isEqualTo("사용자")
 	}
 
 	@Test
-	@DisplayName("login 호출 시 카카오 이름이 30자 초과이면 닉네임을 30자로 자른다")
+	@DisplayName("login 호출 시 email이 null이어도 이메일 없는 멤버를 생성한다")
+	fun login_withNullEmail_createsMemberWithoutEmail() {
+		val command = SocialLoginCommand(
+			provider = SocialProvider.KAKAO,
+			providerId = "kakao-null-email",
+			email = null,
+			name = "이메일없음",
+		)
+
+		val result = memberAuthService.login(command)
+
+		assertThat(result.tokenPair.accessToken).isNotBlank()
+		assertThat(result.isNewMember).isTrue()
+		val socialAccount = socialAccountOutPort.findByProviderAndProviderId(SocialProvider.KAKAO, "kakao-null-email")!!
+		val member = memberOutPort.findById(socialAccount.memberId)!!
+		assertThat(member.email).isNull()
+	}
+
+	@Test
+	@DisplayName("login 호출 시 카카오 이름이 10자 초과이면 닉네임을 10자로 자른다")
 	fun login_withTooLongName_truncatesNickname() {
-		val longName = "가".repeat(31)
+		val longName = "가".repeat(11)
 		val command = SocialLoginCommand(
 			provider = SocialProvider.KAKAO,
 			providerId = "kakao-long-name",
@@ -84,7 +112,7 @@ class MemberAuthServiceTest {
 		memberAuthService.login(command)
 
 		val member = memberOutPort.findByEmail(Email("long@example.com"))!!
-		assertThat(member.nickname).isEqualTo("가".repeat(30))
+		assertThat(member.nickname).isEqualTo("가".repeat(10))
 	}
 
 	@Test
@@ -92,13 +120,21 @@ class MemberAuthServiceTest {
 	fun login_existingMember_returnsTokenPair() {
 		val member = memberOutPort.save(Member.create(Email("existing@example.com"), "홍길동", "길동이"))
 		socialAccountOutPort.save(
-			SocialAccount.create(member.id, SocialProvider.KAKAO, "kakao-456", "existing@example.com"),
+			SocialAccount.create(
+				member.id,
+				SocialProvider.KAKAO,
+				"kakao-456",
+				"existing@example.com",
+				"홍길동",
+				"https://example.com/existing.png",
+			),
 		)
 		val command = SocialLoginCommand(SocialProvider.KAKAO, "kakao-456", "existing@example.com", "홍길동")
 
 		val result = memberAuthService.login(command)
 
-		assertThat(result.accessToken).isNotBlank()
+		assertThat(result.tokenPair.accessToken).isNotBlank()
+		assertThat(result.isNewMember).isFalse()
 	}
 
 	@Test
@@ -108,7 +144,14 @@ class MemberAuthServiceTest {
 		member.withdraw()
 		memberOutPort.save(member)
 		socialAccountOutPort.save(
-			SocialAccount.create(member.id, SocialProvider.KAKAO, "kakao-withdrawn", "withdrawn-login@example.com"),
+			SocialAccount.create(
+				member.id,
+				SocialProvider.KAKAO,
+				"kakao-withdrawn",
+				"withdrawn-login@example.com",
+				"홍길동",
+				"https://example.com/withdrawn.png",
+			),
 		)
 		val command = SocialLoginCommand(SocialProvider.KAKAO, "kakao-withdrawn", "withdrawn-login@example.com", "홍길동")
 
@@ -146,6 +189,54 @@ class MemberAuthServiceTest {
 			.isInstanceOf(MemberNotFoundException::class.java)
 	}
 
+	@Test
+	@DisplayName("유효한 refresh token으로 reissue 호출 시 새 토큰 쌍을 발급하고 기존 토큰을 무효화한다")
+	fun reissue_withValidRefreshToken_rotatesTokenPair() {
+		val member = memberOutPort.save(Member.create(Email("reissue@example.com"), "홍길동", "길동이"))
+		val oldRefreshToken = "old-refresh-token"
+		tokenIssuer.registerRefreshToken(oldRefreshToken, member.id.toString())
+		tokenStore.save(member.id.toString(), oldRefreshToken)
+
+		val result = memberAuthService.reissue(oldRefreshToken)
+
+		assertThat(result.accessToken).isEqualTo("access-${member.id}")
+		assertThat(result.refreshToken).isEqualTo("refresh-${member.id}")
+		assertThat(tokenStore.findMemberIdByRefreshToken(oldRefreshToken)).isNull()
+		assertThat(tokenStore.findMemberIdByRefreshToken(result.refreshToken)).isEqualTo(member.id.toString())
+	}
+
+	@Test
+	@DisplayName("검증할 수 없는 refresh token으로 reissue 호출 시 InvalidRefreshTokenException이 발생한다")
+	fun reissue_withInvalidRefreshToken_throwsInvalidRefreshTokenException() {
+		assertThatThrownBy { memberAuthService.reissue("invalid-refresh-token") }
+			.isInstanceOf(InvalidRefreshTokenException::class.java)
+	}
+
+	@Test
+	@DisplayName("저장소의 활성 토큰과 다른 refresh token으로 reissue 호출 시 InvalidRefreshTokenException이 발생한다")
+	fun reissue_withInactiveRefreshToken_throwsInvalidRefreshTokenException() {
+		val member = memberOutPort.save(Member.create(Email("inactive@example.com"), "홍길동", "길동이"))
+		val inactiveRefreshToken = "inactive-refresh-token"
+		tokenIssuer.registerRefreshToken(inactiveRefreshToken, member.id.toString())
+
+		assertThatThrownBy { memberAuthService.reissue(inactiveRefreshToken) }
+			.isInstanceOf(InvalidRefreshTokenException::class.java)
+	}
+
+	@Test
+	@DisplayName("탈퇴한 멤버의 refresh token으로 reissue 호출 시 WithdrawnMemberException이 발생한다")
+	fun reissue_withWithdrawnMember_throwsWithdrawnMemberException() {
+		val member = memberOutPort.save(Member.create(Email("withdrawn-reissue@example.com"), "홍길동", "길동이"))
+		member.withdraw()
+		memberOutPort.save(member)
+		val refreshToken = "withdrawn-refresh-token"
+		tokenIssuer.registerRefreshToken(refreshToken, member.id.toString())
+		tokenStore.save(member.id.toString(), refreshToken)
+
+		assertThatThrownBy { memberAuthService.reissue(refreshToken) }
+			.isInstanceOf(WithdrawnMemberException::class.java)
+	}
+
 	private class FakeMemberOutPort : MemberOutPort {
 		private val store = linkedMapOf<MemberId, Member>()
 
@@ -175,11 +266,23 @@ class MemberAuthServiceTest {
 
 		override fun findByProviderAndProviderId(provider: SocialProvider, providerId: String): SocialAccount? =
 			store[provider to providerId]
+
+		override fun findByMemberId(memberId: MemberId): SocialAccount? =
+			store.values.firstOrNull { it.memberId == memberId }
 	}
 
 	private class FakeTokenIssuer : TokenIssuer {
+		private val refreshTokens = mutableMapOf<String, String>()
+
 		override fun issue(memberId: String, role: Role): TokenPair =
 			TokenPair("access-$memberId", "refresh-$memberId")
+
+		override fun parseRefreshToken(refreshToken: String): String? =
+			refreshTokens[refreshToken]
+
+		fun registerRefreshToken(refreshToken: String, memberId: String) {
+			refreshTokens[refreshToken] = memberId
+		}
 	}
 
 	private class FakeTokenStore : TokenStore {

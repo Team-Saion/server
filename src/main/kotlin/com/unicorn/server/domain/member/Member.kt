@@ -2,6 +2,7 @@ package com.unicorn.server.domain.member
 
 import com.unicorn.server.common.exception.BusinessException
 import com.unicorn.server.common.vo.Email
+import com.unicorn.server.domain.member.enums.AvatarColor
 import com.unicorn.server.domain.member.enums.MemberStatus
 import com.unicorn.server.domain.member.enums.Role
 import com.unicorn.server.domain.member.exception.MemberErrorCode
@@ -9,12 +10,13 @@ import com.unicorn.server.domain.member.vo.MemberId
 import java.time.LocalDateTime
 
 // Member 도메인 - 서비스 관점의 멤버 프로필과 탈퇴 생명주기 규칙을 담당한다.
-class Member private constructor(
+class Member internal constructor(
 	val id: MemberId,
-	val email: Email,
-	val name: String,
+	val email: Email?,
+	val name: String?,
 	nickname: String,
-	val role: Role,
+	val avatarColor: AvatarColor,
+	role: Role,
 	profileImageKey: String?,
 	status: MemberStatus,
 	deletedAt: LocalDateTime?,
@@ -25,6 +27,9 @@ class Member private constructor(
 		private set
 
 	var profileImageKey: String? = profileImageKey
+		private set
+
+	var role: Role = role
 		private set
 
 	var status: MemberStatus = status
@@ -55,16 +60,50 @@ class Member private constructor(
 		updatedAt = LocalDateTime.now()
 	}
 
+	// 온보딩을 완료하고 정식 멤버 역할로 전환한다.
+	fun completeOnboarding(nickname: String) {
+		check(this.role == Role.PENDING) { "Member is already onboarded" }
+		val trimmed = nickname.trim()
+		validateNickname(trimmed)
+		this.nickname = trimmed
+		this.role = Role.MEMBER
+		this.updatedAt = LocalDateTime.now()
+	}
+
+	// 프로필 이미지 키를 교체한다. 업로드 검증/스토리지 연동은 use-case 책임이다.
+	fun changeProfileImage(objectKey: String) {
+		require(objectKey.isNotBlank()) { "Profile image key cannot be blank" }
+
+		profileImageKey = objectKey
+		updatedAt = LocalDateTime.now()
+	}
+
+	// 멤버 상태를 강제로 변경한다. DELETED로 전환 시 soft delete 시각을 기록하고, 그 외 상태에서는 비운다.
+	fun changeStatus(status: MemberStatus) {
+		this.status = status
+		deletedAt = if (status == MemberStatus.DELETED) deletedAt ?: LocalDateTime.now() else null
+		updatedAt = LocalDateTime.now()
+	}
+
+	// 멤버 역할을 강제로 변경한다.
+	fun changeRole(role: Role) {
+		this.role = role
+		updatedAt = LocalDateTime.now()
+	}
+
 	// 멤버가 탈퇴 상태인지 확인한다.
 	fun isDeleted(): Boolean = status == MemberStatus.DELETED
 
 	companion object {
 		const val WITHDRAWAL_RETENTION_DAYS = 30L
+		private const val MIN_NICKNAME_LENGTH = 2
+		private const val MAX_NICKNAME_LENGTH = 10
+		private val NICKNAME_PATTERN = Regex("^[가-힣a-zA-Z0-9]+$")
 
 		// 신규 멤버를 기본 역할과 활성 상태로 생성한다.
 		fun create(
-			email: Email,
-			name: String,
+			email: Email?,
+			name: String?,
 			nickname: String,
 			role: Role = Role.MEMBER,
 		): Member {
@@ -77,6 +116,7 @@ class Member private constructor(
 				email = email,
 				name = name,
 				nickname = nickname,
+				avatarColor = AvatarColor.random(),
 				role = role,
 				profileImageKey = null,
 				status = MemberStatus.ACTIVE,
@@ -86,30 +126,20 @@ class Member private constructor(
 			)
 		}
 
-		// 저장소의 원시 상태를 도메인 멤버로 복원한다.
-		fun reconstitute(
-			id: MemberId,
-			email: Email,
-			name: String,
-			nickname: String,
-			role: Role,
-			profileImageKey: String?,
-			status: MemberStatus,
-			deletedAt: LocalDateTime?,
-			createdAt: LocalDateTime,
-			updatedAt: LocalDateTime,
-		): Member = Member(id, email, name, nickname, role, profileImageKey, status, deletedAt, createdAt, updatedAt)
-
 		// 실명 또는 소셜 제공 이름의 최소 유효성을 검증한다.
-		private fun validateName(name: String) {
-			require(name.isNotBlank()) { "Name cannot be blank" }
+		private fun validateName(name: String?) {
+			if (name != null) require(name.isNotBlank()) { "Name cannot be blank" }
 		}
 
-		// 서비스 내 노출 닉네임의 최소/최대 길이를 검증한다.
+		// 서비스 내 노출 닉네임의 길이와 허용 문자를 검증한다.
 		private fun validateNickname(nickname: String) {
-			require(nickname.isNotBlank()) { "Nickname cannot be blank" }
-			require(nickname == nickname.trim()) { "Nickname must not have leading or trailing whitespace" }
-			require(nickname.length in 2..30) { "Nickname must be between 2 and 30 characters" }
+			if (nickname.isBlank() ||
+				nickname != nickname.trim() ||
+				nickname.length !in MIN_NICKNAME_LENGTH..MAX_NICKNAME_LENGTH ||
+				!NICKNAME_PATTERN.matches(nickname)
+			) {
+				throw BusinessException(MemberErrorCode.INVALID_NICKNAME)
+			}
 		}
 	}
 }

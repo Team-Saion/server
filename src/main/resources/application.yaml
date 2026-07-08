@@ -3,6 +3,8 @@ spring:
     name: server
   profiles:
     default: dev
+  flyway:
+    enabled: false
 app:
   server:
     url: ${SERVER_URL:http://localhost:8080}
@@ -20,6 +22,9 @@ app:
   kakao:
     jwks-uri: ${KAKAO_JWKS_URI:https://kauth.kakao.com/.well-known/jwks.json}
     issuer: ${KAKAO_ISSUER:https://kauth.kakao.com}
+  s3:
+    region: ${AWS_REGION:ap-northeast-2}
+
 management:
   endpoints:
     web:
@@ -32,11 +37,12 @@ management:
 
 springdoc:
   api-docs:
-    path: /api-specs
+    path: /api/api-specs
   use-fqn: false
   default-consumes-media-type: application/json;charset=UTF-8
   default-produces-media-type: application/json;charset=UTF-8
   swagger-ui:
+    path: /api/swagger-ui.html
     tags-sorter: alpha
     operations-sorter: alpha
     display-request-duration: true

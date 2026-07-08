@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletResponse
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.MediaType
+import org.springframework.http.HttpMethod
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
@@ -40,9 +41,11 @@ class SecurityConfig(
 			}
 			.authorizeHttpRequests { auth ->
 				auth
+					.requestMatchers(HttpMethod.GET, "/api/v1/invitations/by-token/**").permitAll()
 					.requestMatchers(*PERMIT_ALL_ENDPOINTS).permitAll()
+					.requestMatchers(*PENDING_ENDPOINTS).hasAnyRole("PENDING", "MEMBER", "ADMIN")
 					.requestMatchers(*ADMIN_ENDPOINTS).hasRole("ADMIN")
-					.anyRequest().authenticated()
+					.anyRequest().hasAnyRole("MEMBER", "ADMIN")
 			}
 			.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
 			.build()
@@ -58,16 +61,23 @@ class SecurityConfig(
 	companion object {
 		private val PERMIT_ALL_ENDPOINTS = arrayOf(
 			"/api/v1/auth/**",
-			"/swagger-ui/**",
-			"/swagger-ui.html",
-			"/v3/api-docs/**",
-			"/api-specs/**",
+			"/api/v1/terms",
+			"/api/swagger-ui/**",
+			"/api/swagger-ui.html",
+			"/api/api-specs/**",
 			"/actuator/**",
 			"/error",
 		)
 
 		private val ADMIN_ENDPOINTS = arrayOf(
-			"/api/v1/admin/**",
+			"/v1/admin/**",
+		)
+
+		private val PENDING_ENDPOINTS = arrayOf<String>(
+			"/api/v1/terms/agree",
+			"/api/v1/members/me/onboarding-info",
+			"/api/v1/members/me/onboarding",
+			"/api/v1/members/me/profile-image"
 		)
 	}
 }

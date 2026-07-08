@@ -26,22 +26,24 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-aspectj")
     implementation("org.springframework.boot:spring-boot-starter-security")
+    implementation("org.springframework.boot:spring-boot-starter-flyway")
     implementation("org.springframework.security:spring-security-oauth2-jose")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3")
     implementation("io.jsonwebtoken:jjwt-api:0.12.6")
 
-	// Amazon
-	implementation("software.amazon.awssdk:s3:2.46.15")
-	implementation("com.google.firebase:firebase-admin:9.4.3")
+    // Amazon
+    implementation("software.amazon.awssdk:s3:2.46.15")
+    implementation("com.google.firebase:firebase-admin:9.4.3")
 
-	// Kotlin support
-	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
-	implementation("org.jetbrains.kotlin:kotlin-reflect")
+    // Kotlin support
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+    implementation("org.jetbrains.kotlin:kotlin-reflect")
 
 
     // Database drivers
     runtimeOnly("org.postgresql:postgresql")
+    runtimeOnly("com.h2database:h2")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.6")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.6")
 

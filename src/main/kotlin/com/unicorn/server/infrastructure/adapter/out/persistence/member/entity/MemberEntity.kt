@@ -1,11 +1,9 @@
 package com.unicorn.server.infrastructure.adapter.out.persistence.member.entity
 
 import com.unicorn.server.common.persistence.AuditableJpaEntity
-import com.unicorn.server.common.vo.Email
-import com.unicorn.server.domain.member.Member
+import com.unicorn.server.domain.member.enums.AvatarColor
 import com.unicorn.server.domain.member.enums.MemberStatus
 import com.unicorn.server.domain.member.enums.Role
-import com.unicorn.server.domain.member.vo.MemberId
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -21,79 +19,47 @@ import java.time.LocalDateTime
 	name = "member",
 	indexes = [Index(name = "idx_member_email", columnList = "email", unique = true)],
 )
-class MemberEntity protected constructor() : AuditableJpaEntity() {
+class MemberEntity internal constructor() : AuditableJpaEntity() {
 
 	@Id
 	@Column(name = "id", nullable = false, length = 36)
 	var id: String = ""
-		protected set
+		internal set
 
-	@Column(name = "email", nullable = false, length = 255)
-	var email: String = ""
-		protected set
+	@Column(name = "email", nullable = true, length = 255)
+	var email: String? = null
+		internal set
 
-	@Column(name = "name", nullable = false, length = 100)
-	var name: String = ""
-		protected set
+	@Column(name = "name", nullable = true, length = 100)
+	var name: String? = null
+		internal set
 
 	@Column(name = "nickname", nullable = false, length = 30)
 	var nickname: String = ""
-		protected set
+		internal set
+
+	@Enumerated(EnumType.STRING)
+	@Column(name = "avatar_color", nullable = false, length = 20)
+	lateinit var avatarColor: AvatarColor
+		internal set
 
 	@Enumerated(EnumType.STRING)
 	@Column(name = "role", nullable = false, length = 20)
 	lateinit var role: Role
-		protected set
+		internal set
 
 	@Column(name = "profile_image_key", nullable = true, length = 512)
 	var profileImageKey: String? = null
-		protected set
+		internal set
 
 	@Enumerated(EnumType.STRING)
 	@Column(name = "status", nullable = false, length = 20)
 	lateinit var status: MemberStatus
-		protected set
+		internal set
 
 	@Column(name = "deleted_at", nullable = true)
 	var deletedAt: LocalDateTime? = null
-		protected set
+		internal set
 
-	constructor(member: Member) : this() {
-		id = member.id.toString()
-		email = member.email.value
-		name = member.name
-		nickname = member.nickname
-		role = member.role
-		profileImageKey = member.profileImageKey
-		status = member.status
-		deletedAt = member.deletedAt
-		createdAt = member.createdAt
-		updatedAt = member.updatedAt
-	}
 
-	// 도메인 변경사항을 기존 영속성 객체에 반영한다.
-	fun update(member: Member) {
-		email = member.email.value
-		name = member.name
-		nickname = member.nickname
-		role = member.role
-		profileImageKey = member.profileImageKey
-		status = member.status
-		deletedAt = member.deletedAt
-		updatedAt = member.updatedAt
-	}
-
-	// 영속성 객체를 순수 도메인 객체로 복원한다.
-	fun toDomain(): Member = Member.reconstitute(
-		id = MemberId.of(id),
-		email = Email(email),
-		name = name,
-		nickname = nickname,
-		role = role,
-		profileImageKey = profileImageKey,
-		status = status,
-		deletedAt = deletedAt,
-		createdAt = requireNotNull(createdAt) { "createdAt must not be null" },
-		updatedAt = requireNotNull(updatedAt) { "updatedAt must not be null" },
-	)
 }

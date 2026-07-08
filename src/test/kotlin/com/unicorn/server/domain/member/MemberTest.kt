@@ -2,8 +2,10 @@ package com.unicorn.server.domain.member
 
 import com.unicorn.server.common.exception.BusinessException
 import com.unicorn.server.common.vo.Email
+import com.unicorn.server.domain.member.enums.AvatarColor
 import com.unicorn.server.domain.member.enums.MemberStatus
 import com.unicorn.server.domain.member.enums.Role
+import com.unicorn.server.domain.member.exception.MemberErrorCode
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.DisplayName
@@ -34,6 +36,14 @@ class MemberTest {
 		val member = Member.create(Email("test@example.com"), "홍길동", "길동이")
 
 		assertThat(member.profileImageKey).isNull()
+	}
+
+	@Test
+	@DisplayName("Member 생성 시 avatarColor가 할당된다")
+	fun create_avatarColorIsAssigned() {
+		val member = Member.create(Email("test@example.com"), "홍길동", "길동이")
+
+		assertThat(member.avatarColor).isIn(*AvatarColor.values())
 	}
 
 	@Test
@@ -82,16 +92,20 @@ class MemberTest {
 		val member = Member.create(Email("test@example.com"), "홍길동", "길동이")
 
 		assertThatThrownBy { member.updateProfile("a") }
-			.isInstanceOf(IllegalArgumentException::class.java)
+			.isInstanceOf(BusinessException::class.java)
+			.extracting("errorCode")
+			.isEqualTo(MemberErrorCode.INVALID_NICKNAME)
 	}
 
 	@Test
-	@DisplayName("닉네임이 30자 초과이면 예외가 발생한다")
+	@DisplayName("닉네임이 10자 초과이면 예외가 발생한다")
 	fun updateProfile_withTooLongNickname_throwsException() {
 		val member = Member.create(Email("test@example.com"), "홍길동", "길동이")
 
-		assertThatThrownBy { member.updateProfile("a".repeat(31)) }
-			.isInstanceOf(IllegalArgumentException::class.java)
+		assertThatThrownBy { member.updateProfile("a".repeat(11)) }
+			.isInstanceOf(BusinessException::class.java)
+			.extracting("errorCode")
+			.isEqualTo(MemberErrorCode.INVALID_NICKNAME)
 	}
 
 	@Test
@@ -100,6 +114,37 @@ class MemberTest {
 		val member = Member.create(Email("test@example.com"), "홍길동", "길동이")
 
 		assertThatThrownBy { member.updateProfile(" 새닉네임 ") }
+			.isInstanceOf(BusinessException::class.java)
+			.extracting("errorCode")
+			.isEqualTo(MemberErrorCode.INVALID_NICKNAME)
+	}
+
+	@Test
+	@DisplayName("PENDING 상태가 아닌 멤버가 completeOnboarding을 호출하면 예외가 발생한다")
+	fun completeOnboarding_whenAlreadyOnboarded_throwsException() {
+		val member = Member.create(Email("test@example.com"), "홍길동", "길동이", Role.MEMBER)
+
+		assertThatThrownBy { member.completeOnboarding("새닉네임") }
+			.isInstanceOf(IllegalStateException::class.java)
+			.hasMessageContaining("Member is already onboarded")
+	}
+
+	@Test
+	@DisplayName("changeProfileImage 호출 시 profileImageKey가 변경된다")
+	fun changeProfileImage_keyIsUpdated() {
+		val member = Member.create(Email("test@example.com"), "홍길동", "길동이")
+
+		member.changeProfileImage("images/profile/new-key.png")
+
+		assertThat(member.profileImageKey).isEqualTo("images/profile/new-key.png")
+	}
+
+	@Test
+	@DisplayName("빈 objectKey로 changeProfileImage 호출 시 예외가 발생한다")
+	fun changeProfileImage_withBlankKey_throwsException() {
+		val member = Member.create(Email("test@example.com"), "홍길동", "길동이")
+
+		assertThatThrownBy { member.changeProfileImage(" ") }
 			.isInstanceOf(IllegalArgumentException::class.java)
 	}
 

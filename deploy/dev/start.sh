@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# .env 파일에서 환경변수 로드
+set -a
+source /home/ec2-user/.env
+set +a
+
 echo "[DEV] Starting application"
 
 nohup java \
