@@ -1,0 +1,33 @@
+spring:
+  config:
+    activate:
+      on-profile: local
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://aws-1-ap-northeast-2.pooler.supabase.com:6543/postgres
+    username: postgres.pzangrzjoqsapwkhfmoj
+    password: aCwW718fuuqzD27N
+  h2:
+    console:
+      enabled: false
+      path: /h2-console
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+        highlight_sql: true
+    open-in-view: false
+logging:
+  level:
+    com.unicorn.server: debug
+    org.hibernate.SQL: debug
+    org.hibernate.orm.jdbc.bind: trace
+app:
+  jwt:
+    secret: 7f2d9a6c4b8e1z3x5v7n9m2q4w6r8t0y
+    access-token-expiration: 2592000
+    refresh-token-expiration: 2592000
+  kakao:
+    app-key: cdae46869ffd40e31dd33b35c75b9405
