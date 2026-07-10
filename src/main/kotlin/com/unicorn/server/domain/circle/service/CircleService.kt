@@ -163,25 +163,23 @@ class CircleService(
 
 		memberships.forEach { membership ->
 			val circle = circleOutPort.findById(membership.circleId) ?: throw CircleNotFoundException(membership.circleId.toString())
-			val remainingActiveMembers = circleMemberOutPort.findAllActiveByCircleId(membership.circleId)
-				.filter { it.memberId != withdrawingMemberId }
+			val newInitiatorCandidate = circleMemberOutPort.findOldestActiveByCircleIdExcludingMemberId(membership.circleId, withdrawingMemberId)
 
 			if (membership.role == CircleRole.INITIATOR) {
-				if (remainingActiveMembers.isEmpty()) {
+				if (newInitiatorCandidate == null) {
 					circle.softDelete()
 					circleOutPort.save(circle)
 				} else {
-					val newInitiator = remainingActiveMembers.minWith(compareBy<CircleMember>({ it.joinedAt }, { it.memberId.toString() }))
 					membership.demoteToMember()
-					newInitiator.promoteToInitiator()
-					circle.transferOwner(newInitiator.memberId)
-					circleMemberOutPort.save(newInitiator)
+					newInitiatorCandidate.promoteToInitiator()
+					circle.transferOwner(newInitiatorCandidate.memberId)
+					circleMemberOutPort.save(newInitiatorCandidate)
 					val savedCircle = circleOutPort.save(circle)
 					eventPublisher.publish(
 						CircleInitiatorTransferredEvent(
 							circleId = savedCircle.id.toString(),
 							previousInitiatorMemberId = withdrawingMemberId.toString(),
-							newInitiatorMemberId = newInitiator.memberId.toString(),
+							newInitiatorMemberId = newInitiatorCandidate.memberId.toString(),
 						),
 					)
 				}
