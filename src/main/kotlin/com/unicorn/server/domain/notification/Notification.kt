@@ -6,20 +6,35 @@ import com.unicorn.server.domain.notification.enums.NotificationStatus
 import com.unicorn.server.domain.notification.vo.NotificationId
 import java.time.LocalDateTime
 
+// Notification 도메인 - 발송 대상 알림의 전송 상태와 재시도 생명주기
 class Notification private constructor(
+	// 알림 고유 식별자 (신규 생성 시 저장 전까지 null 가능)
 	val id: NotificationId?,
+	// 실제 전달 채널
 	val channel: NotificationChannel,
+	// 알림 수신 대상 식별자
 	receiver: String,
+	// 알림 생성 원인 비즈니스 이벤트 타입
 	val eventType: NotificationEventType,
+	// 메시지 조합 및 후처리용 치환 데이터
 	payload: Map<String, String>,
+	// 동일 알림 중복 생성 방지용 멱등 키
 	dedupKey: String,
+	// 현재 전송 처리 상태
 	status: NotificationStatus,
+	// 누적 전송 시도 횟수
 	attemptCount: Int,
+	// 실패 후 다음 재시도 예정 시각
 	nextRetryAt: LocalDateTime?,
+	// 최종 발송 성공 시각
 	sentAt: LocalDateTime?,
+	// 마지막 실패 기록 시각
 	failedAt: LocalDateTime?,
+	// 마지막 실패 원인 메시지
 	failReason: String?,
+	// 알림 최초 생성 시각
 	val createdAt: LocalDateTime,
+	// 알림 상태 최종 변경 시각
 	updatedAt: LocalDateTime,
 ) {
 	var receiver: String = receiver
