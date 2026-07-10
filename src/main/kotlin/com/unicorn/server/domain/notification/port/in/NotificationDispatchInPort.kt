@@ -1,5 +1,5 @@
 package com.unicorn.server.domain.notification.port.`in`
 
-interface DispatchReadyNotificationsInPort {
+interface NotificationDispatchInPort {
 	fun dispatch(limit: Int)
 }

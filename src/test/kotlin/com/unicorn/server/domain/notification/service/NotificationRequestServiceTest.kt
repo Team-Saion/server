@@ -4,16 +4,16 @@ import com.unicorn.server.domain.notification.Notification
 import com.unicorn.server.domain.notification.enums.NotificationChannel
 import com.unicorn.server.domain.notification.enums.NotificationEventType
 import com.unicorn.server.domain.notification.port.dto.RequestNotificationCommand
-import com.unicorn.server.domain.notification.port.out.NotificationStore
+import com.unicorn.server.domain.notification.port.out.NotificationOutPort
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 
-@DisplayName("RequestNotificationService 단위 테스트")
-class RequestNotificationServiceTest {
-	private val notificationStore = FakeNotificationStore()
-	private val requestNotificationService = RequestNotificationService(notificationStore)
+@DisplayName("NotificationRequestService 단위 테스트")
+class NotificationRequestServiceTest {
+	private val notificationOutPort = FakeNotificationOutPort()
+	private val notificationRequestService = NotificationRequestService(notificationOutPort)
 
 	@Test
 	@DisplayName("동일 dedup key 알림은 한 번만 저장된다")
@@ -26,13 +26,13 @@ class RequestNotificationServiceTest {
 			dedupKey = "signup-1",
 		)
 
-		requestNotificationService.request(command)
-		requestNotificationService.request(command)
+		notificationRequestService.request(command)
+		notificationRequestService.request(command)
 
-		assertThat(notificationStore.notifications).hasSize(1)
+		assertThat(notificationOutPort.notifications).hasSize(1)
 	}
 
-	private class FakeNotificationStore : NotificationStore {
+	private class FakeNotificationOutPort : NotificationOutPort {
 		val notifications = linkedMapOf<String, Notification>()
 
 		override fun save(notification: Notification): Notification {

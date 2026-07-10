@@ -3,7 +3,7 @@ package com.unicorn.server.domain.notification.port.out
 import com.unicorn.server.domain.notification.Notification
 import java.time.LocalDateTime
 
-interface NotificationStore {
+interface NotificationOutPort {
 	fun save(notification: Notification): Notification
 
 	fun findByDedupKey(dedupKey: String): Notification?

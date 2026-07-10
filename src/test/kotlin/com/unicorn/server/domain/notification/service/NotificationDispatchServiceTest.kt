@@ -9,7 +9,7 @@ import com.unicorn.server.domain.notification.exception.RetryableNotificationSen
 import com.unicorn.server.domain.notification.port.dto.NotificationMessage
 import com.unicorn.server.domain.notification.port.out.NotificationMessageComposer
 import com.unicorn.server.domain.notification.port.out.NotificationSender
-import com.unicorn.server.domain.notification.port.out.NotificationStore
+import com.unicorn.server.domain.notification.port.out.NotificationOutPort
 import com.unicorn.server.infrastructure.config.NotificationProperties
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
@@ -18,7 +18,7 @@ import java.time.LocalDateTime
 
 @DisplayName("NotificationDispatchService 단위 테스트")
 class NotificationDispatchServiceTest {
-	private val notificationStore = FakeNotificationStore()
+	private val notificationOutPort = FakeNotificationOutPort()
 	private val successComposer = FakeComposer()
 	private val successSender = RecordingSender()
 	private val notificationProperties = NotificationProperties().apply {
@@ -26,7 +26,7 @@ class NotificationDispatchServiceTest {
 		dispatch.baseRetryDelayMinutes = 5
 	}
 	private val notificationDispatchService = NotificationDispatchService(
-		notificationStore = notificationStore,
+		notificationOutPort = notificationOutPort,
 		composers = listOf(successComposer),
 		senders = listOf(successSender),
 		notificationProperties = notificationProperties,
@@ -35,11 +35,11 @@ class NotificationDispatchServiceTest {
 	@Test
 	@DisplayName("READY 알림 발송 성공 시 SENT 상태가 된다")
 	fun dispatch_readyNotification_sent() {
-		val notification = notificationStore.save(createNotification())
+		val notification = notificationOutPort.save(createNotification())
 
 		notificationDispatchService.dispatch(10)
 
-		val saved = notificationStore.findByDedupKey(notification.dedupKey)
+		val saved = notificationOutPort.findByDedupKey(notification.dedupKey)
 		assertThat(saved?.status).isEqualTo(NotificationStatus.SENT)
 		assertThat(successSender.messages).hasSize(1)
 	}
@@ -47,9 +47,9 @@ class NotificationDispatchServiceTest {
 	@Test
 	@DisplayName("재시도 가능한 발송 실패 시 FAILED 상태와 nextRetryAt이 기록된다")
 	fun dispatch_retryableFailure_failed() {
-		val store = FakeNotificationStore()
+		val outPort = FakeNotificationOutPort()
 		val service = NotificationDispatchService(
-			notificationStore = store,
+			notificationOutPort = outPort,
 			composers = listOf(FakeComposer()),
 			senders = listOf(RetryableFailSender()),
 			notificationProperties = NotificationProperties().apply {
@@ -57,11 +57,11 @@ class NotificationDispatchServiceTest {
 				dispatch.baseRetryDelayMinutes = 5
 			},
 		)
-		val notification = store.save(createNotification(dedupKey = "retryable-key"))
+		val notification = outPort.save(createNotification(dedupKey = "retryable-key"))
 
 		service.dispatch(10)
 
-		val saved = store.findByDedupKey(notification.dedupKey)
+		val saved = outPort.findByDedupKey(notification.dedupKey)
 		assertThat(saved?.status).isEqualTo(NotificationStatus.FAILED)
 		assertThat(saved?.nextRetryAt).isNotNull()
 	}
@@ -69,9 +69,9 @@ class NotificationDispatchServiceTest {
 	@Test
 	@DisplayName("영구 실패 시 DEAD 상태가 된다")
 	fun dispatch_permanentFailure_dead() {
-		val store = FakeNotificationStore()
+		val outPort = FakeNotificationOutPort()
 		val service = NotificationDispatchService(
-			notificationStore = store,
+			notificationOutPort = outPort,
 			composers = listOf(FakeComposer()),
 			senders = listOf(PermanentFailSender()),
 			notificationProperties = NotificationProperties().apply {
@@ -79,11 +79,11 @@ class NotificationDispatchServiceTest {
 				dispatch.baseRetryDelayMinutes = 5
 			},
 		)
-		val notification = store.save(createNotification(dedupKey = "dead-key"))
+		val notification = outPort.save(createNotification(dedupKey = "dead-key"))
 
 		service.dispatch(10)
 
-		val saved = store.findByDedupKey(notification.dedupKey)
+		val saved = outPort.findByDedupKey(notification.dedupKey)
 		assertThat(saved?.status).isEqualTo(NotificationStatus.DEAD)
 	}
 
@@ -95,7 +95,7 @@ class NotificationDispatchServiceTest {
 		dedupKey = dedupKey,
 	)
 
-	private class FakeNotificationStore : NotificationStore {
+	private class FakeNotificationOutPort : NotificationOutPort {
 		private val notifications = linkedMapOf<String, Notification>()
 
 		override fun save(notification: Notification): Notification {

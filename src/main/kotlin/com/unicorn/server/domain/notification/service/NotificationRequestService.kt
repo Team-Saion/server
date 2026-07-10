@@ -1,25 +1,25 @@
 package com.unicorn.server.domain.notification.service
 
 import com.unicorn.server.domain.notification.Notification
-import com.unicorn.server.domain.notification.port.`in`.RequestNotificationInPort
+import com.unicorn.server.domain.notification.port.`in`.NotificationRequestInPort
 import com.unicorn.server.domain.notification.port.dto.RequestNotificationCommand
-import com.unicorn.server.domain.notification.port.out.NotificationStore
+import com.unicorn.server.domain.notification.port.out.NotificationOutPort
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
 @Transactional(readOnly = true)
-class RequestNotificationService(
-	private val notificationStore: NotificationStore,
-) : RequestNotificationInPort {
+class NotificationRequestService(
+	private val notificationOutPort: NotificationOutPort,
+) : NotificationRequestInPort {
 
 	@Transactional
 	override fun request(command: RequestNotificationCommand) {
-		if (notificationStore.findByDedupKey(command.dedupKey) != null) {
+		if (notificationOutPort.findByDedupKey(command.dedupKey) != null) {
 			return
 		}
 
-		notificationStore.save(
+		notificationOutPort.save(
 			Notification.create(
 				channel = command.channel,
 				receiver = command.receiver,
