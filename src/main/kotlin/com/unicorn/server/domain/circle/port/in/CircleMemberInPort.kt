@@ -9,4 +9,5 @@ interface CircleMemberInPort {
 	fun getCircleMembers(circleId: String): List<CircleMemberDto>
 	fun isCircleMember(circleId: String, memberId: String): Boolean
 	fun transferInitiator(circleId: String, currentInitiatorId: String, newInitiatorId: String): CircleSummary
+	fun handleMemberWithdrawal(memberId: String)
 }

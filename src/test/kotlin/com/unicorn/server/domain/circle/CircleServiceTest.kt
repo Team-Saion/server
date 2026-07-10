@@ -160,6 +160,94 @@ class CircleServiceTest {
 			.isEqualTo(CircleErrorCode.INITIATOR_DELEGATION_TARGET_INVALID)
 	}
 
+	@Test
+	@DisplayName("방장이 탈퇴하면 가장 먼저 참여한 활성 멤버에게 권한이 자동 위임된다")
+	fun handleMemberWithdrawal_initiatorTransfersToOldestMember() {
+		val owner = Member.create(Email("owner7@example.com"), "Owner7", "오너칠", role = com.unicorn.server.domain.member.enums.Role.MEMBER)
+		val firstJoiner = Member.create(Email("first@example.com"), "First", "첫째", role = com.unicorn.server.domain.member.enums.Role.MEMBER)
+		val secondJoiner = Member.create(Email("second@example.com"), "Second", "둘째", role = com.unicorn.server.domain.member.enums.Role.MEMBER)
+		memberQueryInPort.save(owner)
+		memberQueryInPort.save(firstJoiner)
+		memberQueryInPort.save(secondJoiner)
+
+		val circle = circleOutPort.save(Circle.create(TestIdFactory.circleId(), "자동위임써클", owner.id))
+		val baseTime = LocalDateTime.of(2026, 1, 1, 12, 0)
+		val initiator = circleMemberOutPort.save(
+			CircleMember(
+				id = TestIdFactory.circleMemberId(),
+				circleId = circle.id,
+				memberId = owner.id,
+				nickname = owner.nickname,
+				role = CircleRole.INITIATOR,
+				status = com.unicorn.server.domain.circle.enums.CircleMemberStatus.ACTIVE,
+				joinedAt = baseTime,
+				leftAt = null,
+				deleted = false,
+				createdAt = baseTime,
+				updatedAt = baseTime,
+			),
+		)
+		val oldestMember = circleMemberOutPort.save(
+			CircleMember(
+				id = TestIdFactory.circleMemberId(),
+				circleId = circle.id,
+				memberId = firstJoiner.id,
+				nickname = firstJoiner.nickname,
+				role = CircleRole.MEMBER,
+				status = com.unicorn.server.domain.circle.enums.CircleMemberStatus.ACTIVE,
+				joinedAt = baseTime.plusMinutes(1),
+				leftAt = null,
+				deleted = false,
+				createdAt = baseTime.plusMinutes(1),
+				updatedAt = baseTime.plusMinutes(1),
+			),
+		)
+		val latestMember = circleMemberOutPort.save(
+			CircleMember(
+				id = TestIdFactory.circleMemberId(),
+				circleId = circle.id,
+				memberId = secondJoiner.id,
+				nickname = secondJoiner.nickname,
+				role = CircleRole.MEMBER,
+				status = com.unicorn.server.domain.circle.enums.CircleMemberStatus.ACTIVE,
+				joinedAt = baseTime.plusMinutes(2),
+				leftAt = null,
+				deleted = false,
+				createdAt = baseTime.plusMinutes(2),
+				updatedAt = baseTime.plusMinutes(2),
+			),
+		)
+
+		circleService.handleMemberWithdrawal(owner.id.toString())
+
+		assertThat(circleOutPort.findById(circle.id)?.deleted).isFalse()
+		assertThat(circleOutPort.findById(circle.id)?.ownerId).isEqualTo(firstJoiner.id)
+		assertThat(circleMemberOutPort.findByCircleAndMember(circle.id, owner.id)?.status).isEqualTo(com.unicorn.server.domain.circle.enums.CircleMemberStatus.LEFT)
+		assertThat(circleMemberOutPort.findByCircleAndMember(circle.id, owner.id)?.role).isEqualTo(CircleRole.MEMBER)
+		assertThat(circleMemberOutPort.findByCircleAndMember(circle.id, firstJoiner.id)?.role).isEqualTo(CircleRole.INITIATOR)
+		assertThat(circleMemberOutPort.findByCircleAndMember(circle.id, secondJoiner.id)?.role).isEqualTo(CircleRole.MEMBER)
+		assertThat(eventPublisher.events.filterIsInstance<CircleInitiatorTransferredEvent>()).hasSize(1)
+		assertThat(initiator.id).isNotNull()
+		assertThat(oldestMember.id).isNotNull()
+		assertThat(latestMember.id).isNotNull()
+	}
+
+	@Test
+	@DisplayName("방장이 유일한 참여자인 상태에서 탈퇴하면 써클이 삭제된다")
+	fun handleMemberWithdrawal_singleInitiatorSoftDeletesCircle() {
+		val owner = Member.create(Email("owner8@example.com"), "Owner8", "오너팔", role = com.unicorn.server.domain.member.enums.Role.MEMBER)
+		memberQueryInPort.save(owner)
+
+		val circle = circleOutPort.save(Circle.create(TestIdFactory.circleId(), "삭제써클", owner.id))
+		circleMemberOutPort.save(com.unicorn.server.domain.circle.CircleMember.createInitiator(TestIdFactory.circleMemberId(), circle.id, owner.id, owner.nickname))
+
+		circleService.handleMemberWithdrawal(owner.id.toString())
+
+		assertThat(circleOutPort.findById(circle.id)?.deleted).isTrue()
+		assertThat(circleMemberOutPort.findByCircleAndMember(circle.id, owner.id)?.status).isEqualTo(com.unicorn.server.domain.circle.enums.CircleMemberStatus.LEFT)
+		assertThat(eventPublisher.events.filterIsInstance<CircleInitiatorTransferredEvent>()).isEmpty()
+	}
+
 	private class FakeCircleOutPort : CircleOutPort {
 		private val circles = linkedMapOf<CircleId, Circle>()
 		override fun save(circle: Circle): Circle {
@@ -180,6 +268,10 @@ class CircleServiceTest {
 		}
 		override fun findByCircleAndMember(circleId: CircleId, memberId: MemberId) = members.firstOrNull { it.circleId == circleId && it.memberId == memberId }
 		override fun findAllActiveByCircleId(circleId: CircleId) = members.filter { it.circleId == circleId && it.status == com.unicorn.server.domain.circle.enums.CircleMemberStatus.ACTIVE && !it.deleted }
+		override fun findOldestActiveByCircleIdExcludingMemberId(circleId: CircleId, excludedMemberId: MemberId) =
+			members
+				.filter { it.circleId == circleId && it.status == com.unicorn.server.domain.circle.enums.CircleMemberStatus.ACTIVE && !it.deleted && it.memberId != excludedMemberId }
+				.minWithOrNull(compareBy<com.unicorn.server.domain.circle.CircleMember>({ it.joinedAt }, { it.memberId.toString() }))
 		override fun findAllActiveByMemberId(memberId: MemberId) = members.filter { it.memberId == memberId && it.status == com.unicorn.server.domain.circle.enums.CircleMemberStatus.ACTIVE && !it.deleted }
 		override fun existsByCircleAndMember(circleId: CircleId, memberId: MemberId) = members.any { it.circleId == circleId && it.memberId == memberId }
 		override fun existsActiveByCircleAndMember(circleId: CircleId, memberId: MemberId) = members.any { it.circleId == circleId && it.memberId == memberId && it.status == com.unicorn.server.domain.circle.enums.CircleMemberStatus.ACTIVE && !it.deleted }

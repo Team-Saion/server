@@ -37,7 +37,7 @@ class CircleAccessPersistenceAdapterTest(
 	@DisplayName("삭제된 써클이면 existsById가 false를 반환한다")
 	fun existsById_withDeletedCircle_returnsFalse() {
 		val circle = Circle.create(CircleId.of("CC000000000000000302"), "삭제된써클", MemberId.generate())
-		circle.softDelete()
+		circle.delete()
 		circlePersistenceAdapter.save(circle)
 
 		val result = circleAccessPersistenceAdapter.existsById("CC000000000000000302")

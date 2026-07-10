@@ -44,6 +44,14 @@ class CircleMember internal constructor(
 		if (role == CircleRole.INITIATOR) {
 			throw BusinessException(CircleErrorCode.INITIATOR_CANNOT_LEAVE)
 		}
+		markLeft()
+	}
+
+	fun leaveByWithdrawal() {
+		markLeft()
+	}
+
+	private fun markLeft() {
 		status = CircleMemberStatus.LEFT
 		leftAt = LocalDateTime.now()
 		updatedAt = LocalDateTime.now()

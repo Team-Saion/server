@@ -7,6 +7,12 @@ import org.springframework.data.jpa.repository.JpaRepository
 interface CircleMemberJpaRepository : JpaRepository<CircleMemberEntity, String> {
 	fun findByCircleIdAndMemberId(circleId: String, memberId: String): CircleMemberEntity?
 	fun findAllByCircleIdAndStatusAndDelYn(circleId: String, status: CircleMemberStatus, delYn: String): List<CircleMemberEntity>
+	fun findFirstByCircleIdAndStatusAndDelYnAndMemberIdNotOrderByJoinedAtAscMemberIdAsc(
+		circleId: String,
+		status: CircleMemberStatus,
+		delYn: String,
+		excludedMemberId: String,
+	): CircleMemberEntity?
 	fun findAllByMemberIdAndStatusAndDelYn(memberId: String, status: CircleMemberStatus, delYn: String): List<CircleMemberEntity>
 	fun existsByCircleIdAndMemberId(circleId: String, memberId: String): Boolean
 	fun existsByCircleIdAndMemberIdAndStatusAndDelYn(

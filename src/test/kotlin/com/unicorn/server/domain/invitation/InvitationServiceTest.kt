@@ -212,6 +212,7 @@ class InvitationServiceTest {
 		private val members = mutableSetOf<Pair<String, String>>()
 		var joinResult = com.unicorn.server.domain.circle.port.dto.JoinCircleResult("circle-id")
 		override fun join(circleId: String, memberId: String) = joinResult
+		override fun handleMemberWithdrawal(memberId: String) = error("not used")
 		override fun getCircleMembers(circleId: String): List<CircleMemberDto> =
 			members.filter { it.first == circleId }.map {
 				CircleMemberDto(memberId = it.second, nickname = it.second, role = "MEMBER", active = true)
