@@ -96,6 +96,7 @@ class HomeQueryServiceTest {
 		private val memberships = linkedMapOf<String, MutableList<CircleMemberDto>>()
 		override fun getCircleMembers(circleId: String): List<CircleMemberDto> = memberships[circleId].orEmpty()
 		override fun join(circleId: String, memberId: String) = error("not used")
+		override fun handleMemberWithdrawal(memberId: String) = error("not used")
 		override fun isCircleMember(circleId: String, memberId: String): Boolean =
 			getCircleMembers(circleId).any { it.memberId == memberId && it.active }
 		override fun transferInitiator(circleId: String, currentInitiatorId: String, newInitiatorId: String) = error("not used")
