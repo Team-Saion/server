@@ -171,7 +171,7 @@ class CircleService(
 					circle.softDelete()
 					circleOutPort.save(circle)
 				} else {
-					val newInitiator = remainingActiveMembers.minWith(compareBy<CircleMember>({ it.joinedAt }, { it.memberId.toString() }))
+					val newInitiator = remainingActiveMembers.minWithOrNull(compareBy<CircleMember>({ it.joinedAt }, { it.memberId.toString() })) ?: throw IllegalStateException("Remaining active members should not be empty")
 					membership.demoteToMember()
 					newInitiator.promoteToInitiator()
 					circle.transferOwner(newInitiator.memberId)
