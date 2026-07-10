@@ -31,7 +31,7 @@ class Circle internal constructor(
 		updatedAt = LocalDateTime.now()
 	}
 
-	fun softDelete() {
+	fun delete() {
 		deleted = true
 		updatedAt = LocalDateTime.now()
 	}

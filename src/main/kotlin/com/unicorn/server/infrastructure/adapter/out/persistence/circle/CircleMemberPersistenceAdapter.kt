@@ -30,6 +30,15 @@ class CircleMemberPersistenceAdapter(
 			.map { it.toDomain() }
 
 	@Transactional(readOnly = true)
+	override fun findOldestActiveByCircleIdExcludingMemberId(circleId: CircleId, excludedMemberId: MemberId): CircleMember? =
+		circleMemberJpaRepository.findFirstByCircleIdAndStatusAndDelYnAndMemberIdNotOrderByJoinedAtAscMemberIdAsc(
+			circleId = circleId.toString(),
+			status = CircleMemberStatus.ACTIVE,
+			delYn = "N",
+			excludedMemberId = excludedMemberId.toString(),
+		)?.toDomain()
+
+	@Transactional(readOnly = true)
 	override fun findAllActiveByMemberId(memberId: MemberId): List<CircleMember> =
 		circleMemberJpaRepository.findAllByMemberIdAndStatusAndDelYn(memberId.toString(), CircleMemberStatus.ACTIVE, "N")
 			.map { it.toDomain() }

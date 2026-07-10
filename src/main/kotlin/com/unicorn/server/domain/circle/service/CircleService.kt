@@ -35,15 +35,15 @@ class CircleService(
     private val circleMemberOutPort: CircleMemberOutPort,
     private val circleIdGenerator: CircleIdGenerator,
     private val circleMemberIdGenerator: CircleMemberIdGenerator,
-	private val getMemberProfileInPort: GetMemberProfileInPort,
-	private val eventPublisher: EventPublisher,
+    private val getMemberProfileInPort: GetMemberProfileInPort,
+    private val eventPublisher: EventPublisher,
 ) : CircleInPort, CircleMemberInPort {
-	override fun create(memberId: String, command: CreateCircleCommand): CircleSummary {
-		val owner = getMemberProfileInPort.getMemberProfile(memberId) ?: throw MemberNotFoundException(memberId)
-		val ownerId = MemberId.of(owner.memberId)
-		assertNoActiveCircle(ownerId)
-		val circleId = circleIdGenerator.next()
-		val circle = circleOutPort.save(Circle.create(circleId, command.name, ownerId))
+    override fun create(memberId: String, command: CreateCircleCommand): CircleSummary {
+        val owner = getMemberProfileInPort.getMemberProfile(memberId) ?: throw MemberNotFoundException(memberId)
+        val ownerId = MemberId.of(owner.memberId)
+        assertNoActiveCircle(ownerId)
+        val circleId = circleIdGenerator.next()
+        val circle = circleOutPort.save(Circle.create(circleId, command.name, ownerId))
         val circleMember = circleMemberOutPort.save(
             CircleMember.createInitiator(circleMemberIdGenerator.next(), circle.id, ownerId, owner.nickname),
         )
@@ -76,30 +76,30 @@ class CircleService(
         return CircleSummary(circle.id.toString(), circle.name, circle.ownerId.toString())
     }
 
-	override fun join(circleId: String, memberId: String): JoinCircleResult {
-		val targetCircleId = CircleId.of(circleId)
-		val targetMemberId = MemberId.of(memberId)
-		circleOutPort.findById(targetCircleId) ?: throw CircleNotFoundException(circleId)
+    override fun join(circleId: String, memberId: String): JoinCircleResult {
+        val targetCircleId = CircleId.of(circleId)
+        val targetMemberId = MemberId.of(memberId)
+        circleOutPort.findById(targetCircleId) ?: throw CircleNotFoundException(circleId)
 
-		val existingMembership = circleMemberOutPort.findByCircleAndMember(targetCircleId, targetMemberId)
-		if (existingMembership != null) {
-			if (existingMembership.status == CircleMemberStatus.ACTIVE && !existingMembership.deleted) {
-				throw BusinessException(CircleErrorCode.ALREADY_JOINED)
-			}
-			assertNoActiveCircle(targetMemberId)
-			assertCircleCapacity(targetCircleId)
-			val member = getMemberProfileInPort.getMemberProfile(memberId) ?: throw MemberNotFoundException(memberId)
-			existingMembership.rejoin(member.nickname)
-			circleMemberOutPort.save(existingMembership)
+        val existingMembership = circleMemberOutPort.findByCircleAndMember(targetCircleId, targetMemberId)
+        if (existingMembership != null) {
+            if (existingMembership.status == CircleMemberStatus.ACTIVE && !existingMembership.deleted) {
+                throw BusinessException(CircleErrorCode.ALREADY_JOINED)
+            }
+            assertNoActiveCircle(targetMemberId)
+            assertCircleCapacity(targetCircleId)
+            val member = getMemberProfileInPort.getMemberProfile(memberId) ?: throw MemberNotFoundException(memberId)
+            existingMembership.rejoin(member.nickname)
+            circleMemberOutPort.save(existingMembership)
             eventPublisher.publish(CircleMemberJoinedEvent(circleId, memberId, existingMembership.role))
             return JoinCircleResult(circleId = circleId)
-		}
+        }
 
-		assertNoActiveCircle(targetMemberId)
-		assertCircleCapacity(targetCircleId)
-		val member = getMemberProfileInPort.getMemberProfile(memberId) ?: throw MemberNotFoundException(memberId)
-		val circleMember = circleMemberOutPort.save(
-			CircleMember.createMember(circleMemberIdGenerator.next(), targetCircleId, targetMemberId, member.nickname),
+        assertNoActiveCircle(targetMemberId)
+        assertCircleCapacity(targetCircleId)
+        val member = getMemberProfileInPort.getMemberProfile(memberId) ?: throw MemberNotFoundException(memberId)
+        val circleMember = circleMemberOutPort.save(
+            CircleMember.createMember(circleMemberIdGenerator.next(), targetCircleId, targetMemberId, member.nickname),
         )
         eventPublisher.publish(CircleMemberJoinedEvent(circleId, memberId, circleMember.role))
         return JoinCircleResult(circleId = circleId)
@@ -117,94 +117,100 @@ class CircleService(
                 )
             }
 
-	override fun isCircleMember(circleId: String, memberId: String): Boolean =
-		circleMemberOutPort.existsActiveByCircleAndMember(CircleId.of(circleId), MemberId.of(memberId))
+    override fun isCircleMember(circleId: String, memberId: String): Boolean =
+        circleMemberOutPort.existsActiveByCircleAndMember(CircleId.of(circleId), MemberId.of(memberId))
 
-	override fun transferInitiator(circleId: String, currentInitiatorId: String, newInitiatorId: String): CircleSummary {
-		val targetCircleId = CircleId.of(circleId)
-		val requesterId = MemberId.of(currentInitiatorId)
-		val targetId = MemberId.of(newInitiatorId)
-		if (requesterId == targetId) {
-			throw BusinessException(CircleErrorCode.INITIATOR_DELEGATION_SELF_FORBIDDEN)
-		}
+    override fun transferInitiator(
+        circleId: String,
+        currentInitiatorId: String,
+        newInitiatorId: String
+    ): CircleSummary {
+        val targetCircleId = CircleId.of(circleId)
+        val requesterId = MemberId.of(currentInitiatorId)
+        val targetId = MemberId.of(newInitiatorId)
+        if (requesterId == targetId) {
+            throw BusinessException(CircleErrorCode.INITIATOR_DELEGATION_SELF_FORBIDDEN)
+        }
 
-		val circle = circleOutPort.findById(targetCircleId) ?: throw CircleNotFoundException(circleId)
-		val requesterMembership = circleMemberOutPort.findByCircleAndMember(targetCircleId, requesterId)
-			?: throw BusinessException(CircleErrorCode.INITIATOR_DELEGATION_FORBIDDEN)
-		if (requesterMembership.status != CircleMemberStatus.ACTIVE || requesterMembership.deleted || requesterMembership.role != com.unicorn.server.domain.circle.enums.CircleRole.INITIATOR) {
-			throw BusinessException(CircleErrorCode.INITIATOR_DELEGATION_FORBIDDEN)
-		}
+        val circle = circleOutPort.findById(targetCircleId) ?: throw CircleNotFoundException(circleId)
+        val requesterMembership = circleMemberOutPort.findByCircleAndMember(targetCircleId, requesterId)
+            ?: throw BusinessException(CircleErrorCode.INITIATOR_DELEGATION_FORBIDDEN)
+        if (requesterMembership.status != CircleMemberStatus.ACTIVE || requesterMembership.deleted || requesterMembership.role != com.unicorn.server.domain.circle.enums.CircleRole.INITIATOR) {
+            throw BusinessException(CircleErrorCode.INITIATOR_DELEGATION_FORBIDDEN)
+        }
 
-		val targetMembership = circleMemberOutPort.findByCircleAndMember(targetCircleId, targetId)
-			?: throw BusinessException(CircleErrorCode.INITIATOR_DELEGATION_TARGET_INVALID)
-		if (targetMembership.status != CircleMemberStatus.ACTIVE || targetMembership.deleted || targetMembership.role != com.unicorn.server.domain.circle.enums.CircleRole.MEMBER) {
-			throw BusinessException(CircleErrorCode.INITIATOR_DELEGATION_TARGET_INVALID)
-		}
+        val targetMembership = circleMemberOutPort.findByCircleAndMember(targetCircleId, targetId)
+            ?: throw BusinessException(CircleErrorCode.INITIATOR_DELEGATION_TARGET_INVALID)
+        if (targetMembership.status != CircleMemberStatus.ACTIVE || targetMembership.deleted || targetMembership.role != com.unicorn.server.domain.circle.enums.CircleRole.MEMBER) {
+            throw BusinessException(CircleErrorCode.INITIATOR_DELEGATION_TARGET_INVALID)
+        }
 
-		requesterMembership.demoteToMember()
-		targetMembership.promoteToInitiator()
-		circle.transferOwner(targetId)
-		circleMemberOutPort.save(requesterMembership)
-		circleMemberOutPort.save(targetMembership)
-		val savedCircle = circleOutPort.save(circle)
-		eventPublisher.publish(
-			CircleInitiatorTransferredEvent(
-				circleId = savedCircle.id.toString(),
-				previousInitiatorMemberId = requesterId.toString(),
-				newInitiatorMemberId = targetId.toString(),
-			),
-		)
-		return CircleSummary(savedCircle.id.toString(), savedCircle.name, savedCircle.ownerId.toString())
-	}
+        requesterMembership.demoteToMember()
+        targetMembership.promoteToInitiator()
+        circle.transferOwner(targetId)
+        circleMemberOutPort.save(requesterMembership)
+        circleMemberOutPort.save(targetMembership)
+        val savedCircle = circleOutPort.save(circle)
+        eventPublisher.publish(
+            CircleInitiatorTransferredEvent(
+                circleId = savedCircle.id.toString(),
+                previousInitiatorMemberId = requesterId.toString(),
+                newInitiatorMemberId = targetId.toString(),
+            ),
+        )
+        return CircleSummary(savedCircle.id.toString(), savedCircle.name, savedCircle.ownerId.toString())
+    }
 
-	override fun handleMemberWithdrawal(memberId: String) {
-		val withdrawingMemberId = MemberId.of(memberId)
-		val memberships = circleMemberOutPort.findAllActiveByMemberId(withdrawingMemberId)
+    override fun handleMemberWithdrawal(memberId: String) {
+        val withdrawingMemberId = MemberId.of(memberId)
+        val memberships = circleMemberOutPort.findAllActiveByMemberId(withdrawingMemberId)
 
-		memberships.forEach { membership ->
-			val circle = circleOutPort.findById(membership.circleId) ?: throw CircleNotFoundException(membership.circleId.toString())
-			val remainingActiveMembers = circleMemberOutPort.findAllActiveByCircleId(membership.circleId)
-				.filter { it.memberId != withdrawingMemberId }
+        memberships.forEach { membership ->
+            val circle = circleOutPort.findById(membership.circleId)
+                ?: throw CircleNotFoundException(membership.circleId.toString())
+            val newInitiatorCandidate = circleMemberOutPort.findOldestActiveByCircleIdExcludingMemberId(
+                membership.circleId,
+                withdrawingMemberId
+            )
 
-			if (membership.role == CircleRole.INITIATOR) {
-				if (remainingActiveMembers.isEmpty()) {
-					circle.softDelete()
-					circleOutPort.save(circle)
-				} else {
-					val newInitiator = remainingActiveMembers.minWith(compareBy<CircleMember>({ it.joinedAt }, { it.memberId.toString() }))
-					membership.demoteToMember()
-					newInitiator.promoteToInitiator()
-					circle.transferOwner(newInitiator.memberId)
-					circleMemberOutPort.save(newInitiator)
-					val savedCircle = circleOutPort.save(circle)
-					eventPublisher.publish(
-						CircleInitiatorTransferredEvent(
-							circleId = savedCircle.id.toString(),
-							previousInitiatorMemberId = withdrawingMemberId.toString(),
-							newInitiatorMemberId = newInitiator.memberId.toString(),
-						),
-					)
-				}
-			}
+            if (membership.role == CircleRole.INITIATOR) {
+                if (newInitiatorCandidate == null) {
+                    circle.delete()
+                    circleOutPort.save(circle)
+                } else {
+                    membership.demoteToMember()
+                    newInitiatorCandidate.promoteToInitiator()
+                    circle.transferOwner(newInitiatorCandidate.memberId)
+                    circleMemberOutPort.save(newInitiatorCandidate)
+                    val savedCircle = circleOutPort.save(circle)
+                    eventPublisher.publish(
+                        CircleInitiatorTransferredEvent(
+                            circleId = savedCircle.id.toString(),
+                            previousInitiatorMemberId = withdrawingMemberId.toString(),
+                            newInitiatorMemberId = newInitiatorCandidate.memberId.toString(),
+                        ),
+                    )
+                }
+            }
 
-			membership.leaveByWithdrawal()
-			circleMemberOutPort.save(membership)
-		}
-	}
+            membership.leaveByWithdrawal()
+            circleMemberOutPort.save(membership)
+        }
+    }
 
-	private fun assertNoActiveCircle(memberId: MemberId) {
-		if (circleMemberOutPort.findAllActiveByMemberId(memberId).isNotEmpty()) {
-			throw BusinessException(CircleErrorCode.ALREADY_HAS_ACTIVE_CIRCLE)
-		}
-	}
+    private fun assertNoActiveCircle(memberId: MemberId) {
+        if (circleMemberOutPort.findAllActiveByMemberId(memberId).isNotEmpty()) {
+            throw BusinessException(CircleErrorCode.ALREADY_HAS_ACTIVE_CIRCLE)
+        }
+    }
 
-	private fun assertCircleCapacity(circleId: CircleId) {
-		if (circleMemberOutPort.countActiveByCircleId(circleId) >= MAX_MEMBERS) {
-			throw BusinessException(CircleErrorCode.CIRCLE_MEMBER_LIMIT_EXCEEDED)
-		}
-	}
+    private fun assertCircleCapacity(circleId: CircleId) {
+        if (circleMemberOutPort.countActiveByCircleId(circleId) >= MAX_MEMBERS) {
+            throw BusinessException(CircleErrorCode.CIRCLE_MEMBER_LIMIT_EXCEEDED)
+        }
+    }
 
-	companion object {
-		private const val MAX_MEMBERS = 10L
-	}
+    companion object {
+        private const val MAX_MEMBERS = 10L
+    }
 }
