@@ -196,13 +196,23 @@ class MemberTest {
 	}
 
 	@Test
-	@DisplayName("withdraw 호출 후 name과 nickname이 멤버 ID 앞 4글자로 마스킹된다")
+	@DisplayName("withdraw 호출 후 nickname이 del로 시작하는 9자 이하 영숫자 패턴으로 마스킹된다")
+	fun withdraw_masksNickname() {
+		val member = Member.create(Email("test@example.com"), "홍길동", "길동이")
+
+		member.withdraw()
+
+		assertThat(member.nickname).matches("del[a-zA-Z0-9]{6}")
+	}
+
+	@Test
+	@DisplayName("withdraw 호출 후 name과 nickname이 같은 마스킹 값으로 변경된다")
 	fun withdraw_masksNameAndNickname() {
 		val member = Member.create(Email("test@example.com"), "홍길동", "길동이")
 
 		member.withdraw()
 
-		val expected = "deleted_${member.id.toString().take(4)}"
+		val expected = "del${member.id.toString().replace("-", "").take(6)}"
 		assertThat(member.name).isEqualTo(expected)
 		assertThat(member.nickname).isEqualTo(expected)
 	}
@@ -226,6 +236,6 @@ class MemberTest {
 		member.withdraw()
 
 		assertThat(member.name).isNull()
-		assertThat(member.nickname).isEqualTo("deleted_${member.id.toString().take(4)}")
+		assertThat(member.nickname).isEqualTo("del${member.id.toString().replace("-", "").take(6)}")
 	}
 }

@@ -13,12 +13,12 @@ class WithdrawalLogPersistenceAdapter(
 
 	@Transactional
 	override fun save(log: WithdrawalLog) {
-		val entity = WithdrawalLogEntity().apply {
-			memberId = log.memberId.toString()
-			originalEmail = log.originalEmail
-			reason = log.reason
-			withdrawnAt = log.withdrawnAt
-		}
+		val entity = WithdrawalLogEntity(
+			memberId = log.memberId.toString(),
+			originalEmail = log.originalEmail,
+			reason = log.reason,
+			withdrawnAt = log.withdrawnAt,
+		)
 		withdrawalLogJpaRepository.save(entity)
 	}
 }

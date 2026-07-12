@@ -18,7 +18,8 @@ class MemberEventListener(
 	fun handleMemberWithdrawn(event: MemberWithdrawnEvent) {
 		log.info("Member withdrawn - memberId: {}", event.memberId)
 		tokenStore.deleteByMemberId(event.memberId)
-		circleMemberInPort.handleMemberWithdrawal(event.memberId)
+		runCatching { circleMemberInPort.handleMemberWithdrawal(event.memberId) }
+			.onFailure { e -> log.error("Failed to handle circle member withdrawal - memberId: {}", event.memberId, e) }
 	}
 
 	companion object {

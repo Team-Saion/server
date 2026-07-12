@@ -14,7 +14,7 @@ import java.time.LocalDateTime
 	name = "withdrawal_log",
 	indexes = [Index(name = "idx_withdrawal_log_member_id", columnList = "member_id")],
 )
-class WithdrawalLogEntity internal constructor() {
+class WithdrawalLogEntity protected constructor() {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -41,4 +41,16 @@ class WithdrawalLogEntity internal constructor() {
 	@Column(name = "created_at", nullable = false, updatable = false)
 	var createdAt: LocalDateTime = LocalDateTime.now()
 		internal set
+
+	constructor(
+		memberId: String,
+		originalEmail: String?,
+		reason: String,
+		withdrawnAt: LocalDateTime,
+	) : this() {
+		this.memberId = memberId
+		this.originalEmail = originalEmail
+		this.reason = reason
+		this.withdrawnAt = withdrawnAt
+	}
 }

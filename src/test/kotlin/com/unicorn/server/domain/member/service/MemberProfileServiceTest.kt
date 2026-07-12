@@ -244,7 +244,7 @@ class MemberProfileServiceTest {
 		memberProfileService.withdraw(member.id.toString(), "테스트 사유")
 
 		val saved = memberOutPort.findById(member.id)!!
-		val expected = "deleted_${member.id.toString().take(4)}"
+		val expected = "del${member.id.toString().replace("-", "").take(6)}"
 		assertThat(saved.name).isEqualTo(expected)
 		assertThat(saved.nickname).isEqualTo(expected)
 	}

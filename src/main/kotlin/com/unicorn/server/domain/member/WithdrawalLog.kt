@@ -15,6 +15,10 @@ class WithdrawalLog private constructor(
 			originalEmail: String?,
 			reason: String,
 			withdrawnAt: LocalDateTime,
-		): WithdrawalLog = WithdrawalLog(memberId, originalEmail, reason, withdrawnAt)
+		): WithdrawalLog {
+			require(reason.isNotBlank()) { "Reason cannot be blank" }
+			require(reason.length <= 500) { "Reason cannot exceed 500 characters" }
+			return WithdrawalLog(memberId, originalEmail, reason, withdrawnAt)
+		}
 	}
 }

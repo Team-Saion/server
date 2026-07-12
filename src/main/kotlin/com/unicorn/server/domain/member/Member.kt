@@ -58,7 +58,7 @@ class Member internal constructor(
 		deletedAt = LocalDateTime.now()
 		updatedAt = LocalDateTime.now()
 		email = email?.let { Email("deleted_${id}@deleted.saion") }
-		val maskedName = "deleted_${id.toString().take(WITHDRAWAL_MASK_ID_PREFIX_LENGTH)}"
+		val maskedName = "del${id.toString().replace("-", "").take(WITHDRAWAL_MASK_ID_LENGTH)}"
 		name = name?.let { maskedName }
 		nickname = maskedName
 		return original
@@ -108,7 +108,7 @@ class Member internal constructor(
 
 	companion object {
 		const val WITHDRAWAL_RETENTION_DAYS = 30L
-		private const val WITHDRAWAL_MASK_ID_PREFIX_LENGTH = 4
+		private const val WITHDRAWAL_MASK_ID_LENGTH = 6
 		private const val MIN_NICKNAME_LENGTH = 2
 		private const val MAX_NICKNAME_LENGTH = 10
 		private val NICKNAME_PATTERN = Regex("^[가-힣a-zA-Z0-9]+$")
