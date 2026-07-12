@@ -173,4 +173,59 @@ class MemberTest {
 
 		assertThat(member.isDeleted()).isTrue()
 	}
+
+	@Test
+	@DisplayName("withdraw 호출 시 원본 이메일을 반환한다")
+	fun withdraw_returnsOriginalEmail() {
+		val originalEmail = Email("test@example.com")
+		val member = Member.create(originalEmail, "홍길동", "길동이")
+
+		val returned = member.withdraw()
+
+		assertThat(returned).isEqualTo(originalEmail)
+	}
+
+	@Test
+	@DisplayName("withdraw 호출 후 email이 마스킹 패턴으로 변경된다")
+	fun withdraw_masksEmail() {
+		val member = Member.create(Email("test@example.com"), "홍길동", "길동이")
+
+		member.withdraw()
+
+		assertThat(member.email?.value).matches("deleted_.+@deleted\\.saion")
+	}
+
+	@Test
+	@DisplayName("withdraw 호출 후 name과 nickname이 멤버 ID 앞 4글자로 마스킹된다")
+	fun withdraw_masksNameAndNickname() {
+		val member = Member.create(Email("test@example.com"), "홍길동", "길동이")
+
+		member.withdraw()
+
+		val expected = "deleted_${member.id.toString().take(4)}"
+		assertThat(member.name).isEqualTo(expected)
+		assertThat(member.nickname).isEqualTo(expected)
+	}
+
+	@Test
+	@DisplayName("email이 null인 멤버를 withdraw하면 null을 반환하고 email은 여전히 null이다")
+	fun withdraw_whenEmailIsNull_returnsNull() {
+		val member = Member.create(null, "홍길동", "길동이")
+
+		val returned = member.withdraw()
+
+		assertThat(returned).isNull()
+		assertThat(member.email).isNull()
+	}
+
+	@Test
+	@DisplayName("name이 null인 멤버를 withdraw하면 name은 여전히 null이고 nickname은 마스킹된다")
+	fun withdraw_whenNameIsNull_keepsNameNullAndMasksNickname() {
+		val member = Member.create(Email("test@example.com"), null, "길동이")
+
+		member.withdraw()
+
+		assertThat(member.name).isNull()
+		assertThat(member.nickname).isEqualTo("deleted_${member.id.toString().take(4)}")
+	}
 }

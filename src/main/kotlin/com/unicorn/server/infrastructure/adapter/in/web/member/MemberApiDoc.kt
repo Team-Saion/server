@@ -15,6 +15,7 @@ import com.unicorn.server.infrastructure.adapter.`in`.web.member.dto.MemberRespo
 import com.unicorn.server.infrastructure.adapter.`in`.web.member.dto.OnboardingInfoResponse
 import com.unicorn.server.infrastructure.adapter.`in`.web.member.dto.TokenResponse
 import com.unicorn.server.infrastructure.adapter.`in`.web.member.dto.UpdateProfileRequest
+import com.unicorn.server.infrastructure.adapter.`in`.web.member.dto.WithdrawRequest
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -182,6 +183,7 @@ interface MemberApiDoc {
 		description = """
 			현재 인증된 멤버를 소프트 삭제 처리합니다.
 
+			- 요청 바디: `reason` (탈퇴 사유, 최대 500자)
 			- MEMBER, ADMIN 역할만 접근할 수 있습니다. PENDING 역할은 403을 반환합니다.
 			- 복구 정책과 보관 기간을 고려해 즉시 물리 삭제하지 않습니다.
 			- 탈퇴 시 refresh token도 무효화합니다.
@@ -197,6 +199,7 @@ interface MemberApiDoc {
 	fun withdraw(
 		@Parameter(hidden = true)
 		@AuthenticationPrincipal memberId: String,
+		@RequestBody @Valid request: WithdrawRequest,
 	): ApiResponse<Unit>
 
 	@Operation(

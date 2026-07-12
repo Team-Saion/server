@@ -20,6 +20,7 @@ import com.unicorn.server.infrastructure.adapter.`in`.web.member.dto.MemberRespo
 import com.unicorn.server.infrastructure.adapter.`in`.web.member.dto.OnboardingInfoResponse
 import com.unicorn.server.infrastructure.adapter.`in`.web.member.dto.TokenResponse
 import com.unicorn.server.infrastructure.adapter.`in`.web.member.dto.UpdateProfileRequest
+import com.unicorn.server.infrastructure.adapter.`in`.web.member.dto.WithdrawRequest
 import jakarta.validation.Valid
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.MediaType
@@ -120,8 +121,9 @@ class MemberController(
 	@DeleteMapping("/me")
 	override fun withdraw(
 		@AuthenticationPrincipal memberId: String,
+		@RequestBody @Valid request: WithdrawRequest,
 	): ApiResponse<Unit> {
-		withdrawMemberInPort.withdraw(memberId)
+		withdrawMemberInPort.withdraw(memberId, request.reason)
 		return ApiResponse.success()
 	}
 
