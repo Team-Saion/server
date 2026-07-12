@@ -10,6 +10,7 @@ import com.unicorn.server.common.port.out.storage.exception.UnsupportedContentTy
 import com.unicorn.server.common.vo.Email
 import com.unicorn.server.domain.member.Member
 import com.unicorn.server.domain.member.SocialAccount
+import com.unicorn.server.domain.member.WithdrawalLog
 import com.unicorn.server.domain.member.enums.MemberStatus
 import com.unicorn.server.domain.member.enums.SocialProvider
 import com.unicorn.server.domain.member.event.MemberWithdrawnEvent
@@ -19,6 +20,7 @@ import com.unicorn.server.domain.member.port.dto.UpdateProfileCommand
 import com.unicorn.server.domain.member.port.dto.UploadProfileImageCommand
 import com.unicorn.server.domain.member.port.out.MemberOutPort
 import com.unicorn.server.domain.member.port.out.SocialAccountOutPort
+import com.unicorn.server.domain.member.port.out.WithdrawalLogOutPort
 import com.unicorn.server.domain.member.vo.MemberId
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -35,11 +37,13 @@ class MemberProfileServiceTest {
 	private val socialAccountOutPort = FakeSocialAccountOutPort()
 	private val eventPublisher = RecordingEventPublisher()
 	private val objectStorage = FakeObjectStorage()
+	private val withdrawalLogOutPort = FakeWithdrawalLogOutPort()
 	private val memberProfileService = MemberProfileService(
 		memberOutPort,
 		socialAccountOutPort,
 		eventPublisher,
 		objectStorage,
+		withdrawalLogOutPort,
 	)
 
 	@Test
@@ -187,7 +191,7 @@ class MemberProfileServiceTest {
 	fun withdraw_statusBecomesDeleted() {
 		val member = memberOutPort.save(Member.create(Email("test@example.com"), "홍길동", "길동이"))
 
-		memberProfileService.withdraw(member.id.toString())
+		memberProfileService.withdraw(member.id.toString(), "테스트 사유")
 
 		assertThat(memberOutPort.findById(member.id)!!.status).isEqualTo(MemberStatus.DELETED)
 	}
@@ -197,7 +201,7 @@ class MemberProfileServiceTest {
 	fun withdraw_deletedAtIsSet() {
 		val member = memberOutPort.save(Member.create(Email("test@example.com"), "홍길동", "길동이"))
 
-		memberProfileService.withdraw(member.id.toString())
+		memberProfileService.withdraw(member.id.toString(), "테스트 사유")
 
 		assertThat(memberOutPort.findById(member.id)!!.deletedAt).isNotNull()
 	}
@@ -207,7 +211,7 @@ class MemberProfileServiceTest {
 	fun withdraw_publishesMemberWithdrawnEvent() {
 		val member = memberOutPort.save(Member.create(Email("test@example.com"), "홍길동", "길동이"))
 
-		memberProfileService.withdraw(member.id.toString())
+		memberProfileService.withdraw(member.id.toString(), "테스트 사유")
 
 		assertThat(eventPublisher.events).anyMatch { it is MemberWithdrawnEvent }
 	}
@@ -217,8 +221,45 @@ class MemberProfileServiceTest {
 	fun withdraw_whenNotFound_throwsMemberNotFoundException() {
 		val unknownId = MemberId.generate().toString()
 
-		assertThatThrownBy { memberProfileService.withdraw(unknownId) }
+		assertThatThrownBy { memberProfileService.withdraw(unknownId, "테스트 사유") }
 			.isInstanceOf(MemberNotFoundException::class.java)
+	}
+
+	@Test
+	@DisplayName("withdraw 호출 시 이메일이 마스킹된다")
+	fun withdraw_masksEmailInMember() {
+		val member = memberOutPort.save(Member.create(Email("original@example.com"), "홍길동", "길동이"))
+
+		memberProfileService.withdraw(member.id.toString(), "테스트 사유")
+
+		val saved = memberOutPort.findById(member.id)!!
+		assertThat(saved.email?.value).matches("deleted_.+@deleted\\.saion")
+	}
+
+	@Test
+	@DisplayName("withdraw 호출 시 이름과 닉네임이 마스킹된다")
+	fun withdraw_masksNameAndNicknameInMember() {
+		val member = memberOutPort.save(Member.create(Email("original@example.com"), "홍길동", "길동이"))
+
+		memberProfileService.withdraw(member.id.toString(), "테스트 사유")
+
+		val saved = memberOutPort.findById(member.id)!!
+		val expected = "del${member.id.toString().replace("-", "").take(6)}"
+		assertThat(saved.name).isEqualTo(expected)
+		assertThat(saved.nickname).isEqualTo(expected)
+	}
+
+	@Test
+	@DisplayName("withdraw 호출 시 원본 이메일과 사유가 로그에 저장된다")
+	fun withdraw_savesWithdrawalLog() {
+		val member = memberOutPort.save(Member.create(Email("log@example.com"), "홍길동", "길동이"))
+
+		memberProfileService.withdraw(member.id.toString(), "서비스 불만족")
+
+		assertThat(withdrawalLogOutPort.logs).hasSize(1)
+		val log = withdrawalLogOutPort.logs.first()
+		assertThat(log.originalEmail).isEqualTo("log@example.com")
+		assertThat(log.reason).isEqualTo("서비스 불만족")
 	}
 
 	@Test
@@ -299,6 +340,14 @@ class MemberProfileServiceTest {
 
 		override fun findByMemberId(memberId: MemberId): SocialAccount? =
 			store.values.firstOrNull { it.memberId == memberId }
+	}
+
+	private class FakeWithdrawalLogOutPort : WithdrawalLogOutPort {
+		val logs = mutableListOf<WithdrawalLog>()
+
+		override fun save(log: WithdrawalLog) {
+			logs += log
+		}
 	}
 
 	private class RecordingEventPublisher : EventPublisher {
