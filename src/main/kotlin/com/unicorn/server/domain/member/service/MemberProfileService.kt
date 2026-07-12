@@ -5,6 +5,7 @@ import com.unicorn.server.common.port.out.storage.ObjectStorage
 import com.unicorn.server.common.port.out.storage.ObjectType
 import com.unicorn.server.common.port.out.storage.ObjectUploadCommand
 import com.unicorn.server.domain.member.Member
+import com.unicorn.server.domain.member.WithdrawalLog
 import com.unicorn.server.domain.member.enums.MemberStatus
 import com.unicorn.server.domain.member.enums.Role
 import com.unicorn.server.domain.member.event.MemberWithdrawnEvent
@@ -23,6 +24,7 @@ import com.unicorn.server.domain.member.port.dto.UpdateProfileCommand
 import com.unicorn.server.domain.member.port.dto.UploadProfileImageCommand
 import com.unicorn.server.domain.member.port.out.MemberOutPort
 import com.unicorn.server.domain.member.port.out.SocialAccountOutPort
+import com.unicorn.server.domain.member.port.out.WithdrawalLogOutPort
 import com.unicorn.server.domain.member.vo.MemberId
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -38,6 +40,7 @@ class MemberProfileService(
 	private val socialAccountOutPort: SocialAccountOutPort,
 	private val eventPublisher: EventPublisher,
 	private val objectStorage: ObjectStorage,
+	private val withdrawalLogOutPort: WithdrawalLogOutPort,
 ) : GetMemberInPort, GetMemberProfileInPort, GetOnboardingInfoInPort, UpdateProfileInPort, WithdrawMemberInPort, UploadProfileImageInPort, UpdateMemberStateInPort {
 
 	// 멤버 식별자로 저장된 멤버를 조회한다.
@@ -107,15 +110,25 @@ class MemberProfileService(
 
 	// 멤버를 soft delete 처리한다.
 	@Transactional
-	override fun withdraw(memberId: String) {
+	override fun withdraw(memberId: String, reason: String) {
 		// 데이터 조회
 		val member = findMemberOrThrow(memberId)
 
 		// 도메인 상태 변경
-		member.withdraw()
+		val originalEmail = member.withdraw()
 
 		// 변경 데이터 저장
 		val savedMember = memberOutPort.save(member)
+
+		// 탈퇴 로그 저장
+		withdrawalLogOutPort.save(
+			WithdrawalLog.create(
+				memberId = savedMember.id,
+				originalEmail = originalEmail?.value,
+				reason = reason,
+				withdrawnAt = requireNotNull(savedMember.deletedAt) { "deletedAt must not be null after withdrawal" },
+			),
+		)
 
 		// 탈퇴 이벤트 발행
 		eventPublisher.publish(MemberWithdrawnEvent(savedMember.id.toString()))

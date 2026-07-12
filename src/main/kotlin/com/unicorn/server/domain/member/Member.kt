@@ -12,8 +12,8 @@ import java.time.LocalDateTime
 // Member 도메인 - 서비스 관점의 멤버 프로필과 탈퇴 생명주기 규칙을 담당한다.
 class Member internal constructor(
 	val id: MemberId,
-	val email: Email?,
-	val name: String?,
+	email: Email?,
+	name: String?,
 	nickname: String,
 	val avatarColor: AvatarColor,
 	role: Role,
@@ -23,6 +23,12 @@ class Member internal constructor(
 	val createdAt: LocalDateTime,
 	updatedAt: LocalDateTime,
 ) {
+	var email: Email? = email
+		private set
+
+	var name: String? = name
+		private set
+
 	var nickname: String = nickname
 		private set
 
@@ -41,15 +47,21 @@ class Member internal constructor(
 	var updatedAt: LocalDateTime = updatedAt
 		private set
 
-	// 멤버를 탈퇴 상태로 전환하고 soft delete 시각을 기록한다.
-	fun withdraw() {
+	// 멤버를 탈퇴 상태로 전환하고 원본 이메일을 마스킹한다.
+	fun withdraw(): Email? {
 		if (status == MemberStatus.DELETED) {
 			throw BusinessException(MemberErrorCode.MEMBER_ALREADY_DELETED)
 		}
 
+		val original = email
 		status = MemberStatus.DELETED
 		deletedAt = LocalDateTime.now()
 		updatedAt = LocalDateTime.now()
+		email = email?.let { Email("deleted_${id}@deleted.saion") }
+		val maskedName = "del${id.toString().replace("-", "").take(WITHDRAWAL_MASK_ID_LENGTH)}"
+		name = name?.let { maskedName }
+		nickname = maskedName
+		return original
 	}
 
 	// 멤버 프로필의 닉네임을 검증 후 변경한다.
@@ -96,6 +108,7 @@ class Member internal constructor(
 
 	companion object {
 		const val WITHDRAWAL_RETENTION_DAYS = 30L
+		private const val WITHDRAWAL_MASK_ID_LENGTH = 6
 		private const val MIN_NICKNAME_LENGTH = 2
 		private const val MAX_NICKNAME_LENGTH = 10
 		private val NICKNAME_PATTERN = Regex("^[가-힣a-zA-Z0-9]+$")
