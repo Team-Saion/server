@@ -32,8 +32,8 @@ class NotificationDispatchService(
     }
 
     private fun dispatchSingle(notification: Notification, now: LocalDateTime) {
-        val composer = composerRegistry[notification.channel] as? NotificationMessageComposer
-        val sender = senderRegistry[notification.channel] as? NotificationSender
+        val composer = composerRegistry[notification.channel]
+        val sender = senderRegistry[notification.channel]
 
         notification.markProcessing(now)
         notificationOutPort.save(notification)
