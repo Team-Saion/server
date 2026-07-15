@@ -9,7 +9,7 @@ class DevicePushToken private constructor(
 	// 디바이스 푸시 토큰 고유 식별자 (신규 생성 시 저장 전까지 null 가능)
 	val id: DevicePushTokenId?,
 	// 푸시 토큰 소유 멤버 식별자
-	val memberId: String,
+	var memberId: String,
 	// 푸시 발송용 실제 디바이스 토큰 문자열
 	token: String,
 	// 토큰 등록 디바이스 플랫폼
