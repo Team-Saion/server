@@ -24,12 +24,12 @@ class NotificationInboxPersistenceAdapter(
 	override fun findPageByReceiver(memberId: String, cursor: Long?, limit: Int): List<NotificationInboxItem> {
 		val pageable = PageRequest.of(0, limit)
 		val entities = cursor?.let { cursorId ->
-			notificationInboxJpaRepository.findByReceiverMemberIdAndIdLessThanOrderByCreatedAtDescIdDesc(
+			notificationInboxJpaRepository.findByReceiverMemberIdAndIdLessThanOrderByIdDesc(
 				memberId,
 				cursorId,
 				pageable,
 			)
-		} ?: notificationInboxJpaRepository.findByReceiverMemberIdOrderByCreatedAtDescIdDesc(memberId, pageable)
+		} ?: notificationInboxJpaRepository.findByReceiverMemberIdOrderByIdDesc(memberId, pageable)
 
 		return entities.map { it.toDomain() }
 	}
