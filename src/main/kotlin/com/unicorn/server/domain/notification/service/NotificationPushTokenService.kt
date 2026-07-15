@@ -19,6 +19,7 @@ class NotificationPushTokenService(
 		require(memberId.isNotBlank()) { "Member id cannot be blank" }
 		val pushToken = notificationPushTokenOutPort.findByToken(command.token)?.also { existing ->
 			existing.refresh(
+				memberId = memberId,
 				platform = command.platform,
 				osNotificationPermissionGranted = command.osNotificationPermissionGranted,
 				appVersion = command.appVersion,
