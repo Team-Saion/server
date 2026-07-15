@@ -8,12 +8,12 @@ import org.springframework.data.jpa.repository.Query
 import java.time.LocalDateTime
 
 interface NotificationInboxJpaRepository : JpaRepository<NotificationInboxItemEntity, Long> {
-	fun findByReceiverMemberIdOrderByCreatedAtDescIdDesc(
+	fun findByReceiverMemberIdOrderByIdDesc(
 		receiverMemberId: String,
 		pageable: Pageable,
 	): List<NotificationInboxItemEntity>
 
-	fun findByReceiverMemberIdAndIdLessThanOrderByCreatedAtDescIdDesc(
+	fun findByReceiverMemberIdAndIdLessThanOrderByIdDesc(
 		receiverMemberId: String,
 		id: Long,
 		pageable: Pageable,
