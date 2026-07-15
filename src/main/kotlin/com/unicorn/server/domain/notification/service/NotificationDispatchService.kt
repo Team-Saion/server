@@ -20,8 +20,8 @@ class NotificationDispatchService(
     senders: List<NotificationSender>,
     private val notificationProperties: NotificationProperties,
 ) : NotificationDispatchInPort {
-    private val composerRegistry: Map<*, *> = composers.associateBy { it.channel() }
-    private val senderRegistry: Map<*, *> = senders.associateBy { it.channel() }
+    private val composerRegistry: Map<NotificationChannel, NotificationMessageComposer> = composers.associateBy { it.channel() }
+    private val senderRegistry: Map<NotificationChannel, NotificationSender> = senders.associateBy { it.channel() }
 
     @Transactional
     override fun dispatch(limit: Int) {
