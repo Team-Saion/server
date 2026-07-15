@@ -32,12 +32,13 @@ dependencies {
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3")
     implementation("io.jsonwebtoken:jjwt-api:0.12.6")
 
-	// Amazon
-	implementation("software.amazon.awssdk:s3:2.46.15")
+    // Amazon
+    implementation("software.amazon.awssdk:s3:2.46.15")
+    implementation("com.google.firebase:firebase-admin:9.4.3")
 
-	// Kotlin support
-	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
-	implementation("org.jetbrains.kotlin:kotlin-reflect")
+    // Kotlin support
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+    implementation("org.jetbrains.kotlin:kotlin-reflect")
 
 
     // Database drivers

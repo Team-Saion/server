@@ -8,6 +8,17 @@ spring:
 app:
   server:
     url: ${SERVER_URL:http://localhost:8080}
+  notification:
+    dispatch:
+      enabled: false
+      interval-ms: 30000
+      batch-size: 100
+      max-attempts: 3
+      base-retry-delay-minutes: 5
+    fcm:
+      enabled: false
+      project-id: ${FCM_PROJECT_ID:}
+      credentials-path: ${FCM_CREDENTIALS_PATH:}
   kakao:
     jwks-uri: ${KAKAO_JWKS_URI:https://kauth.kakao.com/.well-known/jwks.json}
     issuer: ${KAKAO_ISSUER:https://kauth.kakao.com}
