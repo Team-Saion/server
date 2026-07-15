@@ -1,6 +1,7 @@
 package com.unicorn.server.domain.notification.service
 
 import com.unicorn.server.domain.notification.Notification
+import com.unicorn.server.domain.notification.enums.NotificationChannel
 import com.unicorn.server.domain.notification.exception.PermanentNotificationSendException
 import com.unicorn.server.domain.notification.exception.RetryableNotificationSendException
 import com.unicorn.server.domain.notification.port.`in`.NotificationDispatchInPort
@@ -20,7 +21,8 @@ class NotificationDispatchService(
     senders: List<NotificationSender>,
     private val notificationProperties: NotificationProperties,
 ) : NotificationDispatchInPort {
-    private val composerRegistry: Map<NotificationChannel, NotificationMessageComposer> = composers.associateBy { it.channel() }
+    private val composerRegistry: Map<NotificationChannel, NotificationMessageComposer> =
+        composers.associateBy { it.channel() }
     private val senderRegistry: Map<NotificationChannel, NotificationSender> = senders.associateBy { it.channel() }
 
     @Transactional
