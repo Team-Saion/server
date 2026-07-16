@@ -59,6 +59,7 @@ class HomeQueryService(
                     memberId = profile.memberId,
                     nickname = membership.nickname,
                     avatarColor = profile.avatarColor,
+                    profileImageKey = profile.profileImageKey,
                     isMe = profile.memberId == requesterId,
                     role = membership.role,
                 )

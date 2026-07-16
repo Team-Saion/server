@@ -18,12 +18,13 @@ import org.springframework.web.bind.annotation.PathVariable
 interface HomeApiDoc {
 	@Operation(
 		summary = "써클 홈 조회",
-		description = """
+			description = """
 			써클 홈 화면에 필요한 정보를 조회합니다.
 
 			- Authorization 헤더의 Bearer access token이 필요합니다.
 			- 요청자가 해당 써클의 활성 구성원이 아니면 403을 반환합니다.
 			- 회원 탈퇴한 구성원은 응답에서 자동 제외됩니다.
+			- 구성원 정보에는 프로필 이미지 URL(`profileImageUrl`)과 아바타 색상(`avatarColor.code`, `avatarColor.hex`)이 포함됩니다.
 			- 일정 도메인은 현재 no-op stub이라 `mainSchedule`은 null, `schedules`는 빈 배열입니다.
 		""",
 	)
@@ -42,11 +43,12 @@ interface HomeApiDoc {
 
 	@Operation(
 		summary = "써클 구성원 조회",
-		description = """
+			description = """
 			써클의 현재 노출 가능한 구성원 목록을 조회합니다.
 
 			- Authorization 헤더의 Bearer access token이 필요합니다.
 			- 회원 탈퇴한 구성원은 응답에서 자동 제외됩니다.
+			- 각 구성원은 프로필 이미지 URL(`profileImageUrl`)과 아바타 색상(`avatarColor.code`, `avatarColor.hex`)을 포함합니다.
 		""",
 	)
 	@ApiErrorCodeExamples(

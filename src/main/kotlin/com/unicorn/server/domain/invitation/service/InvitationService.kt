@@ -109,7 +109,7 @@ class InvitationService(
 			invitationId = invitation.id.toString(),
 			circleName = circle.name,
 			inviterNickname = inviter.nickname,
-			inviterAvatarColor = inviter.avatarColor,
+			inviterAvatarColor = inviter.avatarColor.name,
 			expiresAt = invitation.expiresAt,
 		)
 	}

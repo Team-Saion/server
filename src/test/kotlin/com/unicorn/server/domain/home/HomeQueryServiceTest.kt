@@ -11,6 +11,7 @@ import com.unicorn.server.domain.circle.port.`in`.CircleMemberInPort
 import com.unicorn.server.domain.circle.vo.CircleId
 import com.unicorn.server.domain.member.port.dto.MemberProfileDto
 import com.unicorn.server.domain.member.port.`in`.GetMemberProfileInPort
+import com.unicorn.server.domain.member.enums.AvatarColor
 import com.unicorn.server.domain.home.service.HomeQueryService
 import com.unicorn.server.domain.schedule.port.`in`.GetSchedulesForCircleInPort
 import org.assertj.core.api.Assertions.assertThat
@@ -74,11 +75,13 @@ class HomeQueryServiceTest {
 		circleMemberInPort.put(circleId, CircleMemberDto(ownerId, "owner3", "INITIATOR", true))
 		circleMemberInPort.put(circleId, CircleMemberDto(friendId, "friend3", "MEMBER", true))
 		memberProfileInPort.put(ownerId, active = true)
-		memberProfileInPort.put(friendId, active = true)
+		memberProfileInPort.put(friendId, active = true, profileImageKey = "images/profile/friend3.png")
 
 		val members = homeQueryService.getMembers(circleId, ownerId)
 
 		assertThat(members).hasSize(2)
+		assertThat(members.first { it.memberId == friendId }.profileImageKey).isEqualTo("images/profile/friend3.png")
+		assertThat(members.first { it.memberId == friendId }.avatarColor).isEqualTo(AvatarColor.TEAL_200)
 		assertThat(scheduleQueryInPort.mainCalled).isFalse()
 		assertThat(scheduleQueryInPort.listCalled).isFalse()
 		assertThat(scheduleQueryInPort.countCalled).isFalse()
@@ -106,11 +109,12 @@ class HomeQueryServiceTest {
 	private class FakeMemberProfileInPort : GetMemberProfileInPort {
 		private val profiles = linkedMapOf<String, MemberProfileDto>()
 		override fun getMemberProfile(memberId: String): MemberProfileDto? = profiles[memberId]
-		fun put(memberId: String, active: Boolean) {
+		fun put(memberId: String, active: Boolean, profileImageKey: String? = null) {
 			profiles[memberId] = MemberProfileDto(
 				memberId = memberId,
 				nickname = "nick-${memberId.take(4)}",
-				avatarColor = "TEAL_200",
+				avatarColor = AvatarColor.TEAL_200,
+				profileImageKey = profileImageKey,
 				kakaoNickname = null,
 				active = active,
 			)

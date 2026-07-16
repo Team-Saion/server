@@ -11,9 +11,9 @@ data class CircleHomeResponse(
 	val totalScheduleCount: Long,
 ) {
 	companion object {
-		fun from(view: HomeView): CircleHomeResponse = CircleHomeResponse(
+		fun from(view: HomeView, serverUrl: String): CircleHomeResponse = CircleHomeResponse(
 			circle = CircleSummaryResponse.from(view.circle),
-			members = view.members.map { CircleMemberResponse.from(it) },
+			members = view.members.map { CircleMemberResponse.from(it, serverUrl) },
 			canInvite = view.canInvite,
 			mainSchedule = view.mainSchedule,
 			schedules = view.schedules,

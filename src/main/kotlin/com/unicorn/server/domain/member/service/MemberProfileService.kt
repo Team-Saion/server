@@ -52,7 +52,8 @@ class MemberProfileService(
 		return MemberProfileDto(
 			memberId = member.id.toString(),
 			nickname = member.nickname,
-			avatarColor = member.avatarColor.name,
+			avatarColor = member.avatarColor,
+			profileImageKey = member.profileImageKey,
 			kakaoNickname = socialAccount?.kakaoNickname,
 			active = !member.isDeleted(),
 		)
