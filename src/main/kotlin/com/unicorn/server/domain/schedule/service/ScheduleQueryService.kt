@@ -2,13 +2,10 @@ package com.unicorn.server.domain.schedule.service
 
 import com.unicorn.server.common.exception.BusinessException
 import com.unicorn.server.common.exception.CommonErrorCode
-import com.unicorn.server.domain.circle.vo.CircleId
 import com.unicorn.server.domain.schedule.Schedule
-import com.unicorn.server.domain.schedule.enums.UrgencyLevel
 import com.unicorn.server.domain.schedule.exception.ScheduleErrorCode
 import com.unicorn.server.domain.schedule.port.`in`.GetScheduleDetailInPort
 import com.unicorn.server.domain.schedule.port.`in`.GetScheduleListInPort
-import com.unicorn.server.domain.schedule.port.`in`.GetSchedulesForCircleInPort
 import com.unicorn.server.domain.schedule.port.dto.MyConfirmationInfo
 import com.unicorn.server.domain.schedule.port.dto.ScheduleDetailResult
 import com.unicorn.server.domain.schedule.port.dto.ScheduleListResult
@@ -30,7 +27,7 @@ class ScheduleQueryService(
 	private val scheduleOutPort: ScheduleOutPort,
 	private val scheduleConfirmationOutPort: ScheduleConfirmationOutPort,
 	private val circleAccessOutPort: CircleAccessOutPort,
-) : GetScheduleListInPort, GetScheduleDetailInPort, GetSchedulesForCircleInPort {
+) : GetScheduleListInPort, GetScheduleDetailInPort {
 
 	override fun getList(
 		circleId: String,
@@ -47,7 +44,7 @@ class ScheduleQueryService(
 		}
 		val pageSize = size
 		val pageCursor = cursor?.takeIf { it.isNotBlank() }?.let { decodeCursor(it) }
-		val results = scheduleOutPort.findActiveByCircleId(circleId, today(), pageCursor, pageSize + 1)
+		val results = scheduleOutPort.findActiveByCircleId(circleId, pageCursor, pageSize + 1)
 		val hasNext = results.size > pageSize
 		val schedules = results.take(pageSize)
 		val nextCursor = if (hasNext && schedules.isNotEmpty()) {
@@ -94,7 +91,6 @@ class ScheduleQueryService(
 			memo = schedule.memo,
 			status = schedule.computeStatus(nowDateTime()),
 			dDay = schedule.computeDDay(today()),
-			urgencyLevel = UrgencyLevel.from(schedule.computeDDay(today())),
 			progressRate = schedule.computeProgressRate(nowDateTime()),
 			confirmations = confirmations,
 			myConfirmation = myConfirmation,
@@ -103,20 +99,8 @@ class ScheduleQueryService(
 		)
 	}
 
-	override fun findUpcomingSchedulesByCircleId(
-		circleId: CircleId,
-		today: LocalDate,
-		limit: Int,
-	): List<ScheduleSummaryResult> =
-		scheduleOutPort.findUpcomingByCircleId(circleId.value, today, limit)
-			.map { it.toSummaryResult() }
-
-	override fun countByCircleId(circleId: CircleId): Long =
-		scheduleOutPort.countActiveByCircleId(circleId.value)
-
-	private fun Schedule.toSummaryResult(): ScheduleSummaryResult {
-		val dDay = computeDDay(today())
-		return ScheduleSummaryResult(
+	private fun Schedule.toSummaryResult(): ScheduleSummaryResult =
+		ScheduleSummaryResult(
 			scheduleId = id,
 			title = title,
 			startDate = startDate,
@@ -126,11 +110,9 @@ class ScheduleQueryService(
 			isAllDay = isAllDay,
 			needConfirm = needConfirm,
 			status = computeStatus(nowDateTime()),
-			dDay = dDay,
-			urgencyLevel = UrgencyLevel.from(dDay),
+			dDay = computeDDay(today()),
 			progressRate = computeProgressRate(nowDateTime()),
 		)
-	}
 
 	private fun decodeCursor(cursor: String): SchedulePageCursor =
 		try {
