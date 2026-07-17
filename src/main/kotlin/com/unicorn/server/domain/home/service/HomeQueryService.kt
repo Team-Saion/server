@@ -31,13 +31,16 @@ class HomeQueryService(
         val visibleMembers = getVisibleMembers(circleId, requesterId)
 
         val today = LocalDate.now()
+        val circleIdVo = CircleId.of(circleId)
+        // 메인(가장 임박한 1건) + 나머지 최대 3건을 한 번의 조회로 가져와 분리한다.
+        val upcomingSchedules = scheduleQueryInPort.findUpcomingSchedulesByCircleId(circleIdVo, today, MAIN_AND_UPCOMING_LIMIT)
         return HomeView(
             circle = HomeCircleDto(circle.id, circle.name, circle.ownerId),
             members = visibleMembers,
             canInvite = visibleMembers.size == 1,
-            mainSchedule = scheduleQueryInPort.findMainScheduleByCircleId(CircleId.of(circleId), today),
-            schedules = scheduleQueryInPort.findUpcomingSchedulesByCircleId(CircleId.of(circleId), today, 3),
-            totalScheduleCount = scheduleQueryInPort.countByCircleId(CircleId.of(circleId)),
+            mainSchedule = upcomingSchedules.firstOrNull(),
+            schedules = upcomingSchedules.drop(1),
+            totalScheduleCount = scheduleQueryInPort.countByCircleId(circleIdVo),
         )
     }
 
@@ -64,4 +67,9 @@ class HomeQueryService(
                     role = membership.role,
                 )
             }
+
+    companion object {
+        // 메인 일정 1건 + 홈에 노출할 나머지 일정 3건
+        private const val MAIN_AND_UPCOMING_LIMIT = 4
+    }
 }

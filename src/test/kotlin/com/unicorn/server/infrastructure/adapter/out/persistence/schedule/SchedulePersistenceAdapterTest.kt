@@ -90,8 +90,9 @@ class SchedulePersistenceAdapterTest(
 			schedule(circleId = "CC000000000000000104", title = "세 번째", startDate = LocalDate.of(2024, 8, 3), startTime = LocalTime.of(9, 0)),
 		)
 
-		val firstPage = schedulePersistenceAdapter.findActiveByCircleId("CC000000000000000104", null, 2)
-		val secondPage = schedulePersistenceAdapter.findActiveByCircleId("CC000000000000000104", SchedulePageCursor.from(second), 2)
+		val today = LocalDate.of(2024, 8, 1)
+		val firstPage = schedulePersistenceAdapter.findActiveByCircleId("CC000000000000000104", today, null, 2)
+		val secondPage = schedulePersistenceAdapter.findActiveByCircleId("CC000000000000000104", today, SchedulePageCursor.from(second), 2)
 
 		assertThat(firstPage.map { it.id }).containsExactly(first.id, second.id)
 		assertThat(secondPage.map { it.id }).containsExactly(third.id)

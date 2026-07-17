@@ -1,6 +1,7 @@
 package com.unicorn.server.domain.schedule.port.dto
 
 import com.unicorn.server.domain.schedule.enums.ScheduleStatus
+import com.unicorn.server.domain.schedule.enums.UrgencyLevel
 import com.unicorn.server.domain.schedule.vo.ScheduleId
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -18,6 +19,7 @@ data class ScheduleDetailResult(
 	val memo: String?,
 	val status: ScheduleStatus,
 	val dDay: Int?,
+	val urgencyLevel: UrgencyLevel,
 	val progressRate: Int,
 	val confirmations: List<ConfirmationCountResult>,
 	val myConfirmation: MyConfirmationInfo?,
