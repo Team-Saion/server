@@ -166,7 +166,8 @@ class CircleServiceJoinTest {
 				MemberProfileDto(
 					memberId = it.id.toString(),
 					nickname = it.nickname,
-					avatarColor = it.avatarColor.name,
+					avatarColor = it.avatarColor,
+					profileImageKey = it.profileImageKey,
 					kakaoNickname = null,
 					active = !it.isDeleted(),
 				)
