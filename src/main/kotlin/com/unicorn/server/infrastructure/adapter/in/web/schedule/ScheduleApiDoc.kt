@@ -159,9 +159,6 @@ interface ScheduleApiDoc {
 
 			**권한**: 써클 구성원(MEMBER 이상)만 조회 가능합니다.
 
-			**조회 범위**: 아직 종료되지 않은 일정만 반환합니다. (endDate가 오늘(KST) 이상)
-			- 종료일이 지난 일정은 목록에서 제외됩니다.
-
 			**정렬 순서**: startDate ASC → startTime ASC → scheduleId ASC
 			- 종일 일정(startTime=null)은 해당 날짜의 00:00 기준으로 정렬합니다.
 
@@ -175,7 +172,6 @@ interface ScheduleApiDoc {
 			- status: UPCOMING(시작 전) / IN_PROGRESS(진행 중) / COMPLETED(종료), KST 현재 시각 기준
 			- isAllDay: startTime/endTime이 모두 null이면 true
 			- dDay: startDate와 오늘(KST) 간의 양수 차이. 진행 중이거나 과거 일정은 null
-			- urgencyLevel: 긴급도. dDay가 10 미만이면 URGENT, 10 이상이거나 dDay가 null(진행 중/종료)이면 NORMAL
 			- progressRate: 0~100 정수. 시작 전=0, 종료 후=100, 진행 중=경과 시간 비율
 		""",
 	)
@@ -215,10 +211,6 @@ interface ScheduleApiDoc {
 			**dDay 계산 (KST 기준 오늘 날짜)**
 			- 오늘 기준 startDate까지 남은 일수 (양수)
 			- 진행 중이거나 시작일이 이미 지난 경우 null
-
-			**urgencyLevel (긴급도)**
-			- URGENT: dDay가 10 미만
-			- NORMAL: dDay가 10 이상이거나, 진행 중/종료되어 dDay가 null인 경우
 
 			**progressRate 계산**
 			- 시작 전: 0

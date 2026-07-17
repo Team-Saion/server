@@ -25,8 +25,7 @@ interface HomeApiDoc {
 			- 요청자가 해당 써클의 활성 구성원이 아니면 403을 반환합니다.
 			- 회원 탈퇴한 구성원은 응답에서 자동 제외됩니다.
 			- 구성원 정보에는 프로필 이미지 URL(`profileImageUrl`)과 아바타 색상(`avatarColor.code`, `avatarColor.hex`)이 포함됩니다.
-			- `mainSchedule`은 오늘 이후 가장 임박한 일정 1건이며, 예정된 일정이 없으면 null입니다.
-			- `schedules`는 `mainSchedule`을 제외한 이후 일정들을 임박한 순서로 담습니다.
+			- 일정 도메인은 현재 no-op stub이라 `mainSchedule`은 null, `schedules`는 빈 배열입니다.
 		""",
 	)
 	@ApiErrorCodeExamples(
