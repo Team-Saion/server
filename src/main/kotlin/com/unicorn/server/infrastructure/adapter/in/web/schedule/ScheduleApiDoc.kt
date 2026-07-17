@@ -159,6 +159,9 @@ interface ScheduleApiDoc {
 
 			**권한**: 써클 구성원(MEMBER 이상)만 조회 가능합니다.
 
+			**조회 범위**: 아직 종료되지 않은 일정만 반환합니다. (endDate가 오늘(KST) 이상)
+			- 종료일이 지난 일정은 목록에서 제외됩니다.
+
 			**정렬 순서**: startDate ASC → startTime ASC → scheduleId ASC
 			- 종일 일정(startTime=null)은 해당 날짜의 00:00 기준으로 정렬합니다.
 

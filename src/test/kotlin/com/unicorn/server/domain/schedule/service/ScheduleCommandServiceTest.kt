@@ -239,9 +239,10 @@ class ScheduleCommandServiceTest {
 
 		override fun findActiveByCircleId(
 			circleId: String,
+			today: LocalDate,
 			cursor: SchedulePageCursor?,
 			size: Int,
-		): List<Schedule> = store.values.filter { it.circleId == circleId && !it.isDeleted }.take(size)
+		): List<Schedule> = store.values.filter { it.circleId == circleId && !it.isDeleted && !it.endDate.isBefore(today) }.take(size)
 
 		override fun findUpcomingByCircleId(
 			circleId: String,

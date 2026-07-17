@@ -37,14 +37,16 @@ class SchedulePersistenceAdapter(
 	@Transactional(readOnly = true)
 	override fun findActiveByCircleId(
 		circleId: String,
+		today: LocalDate,
 		cursor: SchedulePageCursor?,
 		size: Int,
 	): List<Schedule> {
 		val entities = if (cursor == null) {
-			scheduleJpaRepository.findFirstPage(circleId, size)
+			scheduleJpaRepository.findFirstPage(circleId, today, size)
 		} else {
 			scheduleJpaRepository.findAfterCursor(
 				circleId = circleId,
+				today = today,
 				cursorDate = cursor.startDate,
 				cursorTime = cursor.startTime ?: LocalTime.MIDNIGHT,
 				cursorId = cursor.scheduleId.value,

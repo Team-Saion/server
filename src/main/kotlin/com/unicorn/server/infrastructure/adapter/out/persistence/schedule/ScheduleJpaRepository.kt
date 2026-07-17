@@ -17,6 +17,7 @@ interface ScheduleJpaRepository : JpaRepository<ScheduleEntity, String> {
 			FROM schedule
 			WHERE circle_id = :circleId
 			  AND del_yn = 'N'
+			  AND end_date >= :today
 			ORDER BY start_date ASC,
 			         start_time_sort ASC,
 			         schedule_id ASC
@@ -26,6 +27,7 @@ interface ScheduleJpaRepository : JpaRepository<ScheduleEntity, String> {
 	)
 	fun findFirstPage(
 		@Param("circleId") circleId: String,
+		@Param("today") today: LocalDate,
 		@Param("size") size: Int,
 	): List<ScheduleEntity>
 
@@ -35,6 +37,7 @@ interface ScheduleJpaRepository : JpaRepository<ScheduleEntity, String> {
 			FROM schedule
 			WHERE circle_id = :circleId
 			  AND del_yn = 'N'
+			  AND end_date >= :today
 			  AND (
 			    start_date > :cursorDate
 			    OR (start_date = :cursorDate AND start_time_sort > :cursorTime)
@@ -49,6 +52,7 @@ interface ScheduleJpaRepository : JpaRepository<ScheduleEntity, String> {
 	)
 	fun findAfterCursor(
 		@Param("circleId") circleId: String,
+		@Param("today") today: LocalDate,
 		@Param("cursorDate") cursorDate: LocalDate,
 		@Param("cursorTime") cursorTime: LocalTime,
 		@Param("cursorId") cursorId: String,

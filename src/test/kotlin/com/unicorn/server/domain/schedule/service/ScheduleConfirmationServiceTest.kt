@@ -160,6 +160,7 @@ class ScheduleConfirmationServiceTest {
 
 		override fun findActiveByCircleId(
 			circleId: String,
+			today: LocalDate,
 			cursor: SchedulePageCursor?,
 			size: Int,
 		): List<Schedule> = emptyList()

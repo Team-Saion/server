@@ -47,7 +47,7 @@ class ScheduleQueryService(
 		}
 		val pageSize = size
 		val pageCursor = cursor?.takeIf { it.isNotBlank() }?.let { decodeCursor(it) }
-		val results = scheduleOutPort.findActiveByCircleId(circleId, pageCursor, pageSize + 1)
+		val results = scheduleOutPort.findActiveByCircleId(circleId, today(), pageCursor, pageSize + 1)
 		val hasNext = results.size > pageSize
 		val schedules = results.take(pageSize)
 		val nextCursor = if (hasNext && schedules.isNotEmpty()) {

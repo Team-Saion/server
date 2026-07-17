@@ -185,11 +185,12 @@ class ScheduleQueryServiceTest {
 
 		override fun findActiveByCircleId(
 			circleId: String,
+			today: LocalDate,
 			cursor: SchedulePageCursor?,
 			size: Int,
 		): List<Schedule> =
 			store.values
-				.filter { it.circleId == circleId && !it.isDeleted }
+				.filter { it.circleId == circleId && !it.isDeleted && !it.endDate.isBefore(today) }
 				.sortedWith(compareBy<Schedule> { it.startDate }.thenBy { it.startTime ?: LocalTime.MIDNIGHT }.thenBy { it.id.value })
 				.dropWhile { cursor != null && !isAfterCursor(it, cursor) }
 				.take(size)
