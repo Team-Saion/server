@@ -7,6 +7,7 @@ import com.unicorn.server.domain.schedule.port.out.ScheduleOutPort
 import com.unicorn.server.domain.schedule.vo.ScheduleId
 import com.unicorn.server.infrastructure.adapter.out.persistence.schedule.entity.ScheduleEntity
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDate
 import java.time.LocalTime
 
 @PersistenceAdapter
@@ -53,4 +54,16 @@ class SchedulePersistenceAdapter(
 
 		return entities.map { it.toDomain() }
 	}
+
+	@Transactional(readOnly = true)
+	override fun findUpcomingByCircleId(
+		circleId: String,
+		today: LocalDate,
+		limit: Int,
+	): List<Schedule> =
+		scheduleJpaRepository.findUpcoming(circleId, today, limit).map { it.toDomain() }
+
+	@Transactional(readOnly = true)
+	override fun countActiveByCircleId(circleId: String): Long =
+		scheduleJpaRepository.countByCircleIdAndDelYn(circleId)
 }

@@ -163,6 +163,14 @@ class ScheduleConfirmationServiceTest {
 			cursor: SchedulePageCursor?,
 			size: Int,
 		): List<Schedule> = emptyList()
+
+		override fun findUpcomingByCircleId(
+			circleId: String,
+			today: LocalDate,
+			limit: Int,
+		): List<Schedule> = emptyList()
+
+		override fun countActiveByCircleId(circleId: String): Long = 0L
 	}
 
 	private class FakeScheduleConfirmationOutPort : ScheduleConfirmationOutPort {
