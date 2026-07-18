@@ -64,6 +64,28 @@ interface CircleApiDoc {
 	): ApiResponse<CircleSummaryResponse>
 
 	@Operation(
+		summary = "써클 탈퇴",
+		description = """
+			인증된 사용자가 현재 참여 중인 써클에서 탈퇴합니다.
+
+			- 멤버십은 물리적으로 삭제하지 않고 LEFT 상태와 soft delete로 변경합니다.
+			- 방장이 탈퇴하면 가입일이 가장 오래된 활성 구성원에게 권한이 자동 위임됩니다.
+			- 방장이 유일한 구성원이라면 써클과 멤버십이 함께 soft delete 됩니다.
+		""",
+	)
+	@ApiErrorCodeExamples(
+		ApiErrorCodeExample(codeType = CommonErrorCode::class, code = "UNAUTHORIZED"),
+		ApiErrorCodeExample(codeType = CircleErrorCode::class, code = "CIRCLE_ACCESS_DENIED"),
+		ApiErrorCodeExample(codeType = CircleErrorCode::class, code = "CIRCLE_NOT_FOUND"),
+	)
+	fun leave(
+		@Parameter(hidden = true)
+		@AuthenticationPrincipal memberId: String,
+		@Parameter(description = "써클 ID")
+		circleId: String,
+	): ApiResponse<Unit>
+
+	@Operation(
 		summary = "써클 방장 권한 위임",
 		description = """
 			현재 INITIATOR가 같은 써클의 다른 활성 구성원에게 방장 권한을 위임합니다.

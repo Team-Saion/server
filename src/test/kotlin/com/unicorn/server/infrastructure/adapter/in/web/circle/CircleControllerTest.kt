@@ -3,6 +3,8 @@ package com.unicorn.server.infrastructure.adapter.`in`.web.circle
 import com.unicorn.server.domain.circle.port.dto.CreateCircleCommand
 import com.unicorn.server.domain.circle.port.`in`.CircleInPort
 import com.unicorn.server.domain.circle.port.`in`.CircleMemberInPort
+import com.unicorn.server.domain.circle.port.out.CircleMemberOutPort
+import com.unicorn.server.domain.circle.vo.CircleId
 import com.unicorn.server.domain.member.Member
 import com.unicorn.server.domain.member.enums.Role
 import com.unicorn.server.domain.member.port.out.MemberOutPort
@@ -18,6 +20,7 @@ import org.springframework.http.MediaType
 import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
@@ -34,6 +37,7 @@ class CircleControllerTest(
 	@param:Autowired private val memberOutPort: MemberOutPort,
 	@param:Autowired private val circleInPort: CircleInPort,
 	@param:Autowired private val circleMemberInPort: CircleMemberInPort,
+	@param:Autowired private val circleMemberOutPort: CircleMemberOutPort,
 ) {
 	private lateinit var mockMvc: MockMvc
 
@@ -88,6 +92,27 @@ class CircleControllerTest(
 		)
 			.andExpect(status().isForbidden)
 			.andExpect(jsonPath("$.errorCode").value("C403_2"))
+	}
+
+	@Test
+	@DisplayName("일반 구성원이 써클 탈퇴 API를 호출하면 멤버십이 soft delete 된다")
+	fun leave_member_softDeletesMembership() {
+		val owner = memberOutPort.save(member("LeaveOwner", "leaveown"))
+		val leavingMember = memberOutPort.save(member("LeavingMember", "leaving"))
+		val circle = circleInPort.create(owner.id.toString(), CreateCircleCommand("탈퇴API테스트"))
+		circleMemberInPort.join(circle.id, leavingMember.id.toString())
+		val accessToken = jwtProvider.issue(leavingMember.id.toString(), Role.MEMBER).accessToken
+
+		mockMvc.perform(
+			delete("/api/v1/circles/${circle.id}/members/me")
+				.header(HttpHeaders.AUTHORIZATION, "Bearer $accessToken"),
+		)
+			.andExpect(status().isOk)
+			.andExpect(jsonPath("$.success").value(true))
+
+		val membership = circleMemberOutPort.findByCircleAndMember(CircleId.of(circle.id), leavingMember.id)
+		assertThat(membership?.deleted).isTrue()
+		assertThat(circleMemberInPort.isCircleMember(circle.id, leavingMember.id.toString())).isFalse()
 	}
 
 	private fun member(name: String, nickname: String): Member =
