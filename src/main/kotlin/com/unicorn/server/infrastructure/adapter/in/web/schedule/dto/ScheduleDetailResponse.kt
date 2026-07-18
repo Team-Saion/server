@@ -2,6 +2,7 @@ package com.unicorn.server.infrastructure.adapter.`in`.web.schedule.dto
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.unicorn.server.domain.schedule.enums.ScheduleStatus
+import com.unicorn.server.domain.schedule.enums.UrgencyLevel
 import com.unicorn.server.domain.schedule.port.dto.ScheduleDetailResult
 import io.swagger.v3.oas.annotations.media.Schema
 import java.time.LocalDate
@@ -73,6 +74,17 @@ data class ScheduleDetailResponse(
 
 	@field:Schema(
 		description = """
+			긴급도. dDay 기준으로 계산됩니다.
+			- URGENT: dDay가 10 미만
+			- NORMAL: dDay가 10 이상이거나, 진행 중/종료되어 dDay가 없는 경우
+		""",
+		example = "NORMAL",
+		allowableValues = ["URGENT", "NORMAL"],
+	)
+	val urgencyLevel: UrgencyLevel,
+
+	@field:Schema(
+		description = """
 			진행률 (0~100 정수). KST 현재 시각 기준으로 계산됩니다.
 			- 시작 전: 0
 			- 종료 후: 100
@@ -125,6 +137,7 @@ data class ScheduleDetailResponse(
 			needConfirm = result.needConfirm,
 			status = result.status,
 			dDay = result.dDay,
+			urgencyLevel = result.urgencyLevel,
 			progressRate = result.progressRate,
 			memo = result.memo,
 			confirmations = result.confirmations.map { ConfirmationCountResponse.from(it) },
