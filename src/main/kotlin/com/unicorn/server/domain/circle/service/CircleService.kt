@@ -108,7 +108,7 @@ class CircleService(
         return JoinCircleResult(circleId = circleId)
     }
 
-    override fun lerave(circleId: String, memberId: String) {
+    override fun leave(circleId: String, memberId: String) {
         val targetCircleId = CircleId.of(circleId)
         val targetMemberId = MemberId.of(memberId)
         val circle = circleOutPort.findById(targetCircleId)
