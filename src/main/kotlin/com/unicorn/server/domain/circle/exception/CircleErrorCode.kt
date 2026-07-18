@@ -12,7 +12,7 @@ enum class CircleErrorCode(
 	CIRCLE_NAME_TOO_LONG("C400_2", "20자 이내로 입력해주세요.", HttpStatus.BAD_REQUEST),
 	CIRCLE_NAME_INVALID_CHARSET("C400_3", "사용할 수 없는 문자가 포함되어 있어요.", HttpStatus.BAD_REQUEST),
 	CIRCLE_NICKNAME_INVALID("C400_4", "유효하지 않은 닉네임입니다.", HttpStatus.BAD_REQUEST),
-	INITIATOR_CANNOT_LEAVE("C400_5", "생성자는 탈퇴할 수 없습니다.", HttpStatus.BAD_REQUEST),
+	INITIATOR_CANNOT_LEAVE("C400_5", "후임 방장을 지정할 수 없어 탈퇴할 수 없습니다.", HttpStatus.BAD_REQUEST),
 	ALREADY_JOINED("C400_6", "이미 참여한 써클입니다.", HttpStatus.BAD_REQUEST),
 	ALREADY_HAS_ACTIVE_CIRCLE("C400_7", "현재 참여 중인 써클이 있어 새로 생성하거나 참여할 수 없습니다.", HttpStatus.BAD_REQUEST),
 	CIRCLE_MEMBER_LIMIT_EXCEEDED("C400_8", "써클은 최대 10명까지 참여할 수 있습니다.", HttpStatus.BAD_REQUEST),

@@ -47,14 +47,12 @@ class CircleMember internal constructor(
 		markLeft()
 	}
 
-	fun leaveByWithdrawal() {
-		markLeft()
-	}
-
 	private fun markLeft() {
 		status = CircleMemberStatus.LEFT
-		leftAt = LocalDateTime.now()
-		updatedAt = LocalDateTime.now()
+		deleted = true
+		val now = LocalDateTime.now()
+		leftAt = now
+		updatedAt = now
 	}
 
 	fun rejoin(newNickname: String) {
@@ -64,6 +62,7 @@ class CircleMember internal constructor(
 		status = CircleMemberStatus.ACTIVE
 		nickname = validateNickname(newNickname)
 		leftAt = null
+		deleted = false
 		updatedAt = LocalDateTime.now()
 	}
 

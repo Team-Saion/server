@@ -7,6 +7,7 @@ import com.unicorn.server.common.port.out.event.EventPublisher
 import com.unicorn.server.common.vo.Email
 import com.unicorn.server.domain.circle.enums.CircleRole
 import com.unicorn.server.domain.circle.exception.CircleErrorCode
+import com.unicorn.server.domain.circle.exception.CircleSuccessorNotFoundException
 import com.unicorn.server.domain.circle.event.CircleInitiatorTransferredEvent
 import com.unicorn.server.domain.circle.port.dto.CreateCircleCommand
 import com.unicorn.server.domain.circle.port.out.CircleIdGenerator
@@ -268,10 +269,13 @@ class CircleServiceTest {
 		}
 		override fun findByCircleAndMember(circleId: CircleId, memberId: MemberId) = members.firstOrNull { it.circleId == circleId && it.memberId == memberId }
 		override fun findAllActiveByCircleId(circleId: CircleId) = members.filter { it.circleId == circleId && it.status == com.unicorn.server.domain.circle.enums.CircleMemberStatus.ACTIVE && !it.deleted }
+		override fun existsActiveMemberByCircleIdExcludingMemberId(circleId: CircleId, excludedMemberId: MemberId) =
+			members.any { it.circleId == circleId && it.status == com.unicorn.server.domain.circle.enums.CircleMemberStatus.ACTIVE && !it.deleted && it.role == CircleRole.MEMBER && it.memberId != excludedMemberId }
 		override fun findOldestActiveByCircleIdExcludingMemberId(circleId: CircleId, excludedMemberId: MemberId) =
 			members
-				.filter { it.circleId == circleId && it.status == com.unicorn.server.domain.circle.enums.CircleMemberStatus.ACTIVE && !it.deleted && it.memberId != excludedMemberId }
+				.filter { it.circleId == circleId && it.status == com.unicorn.server.domain.circle.enums.CircleMemberStatus.ACTIVE && !it.deleted && it.role == CircleRole.MEMBER && it.memberId != excludedMemberId }
 				.minWithOrNull(compareBy<com.unicorn.server.domain.circle.CircleMember>({ it.joinedAt }, { it.memberId.toString() }))
+				?: throw CircleSuccessorNotFoundException(circleId.toString())
 		override fun findAllActiveByMemberId(memberId: MemberId) = members.filter { it.memberId == memberId && it.status == com.unicorn.server.domain.circle.enums.CircleMemberStatus.ACTIVE && !it.deleted }
 		override fun existsByCircleAndMember(circleId: CircleId, memberId: MemberId) = members.any { it.circleId == circleId && it.memberId == memberId }
 		override fun existsActiveByCircleAndMember(circleId: CircleId, memberId: MemberId) = members.any { it.circleId == circleId && it.memberId == memberId && it.status == com.unicorn.server.domain.circle.enums.CircleMemberStatus.ACTIVE && !it.deleted }

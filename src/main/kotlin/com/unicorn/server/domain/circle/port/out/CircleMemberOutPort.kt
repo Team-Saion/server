@@ -8,7 +8,8 @@ interface CircleMemberOutPort {
 	fun save(circleMember: CircleMember): CircleMember
 	fun findByCircleAndMember(circleId: CircleId, memberId: MemberId): CircleMember?
 	fun findAllActiveByCircleId(circleId: CircleId): List<CircleMember>
-	fun findOldestActiveByCircleIdExcludingMemberId(circleId: CircleId, excludedMemberId: MemberId): CircleMember?
+	fun existsActiveMemberByCircleIdExcludingMemberId(circleId: CircleId, excludedMemberId: MemberId): Boolean
+	fun findOldestActiveByCircleIdExcludingMemberId(circleId: CircleId, excludedMemberId: MemberId): CircleMember
 	fun findAllActiveByMemberId(memberId: MemberId): List<CircleMember>
 	fun existsByCircleAndMember(circleId: CircleId, memberId: MemberId): Boolean
 	fun existsActiveByCircleAndMember(circleId: CircleId, memberId: MemberId): Boolean
