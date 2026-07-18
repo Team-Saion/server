@@ -44,14 +44,6 @@ class InvitationEntity internal constructor() : AuditableJpaEntity() {
 	var inviterId: String = ""
 		internal set
 
-	@Column(name = "invite_to_name", length = 10)
-	var inviteToName: String? = null
-		internal set
-
-	@Column(name = "message", length = 50)
-	var message: String? = null
-		internal set
-
 	@Enumerated(EnumType.STRING)
 	@Column(name = "status", nullable = false, length = 20)
 	var status: InvitationStatus = InvitationStatus.ACTIVE

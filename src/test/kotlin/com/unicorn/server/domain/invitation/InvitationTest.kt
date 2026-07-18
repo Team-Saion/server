@@ -20,8 +20,6 @@ class InvitationTest {
 			targetId = TestIdFactory.circleId().toString(),
 			token = InvitationToken("abcdefghijklmnopqrstuvwxABCDEFGH"),
 			inviterId = inviterId,
-			inviteToName = null,
-			message = null,
 		)
 
 		assertThatThrownBy { invitation.ensureNotSelfApproval(inviterId) }

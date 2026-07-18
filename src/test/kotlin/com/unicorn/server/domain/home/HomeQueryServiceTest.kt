@@ -82,6 +82,7 @@ class HomeQueryServiceTest {
 		assertThat(members).hasSize(2)
 		assertThat(members.first { it.memberId == friendId }.profileImageKey).isEqualTo("images/profile/friend3.png")
 		assertThat(members.first { it.memberId == friendId }.avatarColor).isEqualTo(AvatarColor.TEAL_200)
+		assertThat(scheduleQueryInPort.mainCalled).isFalse()
 		assertThat(scheduleQueryInPort.listCalled).isFalse()
 		assertThat(scheduleQueryInPort.countCalled).isFalse()
 	}
@@ -122,10 +123,12 @@ class HomeQueryServiceTest {
 	}
 
 	private class FakeScheduleQueryInPort : GetSchedulesForCircleInPort {
+		var mainCalled = false
 		var listCalled = false
 		var countCalled = false
 
-		override fun findUpcomingSchedulesByCircleId(circleId: CircleId, today: LocalDate, limit: Int) = emptyList<com.unicorn.server.domain.schedule.port.dto.ScheduleSummaryResult>().also { listCalled = true }
+		override fun findMainScheduleByCircleId(circleId: CircleId, today: LocalDate) = null.also { mainCalled = true }
+		override fun findUpcomingSchedulesByCircleId(circleId: CircleId, today: LocalDate, limit: Int) = emptyList<com.unicorn.server.domain.schedule.port.dto.ScheduleView>().also { listCalled = true }
 		override fun countByCircleId(circleId: CircleId): Long = 0L.also { countCalled = true }
 	}
 }

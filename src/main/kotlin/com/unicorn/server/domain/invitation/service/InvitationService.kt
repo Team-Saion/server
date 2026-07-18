@@ -27,8 +27,6 @@ import com.unicorn.server.domain.invitation.port.`in`.IssueInvitationInPort
 import com.unicorn.server.domain.invitation.port.out.InvitationOutPort
 import com.unicorn.server.domain.invitation.port.out.InvitationIdGenerator
 import com.unicorn.server.domain.invitation.port.out.InvitationTokenGenerator
-import com.unicorn.server.domain.invitation.vo.InviteMessage
-import com.unicorn.server.domain.invitation.vo.InviteToName
 import com.unicorn.server.domain.invitation.vo.InvitationId
 import com.unicorn.server.domain.invitation.vo.InvitationToken
 import com.unicorn.server.domain.member.exception.MemberNotFoundException
@@ -50,9 +48,7 @@ class InvitationService(
 	private val eventPublisher: EventPublisher,
 ) : IssueInvitationInPort, DispatchInvitationInPort, GetInvitationByTokenInPort, AcceptCircleInvitationInPort {
 	override fun issue(inviterMemberId: String, command: IssueInvitationCommand): IssuedInvitationResult {
-		if (command.type != InvitationType.CIRCLE) {
-			throw BusinessException(InvitationErrorCode.INVITATION_TARGET_INVALID)
-		}
+		val type = InvitationType.CIRCLE
 		circleInPort.getCircleSummary(command.targetId)
 		if (!circleMemberInPort.isCircleMember(command.targetId, inviterMemberId)) {
 			throw BusinessException(InvitationErrorCode.INVITATION_NOT_AUTHORIZED)
@@ -61,7 +57,7 @@ class InvitationService(
 		if (circleMemberInPort.getCircleMembers(command.targetId).size >= MAX_MEMBERS) {
 			throw BusinessException(CircleErrorCode.CIRCLE_MEMBER_LIMIT_EXCEEDED)
 		}
-		invitationOutPort.findAllActiveByTypeAndTargetIdAndInviterId(command.type, command.targetId, inviterId)
+		invitationOutPort.findAllActiveByTypeAndTargetIdAndInviterId(type, command.targetId, inviterId)
 			.forEach {
 				it.markExpired()
 				invitationOutPort.save(it)
@@ -70,12 +66,10 @@ class InvitationService(
 		val invitation = invitationOutPort.save(
 			Invitation.create(
 				id = invitationIdGenerator.next(),
-				type = command.type,
+				type = type,
 				targetId = command.targetId,
 				token = tokenGenerator.generate(),
 				inviterId = inviterId,
-				inviteToName = command.inviteToName?.takeIf { it.isNotBlank() }?.let(::InviteToName),
-				message = command.message?.takeIf { it.isNotBlank() }?.let(::InviteMessage),
 			),
 		)
 		eventPublisher.publish(InvitationIssuedEvent(invitation.id.toString(), invitation.type, invitation.targetId, invitation.inviterId.toString()))
