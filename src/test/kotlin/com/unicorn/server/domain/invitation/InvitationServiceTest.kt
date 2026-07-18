@@ -51,7 +51,7 @@ class InvitationServiceTest {
 		assertThatThrownBy {
 			fixture.service.issue(
 				outsider.id.toString(),
-				IssueInvitationCommand(InvitationType.CIRCLE, circleId, null, null),
+				IssueInvitationCommand(circleId),
 			)
 		}
 			.isInstanceOf(BusinessException::class.java)
@@ -74,8 +74,6 @@ class InvitationServiceTest {
 			targetId = circleId,
 			token = InvitationToken("abcdefghijklmnopqrstuvwxABCDEFGH"),
 			inviterId = owner.id,
-			inviteToName = null,
-			message = null,
 			status = com.unicorn.server.domain.invitation.enums.InvitationStatus.ACTIVE,
 			expiresAt = LocalDateTime.now().minusMinutes(1),
 			deleted = false,
@@ -104,7 +102,7 @@ class InvitationServiceTest {
 		assertThatThrownBy {
 			fixture.service.issue(
 				owner.id.toString(),
-				IssueInvitationCommand(InvitationType.CIRCLE, circleId, null, null),
+				IssueInvitationCommand(circleId),
 			)
 		}
 			.isInstanceOf(BusinessException::class.java)
@@ -124,17 +122,19 @@ class InvitationServiceTest {
 
 		val firstIssued = fixture.service.issue(
 			owner.id.toString(),
-			IssueInvitationCommand(InvitationType.CIRCLE, circleId, null, null),
+			IssueInvitationCommand(circleId),
 		)
 		val secondIssued = fixture.service.issue(
 			owner.id.toString(),
-			IssueInvitationCommand(InvitationType.CIRCLE, circleId, null, null),
+			IssueInvitationCommand(circleId),
 		)
 
 		assertThat(fixture.invitationOutPort.findById(InvitationId.of(firstIssued.invitationId))?.status)
 			.isEqualTo(com.unicorn.server.domain.invitation.enums.InvitationStatus.EXPIRED)
 		assertThat(fixture.invitationOutPort.findById(InvitationId.of(secondIssued.invitationId))?.status)
 			.isEqualTo(com.unicorn.server.domain.invitation.enums.InvitationStatus.ACTIVE)
+		assertThat(fixture.invitationOutPort.findById(InvitationId.of(secondIssued.invitationId))?.type)
+			.isEqualTo(InvitationType.CIRCLE)
 	}
 
 	@Test
@@ -156,8 +156,6 @@ class InvitationServiceTest {
 			targetId = circleId,
 			token = InvitationToken("abcdefghijklmnopqrstuvwxABCDEFGH"),
 			inviterId = owner.id,
-			inviteToName = null,
-			message = null,
 		)
 		fixture.invitationOutPort.save(invitation)
 

@@ -36,8 +36,6 @@ interface InvitationApiDoc {
 		ApiErrorCodeExample(codeType = CommonErrorCode::class, code = "UNAUTHORIZED"),
 		ApiErrorCodeExample(codeType = InvitationErrorCode::class, code = "INVITATION_TARGET_INVALID"),
 		ApiErrorCodeExample(codeType = InvitationErrorCode::class, code = "INVITATION_NOT_AUTHORIZED"),
-		ApiErrorCodeExample(codeType = InvitationErrorCode::class, code = "INVITE_TO_NAME_INVALID"),
-		ApiErrorCodeExample(codeType = InvitationErrorCode::class, code = "INVITE_MESSAGE_INVALID"),
 	)
 	@SwaggerApiResponse(responseCode = "201", description = "Created")
 	@ApiSuccessCodeExample(IssuedInvitationResponse::class)

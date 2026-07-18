@@ -5,8 +5,6 @@ import com.unicorn.server.domain.invitation.InvitationRedemption
 import com.unicorn.server.domain.invitation.vo.InvitationId
 import com.unicorn.server.domain.invitation.vo.InvitationRedemptionId
 import com.unicorn.server.domain.invitation.vo.InvitationToken
-import com.unicorn.server.domain.invitation.vo.InviteMessage
-import com.unicorn.server.domain.invitation.vo.InviteToName
 import com.unicorn.server.domain.member.vo.MemberId
 
 // ========== InvitationEntity ↔ Invitation ==========
@@ -20,8 +18,6 @@ fun Invitation.toEntity(): InvitationEntity = InvitationEntity().apply {
 	targetId = this@toEntity.targetId.toString()
 	token = this@toEntity.token.value
 	inviterId = this@toEntity.inviterId.toString()
-	inviteToName = this@toEntity.inviteToName?.value?.trim()
-	message = this@toEntity.message?.value?.trim()
 	status = this@toEntity.status
 	expiresAt = this@toEntity.expiresAt
 	delYn = if (this@toEntity.deleted) "Y" else "N"
@@ -38,8 +34,6 @@ fun InvitationEntity.toDomain(): Invitation = Invitation(
 	targetId = this.targetId,
 	token = InvitationToken(this.token),
 	inviterId = MemberId.of(this.inviterId),
-	inviteToName = this.inviteToName?.let(::InviteToName),
-	message = this.message?.let(::InviteMessage),
 	status = this.status,
 	expiresAt = this.expiresAt,
 	deleted = this.delYn == "Y",
