@@ -9,6 +9,7 @@ import com.unicorn.server.infrastructure.adapter.`in`.web.circle.dto.CircleTrans
 import com.unicorn.server.infrastructure.adapter.`in`.web.common.dto.ApiResponse
 import jakarta.validation.Valid
 import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -35,6 +36,15 @@ class CircleController(
 		@RequestBody @Valid request: CreateCircleRequest,
 	): ApiResponse<CircleSummaryResponse> =
 		ApiResponse.created(CircleSummaryResponse.from(circleInPort.create(memberId, CreateCircleCommand(request.name))))
+
+	@DeleteMapping("/{circleId}/members/me")
+	override fun leave(
+		@AuthenticationPrincipal memberId: String,
+		@PathVariable circleId: String,
+	): ApiResponse<Unit> {
+		circleMemberInPort.leave(circleId, memberId)
+		return ApiResponse.success()
+	}
 
 	@PatchMapping("/{circleId}/initiator")
 	override fun transferInitiator(

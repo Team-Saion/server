@@ -3,6 +3,8 @@ package com.unicorn.server.infrastructure.adapter.out.persistence.circle
 import com.unicorn.server.common.annotation.PersistenceAdapter
 import com.unicorn.server.domain.circle.CircleMember
 import com.unicorn.server.domain.circle.enums.CircleMemberStatus
+import com.unicorn.server.domain.circle.enums.CircleRole
+import com.unicorn.server.domain.circle.exception.CircleSuccessorNotFoundException
 import com.unicorn.server.domain.circle.port.out.CircleMemberOutPort
 import com.unicorn.server.domain.circle.vo.CircleId
 import com.unicorn.server.domain.member.vo.MemberId
@@ -30,13 +32,24 @@ class CircleMemberPersistenceAdapter(
 			.map { it.toDomain() }
 
 	@Transactional(readOnly = true)
-	override fun findOldestActiveByCircleIdExcludingMemberId(circleId: CircleId, excludedMemberId: MemberId): CircleMember? =
-		circleMemberJpaRepository.findFirstByCircleIdAndStatusAndDelYnAndMemberIdNotOrderByJoinedAtAscMemberIdAsc(
+	override fun existsActiveMemberByCircleIdExcludingMemberId(circleId: CircleId, excludedMemberId: MemberId): Boolean =
+		circleMemberJpaRepository.existsByCircleIdAndStatusAndRoleAndDelYnAndMemberIdNot(
 			circleId = circleId.toString(),
 			status = CircleMemberStatus.ACTIVE,
+			role = CircleRole.MEMBER,
 			delYn = "N",
 			excludedMemberId = excludedMemberId.toString(),
-		)?.toDomain()
+		)
+
+	@Transactional(readOnly = true)
+	override fun findOldestActiveByCircleIdExcludingMemberId(circleId: CircleId, excludedMemberId: MemberId): CircleMember =
+		circleMemberJpaRepository.findFirstByCircleIdAndStatusAndRoleAndDelYnAndMemberIdNotOrderByJoinedAtAscMemberIdAsc(
+			circleId = circleId.toString(),
+			status = CircleMemberStatus.ACTIVE,
+			role = CircleRole.MEMBER,
+			delYn = "N",
+			excludedMemberId = excludedMemberId.toString(),
+		)?.toDomain() ?: throw CircleSuccessorNotFoundException(circleId.toString())
 
 	@Transactional(readOnly = true)
 	override fun findAllActiveByMemberId(memberId: MemberId): List<CircleMember> =

@@ -2,6 +2,8 @@ package com.unicorn.server.domain.circle
 
 import com.unicorn.server.TestIdFactory
 import com.unicorn.server.common.exception.BusinessException
+import com.unicorn.server.domain.circle.enums.CircleMemberStatus
+import com.unicorn.server.domain.circle.enums.CircleRole
 import com.unicorn.server.domain.circle.exception.CircleErrorCode
 import com.unicorn.server.domain.member.vo.MemberId
 import org.assertj.core.api.Assertions.assertThat
@@ -68,5 +70,81 @@ class CirclePolicyTest {
 			.isInstanceOf(BusinessException::class.java)
 			.extracting("errorCode")
 			.isEqualTo(CircleErrorCode.CIRCLE_NICKNAME_INVALID)
+	}
+
+	@Test
+	@DisplayName("새로운 방장에게 권한을 위임하면 써클 소유자와 구성원 역할이 함께 변경된다")
+	fun transferInitiator_changesOwnerAndMemberRoles() {
+		val ownerId = TestIdFactory.memberId()
+		val newInitiatorId = TestIdFactory.memberId()
+		val circle = Circle.create(TestIdFactory.circleId(), "권한위임", ownerId)
+		val currentInitiator = CircleMember.createInitiator(
+			TestIdFactory.circleMemberId(),
+			circle.id,
+			ownerId,
+			"기존방장",
+		)
+		val newInitiator = CircleMember.createMember(
+			TestIdFactory.circleMemberId(),
+			circle.id,
+			newInitiatorId,
+			"새방장",
+		)
+
+		circle.transferInitiator(currentInitiator, newInitiator)
+
+		assertThat(circle.ownerId).isEqualTo(newInitiatorId)
+		assertThat(currentInitiator.role).isEqualTo(CircleRole.MEMBER)
+		assertThat(newInitiator.role).isEqualTo(CircleRole.INITIATOR)
+	}
+
+	@Test
+	@DisplayName("방장이 탈퇴하면 후임자 승격과 탈퇴 상태 변경을 함께 처리한다")
+	fun leaveMember_initiator_transfersRoleAndLeaves() {
+		val ownerId = TestIdFactory.memberId()
+		val successorId = TestIdFactory.memberId()
+		val circle = Circle.create(TestIdFactory.circleId(), "방장탈퇴", ownerId)
+		val leavingMember = CircleMember.createInitiator(
+			TestIdFactory.circleMemberId(),
+			circle.id,
+			ownerId,
+			"기존방장",
+		)
+		val successor = CircleMember.createMember(
+			TestIdFactory.circleMemberId(),
+			circle.id,
+			successorId,
+			"후임방장",
+		)
+
+		val result = circle.leaveMember(leavingMember, successor)
+
+		assertThat(result).isSameAs(successor)
+		assertThat(circle.ownerId).isEqualTo(successorId)
+		assertThat(circle.deleted).isFalse()
+		assertThat(leavingMember.role).isEqualTo(CircleRole.MEMBER)
+		assertThat(leavingMember.status).isEqualTo(CircleMemberStatus.LEFT)
+		assertThat(leavingMember.deleted).isTrue()
+		assertThat(successor.role).isEqualTo(CircleRole.INITIATOR)
+	}
+
+	@Test
+	@DisplayName("후임자가 없는 마지막 방장이 탈퇴하면 써클과 멤버십을 함께 soft delete 한다")
+	fun deleteWithLastMember_deletesCircleAndMembership() {
+		val ownerId = TestIdFactory.memberId()
+		val circle = Circle.create(TestIdFactory.circleId(), "단독방장", ownerId)
+		val leavingMember = CircleMember.createInitiator(
+			TestIdFactory.circleMemberId(),
+			circle.id,
+			ownerId,
+			"단독방장",
+		)
+
+		circle.deleteWithLastMember(leavingMember)
+
+		assertThat(circle.deleted).isTrue()
+		assertThat(leavingMember.role).isEqualTo(CircleRole.MEMBER)
+		assertThat(leavingMember.status).isEqualTo(CircleMemberStatus.LEFT)
+		assertThat(leavingMember.deleted).isTrue()
 	}
 }
