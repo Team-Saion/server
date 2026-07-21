@@ -3,8 +3,6 @@ package com.unicorn.server.domain.invitation
 import com.unicorn.server.domain.invitation.enums.InvitationStatus
 import com.unicorn.server.domain.invitation.enums.InvitationType
 import com.unicorn.server.domain.invitation.exception.InvitationSelfApprovalForbiddenException
-import com.unicorn.server.domain.invitation.vo.InviteMessage
-import com.unicorn.server.domain.invitation.vo.InviteToName
 import com.unicorn.server.domain.invitation.vo.InvitationId
 import com.unicorn.server.domain.invitation.vo.InvitationToken
 import com.unicorn.server.domain.member.vo.MemberId
@@ -16,8 +14,6 @@ class Invitation internal constructor(
 	val targetId: String,
 	val token: InvitationToken,
 	val inviterId: MemberId,
-	val inviteToName: InviteToName?,
-	val message: InviteMessage?,
 	status: InvitationStatus,
 	val expiresAt: LocalDateTime,
 	deleted: Boolean,
@@ -57,8 +53,6 @@ class Invitation internal constructor(
 			targetId: String,
 			token: InvitationToken,
 			inviterId: MemberId,
-			inviteToName: InviteToName?,
-			message: InviteMessage?,
 		): Invitation {
 			val now = LocalDateTime.now()
 			return Invitation(
@@ -67,8 +61,6 @@ class Invitation internal constructor(
 				targetId = targetId,
 				token = token,
 				inviterId = inviterId,
-				inviteToName = inviteToName,
-				message = message,
 				status = InvitationStatus.ACTIVE,
 				expiresAt = now.plusHours(EXPIRE_HOURS),
 				deleted = false,

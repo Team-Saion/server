@@ -6,7 +6,6 @@ import com.unicorn.server.domain.circle.port.dto.CreateCircleCommand
 import com.unicorn.server.domain.circle.port.`in`.CircleInPort
 import com.unicorn.server.domain.home.port.`in`.HomeQueryInPort
 import com.unicorn.server.domain.invitation.enums.InvitationChannel
-import com.unicorn.server.domain.invitation.enums.InvitationType
 import com.unicorn.server.domain.invitation.exception.InvitationExpiredException
 import com.unicorn.server.domain.invitation.exception.InvitationSelfApprovalForbiddenException
 import com.unicorn.server.domain.invitation.port.dto.DispatchInvitationCommand
@@ -57,7 +56,7 @@ class CircleInvitationFlowIntegrationTest : BaseTest() {
 		val circle = circleInPort.create(owner.id.toString(), CreateCircleCommand("멀티초대1"))
 		val issued = issueInvitationInPort.issue(
 			owner.id.toString(),
-			IssueInvitationCommand(InvitationType.CIRCLE, circle.id, null, null),
+			IssueInvitationCommand(circle.id),
 		)
 
 		dispatchInvitationInPort.dispatch(DispatchInvitationCommand(issued.invitationId, InvitationChannel.KAKAO))
@@ -81,11 +80,11 @@ class CircleInvitationFlowIntegrationTest : BaseTest() {
 
 		val firstIssued = issueInvitationInPort.issue(
 			owner.id.toString(),
-			IssueInvitationCommand(InvitationType.CIRCLE, circle.id, null, null),
+			IssueInvitationCommand(circle.id),
 		)
 		val secondIssued = issueInvitationInPort.issue(
 			owner.id.toString(),
-			IssueInvitationCommand(InvitationType.CIRCLE, circle.id, null, null),
+			IssueInvitationCommand(circle.id),
 		)
 
 		assertThatThrownBy { getInvitationByTokenInPort.getByToken(firstIssued.token) }
@@ -103,7 +102,7 @@ class CircleInvitationFlowIntegrationTest : BaseTest() {
 		val circle = circleInPort.create(owner.id.toString(), CreateCircleCommand("재수락테스트4"))
 		val issued = issueInvitationInPort.issue(
 			owner.id.toString(),
-			IssueInvitationCommand(InvitationType.CIRCLE, circle.id, null, null),
+			IssueInvitationCommand(circle.id),
 		)
 
 		acceptCircleInvitationInPort.accept(issued.token, invitee.id.toString())
@@ -123,7 +122,7 @@ class CircleInvitationFlowIntegrationTest : BaseTest() {
 		val circle = circleInPort.create(owner.id.toString(), CreateCircleCommand("로그테스트5"))
 		val issued = issueInvitationInPort.issue(
 			owner.id.toString(),
-			IssueInvitationCommand(InvitationType.CIRCLE, circle.id, "엄마", "같이해요"),
+			IssueInvitationCommand(circle.id),
 		)
 
 		dispatchInvitationInPort.dispatch(DispatchInvitationCommand(issued.invitationId, InvitationChannel.MESSAGE))
@@ -142,7 +141,7 @@ class CircleInvitationFlowIntegrationTest : BaseTest() {
 		val circle = circleInPort.create(owner.id.toString(), CreateCircleCommand("자기초대2"))
 		val issued = issueInvitationInPort.issue(
 			owner.id.toString(),
-			IssueInvitationCommand(InvitationType.CIRCLE, circle.id, null, null),
+			IssueInvitationCommand(circle.id),
 		)
 
 		assertThatThrownBy { acceptCircleInvitationInPort.accept(issued.token, owner.id.toString()) }
@@ -157,7 +156,7 @@ class CircleInvitationFlowIntegrationTest : BaseTest() {
 		val circle = circleInPort.create(owner.id.toString(), CreateCircleCommand("탈퇴필터3"))
 		val issued = issueInvitationInPort.issue(
 			owner.id.toString(),
-			IssueInvitationCommand(InvitationType.CIRCLE, circle.id, null, null),
+			IssueInvitationCommand(circle.id),
 		)
 		acceptCircleInvitationInPort.accept(issued.token, invitee.id.toString())
 

@@ -1,8 +1,5 @@
 package com.unicorn.server.infrastructure.adapter.`in`.web.invitation
 
-import com.unicorn.server.common.exception.BusinessException
-import com.unicorn.server.domain.invitation.enums.InvitationType
-import com.unicorn.server.domain.invitation.exception.InvitationErrorCode
 import com.unicorn.server.domain.invitation.port.dto.IssueInvitationCommand
 import com.unicorn.server.domain.invitation.port.`in`.AcceptCircleInvitationInPort
 import com.unicorn.server.domain.invitation.port.`in`.GetInvitationByTokenInPort
@@ -32,23 +29,15 @@ class InvitationController(
     override fun issue(
         @AuthenticationPrincipal memberId: String,
         @RequestBody @Valid request: IssueInvitationRequest,
-    ): ApiResponse<IssuedInvitationResponse> {
-        val type = runCatching { InvitationType.valueOf(request.type) }
-            .getOrElse { throw BusinessException(InvitationErrorCode.INVITATION_TARGET_INVALID) }
-        return ApiResponse.created(
+    ): ApiResponse<IssuedInvitationResponse> =
+        ApiResponse.created(
             IssuedInvitationResponse.from(
                 issueInvitationInPort.issue(
                     memberId,
-                    IssueInvitationCommand(
-                        type = type,
-                        targetId = request.targetId,
-                        inviteToName = request.inviteToName,
-                        message = request.message,
-                    ),
+                    IssueInvitationCommand(targetId = request.targetId),
                 ),
             ),
         )
-    }
 
     @GetMapping("/{token}")
     override fun getByToken(@PathVariable token: String): ApiResponse<InvitationDetailResponse> =
