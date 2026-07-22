@@ -7,6 +7,7 @@ import com.unicorn.server.domain.notification.Notification
 import com.unicorn.server.domain.notification.NotificationInboxItem
 import com.unicorn.server.domain.notification.NotificationRoute
 import com.unicorn.server.domain.notification.NotificationSetting
+import com.unicorn.server.domain.notification.NotificationTemplate
 import com.unicorn.server.domain.notification.vo.DevicePushTokenId
 import com.unicorn.server.domain.notification.vo.NotificationId
 import com.unicorn.server.domain.notification.vo.NotificationInboxItemId
@@ -96,6 +97,12 @@ fun NotificationSettingEntity.toDomain(): NotificationSetting = NotificationSett
 	familyScheduleCheckEnabled = familyScheduleCheckEnabled,
 	createdAt = requireNotNull(createdAt) { "createdAt must not be null" },
 	updatedAt = requireNotNull(updatedAt) { "updatedAt must not be null" },
+)
+
+fun NotificationTemplateEntity.toDomain(): NotificationTemplate = NotificationTemplate(
+	eventType = eventType,
+	titleTemplate = titleTemplate,
+	bodyTemplate = bodyTemplate,
 )
 
 fun DevicePushToken.toEntity(): DevicePushTokenEntity = DevicePushTokenEntity().apply {
