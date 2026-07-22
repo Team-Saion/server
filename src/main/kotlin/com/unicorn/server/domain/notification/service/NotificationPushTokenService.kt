@@ -44,4 +44,8 @@ class NotificationPushTokenService(
 		pushToken.deactivate()
 		notificationPushTokenOutPort.save(pushToken)
 	}
+
+	@Transactional(readOnly = true)
+	override fun getActiveReceivable(memberId: String): List<DevicePushToken> =
+		notificationPushTokenOutPort.findActiveReceivableByMemberId(memberId)
 }
