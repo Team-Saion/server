@@ -16,7 +16,6 @@ class NotificationRequestedEventListener(
             RequestNotificationCommand(
                 channel = event.channel,
                 receiver = event.receiver,
-                eventType = event.eventType,
                 payload = event.payload,
                 dedupKey = event.dedupKey,
             ),

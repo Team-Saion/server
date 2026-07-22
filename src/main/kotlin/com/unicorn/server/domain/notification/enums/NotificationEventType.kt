@@ -1,8 +1,6 @@
 package com.unicorn.server.domain.notification.enums
 
 enum class NotificationEventType {
-	SIGNUP_COMPLETED,
-
 	/** 써클 참여 완료 */
 	CIRCLE_JOIN_COMPLETED,
 
