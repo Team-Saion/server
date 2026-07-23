@@ -1,14 +1,18 @@
 package com.unicorn.server.domain.schedule.service
 
 import com.unicorn.server.common.exception.BusinessException
+import com.unicorn.server.common.port.out.event.EventPublisher
 import com.unicorn.server.domain.schedule.ScheduleConfirmation
 import com.unicorn.server.domain.schedule.enums.ConfirmationType
+import com.unicorn.server.domain.schedule.event.ScheduleConfirmedEvent
 import com.unicorn.server.domain.schedule.exception.ScheduleErrorCode
 import com.unicorn.server.domain.schedule.port.`in`.RegisterConfirmationInPort
+import com.unicorn.server.domain.schedule.port.`in`.ScheduleConfirmationStatusInPort
 import com.unicorn.server.domain.schedule.port.dto.RegisterConfirmationCommand
 import com.unicorn.server.domain.schedule.port.out.CircleAccessOutPort
 import com.unicorn.server.domain.schedule.port.out.ScheduleConfirmationOutPort
 import com.unicorn.server.domain.schedule.port.out.ScheduleOutPort
+import com.unicorn.server.domain.schedule.vo.ScheduleId
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -18,7 +22,8 @@ class ScheduleConfirmationService(
 	private val scheduleOutPort: ScheduleOutPort,
 	private val scheduleConfirmationOutPort: ScheduleConfirmationOutPort,
 	private val circleAccessOutPort: CircleAccessOutPort,
-) : RegisterConfirmationInPort {
+	private val eventPublisher: EventPublisher,
+) : RegisterConfirmationInPort, ScheduleConfirmationStatusInPort {
 
 	override fun register(command: RegisterConfirmationCommand): ConfirmationType {
 		if (!command.confirmationType.available) {
@@ -35,6 +40,7 @@ class ScheduleConfirmationService(
 		}
 
 		val existing = scheduleConfirmationOutPort.findByScheduleIdAndMemberId(command.scheduleId, command.memberId)
+		val wasConfirmed = existing?.confirmationType == ConfirmationType.CONFIRMED
 		if (existing == null) {
 			scheduleConfirmationOutPort.save(
 				ScheduleConfirmation.create(
@@ -48,7 +54,22 @@ class ScheduleConfirmationService(
 			existing.changeType(command.confirmationType, command.memberId)
 			scheduleConfirmationOutPort.save(existing)
 		}
+		if (command.confirmationType == ConfirmationType.CONFIRMED && !wasConfirmed) {
+			eventPublisher.publish(
+				ScheduleConfirmedEvent(
+					scheduleId = schedule.id.value,
+					circleId = schedule.circleId,
+					scheduleCreatorMemberId = schedule.createdBy,
+					confirmerMemberId = command.memberId,
+					scheduleTitle = schedule.title,
+				),
+			)
+		}
 
 		return command.confirmationType
 	}
+
+	override fun hasConfirmed(scheduleId: ScheduleId, memberId: String): Boolean =
+		scheduleConfirmationOutPort.findByScheduleIdAndMemberId(scheduleId, memberId)
+			?.confirmationType == ConfirmationType.CONFIRMED
 }

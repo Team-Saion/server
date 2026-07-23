@@ -1,6 +1,10 @@
 package com.unicorn.server.infrastructure.adapter.`in`.web.schedule
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.unicorn.server.domain.circle.port.`in`.CircleMemberInPort
+import com.unicorn.server.domain.circle.port.dto.CircleMemberDto
+import com.unicorn.server.domain.circle.port.dto.CircleSummary
+import com.unicorn.server.domain.circle.port.dto.JoinCircleResult
 import com.unicorn.server.domain.member.enums.Role
 import com.unicorn.server.domain.schedule.port.out.CircleAccessOutPort
 import com.unicorn.server.infrastructure.adapter.out.persistence.schedule.ScheduleConfirmationJpaRepository
@@ -57,6 +61,36 @@ class ScheduleControllerTest(
 
 			override fun isInitiator(circleId: String, memberId: String): Boolean =
 				circleId == CIRCLE_ID && memberId == INITIATOR_ID
+		}
+
+		@Bean
+		@Primary
+		fun fakeCircleMemberInPort(): CircleMemberInPort = object : CircleMemberInPort {
+			override fun getCircleMembers(circleId: String): List<CircleMemberDto> =
+				if (circleId == CIRCLE_ID) {
+					listOf(
+						CircleMemberDto(AUTHOR_ID, "작성자", "MEMBER", true),
+						CircleMemberDto(INITIATOR_ID, "initiator", "INITIATOR", true),
+						CircleMemberDto(OTHER_MEMBER_ID, "구성원", "MEMBER", true),
+					)
+				} else {
+					emptyList()
+				}
+
+			override fun join(circleId: String, memberId: String): JoinCircleResult = error("not used")
+
+			override fun leave(circleId: String, memberId: String) = error("not used")
+
+			override fun isCircleMember(circleId: String, memberId: String): Boolean =
+				circleId == CIRCLE_ID && memberId in setOf(AUTHOR_ID, INITIATOR_ID, OTHER_MEMBER_ID)
+
+			override fun transferInitiator(
+				circleId: String,
+				currentInitiatorId: String,
+				newInitiatorId: String,
+			): CircleSummary = error("not used")
+
+			override fun handleMemberWithdrawal(memberId: String) = error("not used")
 		}
 	}
 

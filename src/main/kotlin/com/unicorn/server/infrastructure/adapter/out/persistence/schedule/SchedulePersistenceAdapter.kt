@@ -8,6 +8,7 @@ import com.unicorn.server.domain.schedule.vo.ScheduleId
 import com.unicorn.server.infrastructure.adapter.out.persistence.schedule.entity.ScheduleEntity
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
 
 @PersistenceAdapter
@@ -56,6 +57,35 @@ class SchedulePersistenceAdapter(
 
 		return entities.map { it.toDomain() }
 	}
+
+	@Transactional(readOnly = true)
+	override fun findActiveByStartDateAndCreatedBefore(
+		startDate: LocalDate,
+		createdBefore: LocalDateTime,
+	): List<Schedule> =
+		scheduleJpaRepository.findActiveByStartDateAndCreatedBefore(startDate, createdBefore).map { it.toDomain() }
+
+	@Transactional(readOnly = true)
+	override fun findActiveAllDayByStartDateAndCreatedBefore(
+		startDate: LocalDate,
+		createdBefore: LocalDateTime,
+	): List<Schedule> =
+		scheduleJpaRepository.findActiveAllDayByStartDateAndCreatedBefore(startDate, createdBefore).map { it.toDomain() }
+
+	@Transactional(readOnly = true)
+	override fun findActiveTimedByStartAtAndCreatedBefore(
+		startDate: LocalDate,
+		startTime: LocalTime,
+		createdBefore: LocalDateTime,
+	): List<Schedule> =
+		scheduleJpaRepository.findActiveTimedByStartAtAndCreatedBefore(startDate, startTime, createdBefore).map { it.toDomain() }
+
+	@Transactional(readOnly = true)
+	override fun findActiveConfirmationRequiredCreatedBetween(
+		createdFrom: LocalDateTime,
+		createdBefore: LocalDateTime,
+	): List<Schedule> =
+		scheduleJpaRepository.findActiveConfirmationRequiredCreatedBetween(createdFrom, createdBefore).map { it.toDomain() }
 
 	@Transactional(readOnly = true)
 	override fun findUpcomingByCircleId(
