@@ -1,9 +1,12 @@
 package com.unicorn.server.domain.schedule.service
 
 import com.unicorn.server.common.exception.BusinessException
+import com.unicorn.server.common.domain.Event
+import com.unicorn.server.common.port.out.event.EventPublisher
 import com.unicorn.server.domain.schedule.Schedule
 import com.unicorn.server.domain.schedule.ScheduleConfirmation
 import com.unicorn.server.domain.schedule.enums.ConfirmationType
+import com.unicorn.server.domain.schedule.event.ScheduleConfirmedEvent
 import com.unicorn.server.domain.schedule.exception.ScheduleErrorCode
 import com.unicorn.server.domain.schedule.port.dto.ConfirmationCountResult
 import com.unicorn.server.domain.schedule.port.dto.RegisterConfirmationCommand
@@ -26,10 +29,12 @@ class ScheduleConfirmationServiceTest {
 	private val scheduleOutPort = FakeScheduleOutPort()
 	private val confirmationOutPort = FakeScheduleConfirmationOutPort()
 	private val circleAccessOutPort = FakeCircleAccessOutPort()
+	private val eventPublisher = RecordingEventPublisher()
 	private val scheduleConfirmationService = ScheduleConfirmationService(
 		scheduleOutPort,
 		confirmationOutPort,
 		circleAccessOutPort,
+		eventPublisher,
 	)
 
 	@Test
@@ -44,6 +49,9 @@ class ScheduleConfirmationServiceTest {
 		assertThat(type).isEqualTo(ConfirmationType.CONFIRMED)
 		assertThat(confirmationOutPort.saved).hasSize(1)
 		assertThat(confirmationOutPort.saved.single().memberId).isEqualTo(MEMBER_ID)
+		val event = eventPublisher.events.filterIsInstance<ScheduleConfirmedEvent>().single()
+		assertThat(event.scheduleCreatorMemberId).isEqualTo("author")
+		assertThat(event.confirmerMemberId).isEqualTo(MEMBER_ID)
 	}
 
 	@Test
@@ -160,9 +168,39 @@ class ScheduleConfirmationServiceTest {
 
 		override fun findActiveByCircleId(
 			circleId: String,
+			today: LocalDate,
 			cursor: SchedulePageCursor?,
 			size: Int,
 		): List<Schedule> = emptyList()
+
+		override fun findActiveByStartDateAndCreatedBefore(
+			startDate: java.time.LocalDate,
+			createdBefore: java.time.LocalDateTime,
+		): List<Schedule> = error("not used")
+
+		override fun findActiveAllDayByStartDateAndCreatedBefore(
+			startDate: java.time.LocalDate,
+			createdBefore: java.time.LocalDateTime,
+		): List<Schedule> = error("not used")
+
+		override fun findActiveTimedByStartAtAndCreatedBefore(
+			startDate: java.time.LocalDate,
+			startTime: java.time.LocalTime,
+			createdBefore: java.time.LocalDateTime,
+		): List<Schedule> = error("not used")
+
+		override fun findActiveConfirmationRequiredCreatedBetween(
+			createdFrom: java.time.LocalDateTime,
+			createdBefore: java.time.LocalDateTime,
+		): List<Schedule> = error("not used")
+
+		override fun findUpcomingByCircleId(
+			circleId: String,
+			today: LocalDate,
+			limit: Int,
+		): List<Schedule> = emptyList()
+
+		override fun countActiveByCircleId(circleId: String): Long = 0L
 	}
 
 	private class FakeScheduleConfirmationOutPort : ScheduleConfirmationOutPort {
@@ -209,6 +247,14 @@ class ScheduleConfirmationServiceTest {
 		override fun isMember(circleId: String, memberId: String): Boolean = circleId to memberId in members
 
 		override fun isInitiator(circleId: String, memberId: String): Boolean = false
+	}
+
+	private class RecordingEventPublisher : EventPublisher {
+		val events = mutableListOf<Event>()
+
+		override fun publish(event: Event) {
+			events += event
+		}
 	}
 
 	companion object {

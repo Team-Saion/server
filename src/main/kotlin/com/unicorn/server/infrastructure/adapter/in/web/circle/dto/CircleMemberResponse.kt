@@ -1,5 +1,6 @@
 package com.unicorn.server.infrastructure.adapter.`in`.web.circle.dto
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.unicorn.server.domain.home.port.dto.HomeMemberDto
 import com.unicorn.server.infrastructure.adapter.`in`.web.member.dto.AvatarColorResponse
 import io.swagger.v3.oas.annotations.media.Schema
@@ -23,6 +24,7 @@ data class CircleMemberResponse(
     val profileImageUrl: String?,
 
     @field:Schema(description = "요청자 본인 여부", example = "true")
+    @get:JsonProperty("isMe")
     val isMe: Boolean,
 
     @field:Schema(description = "써클 내 역할", example = "MEMBER")

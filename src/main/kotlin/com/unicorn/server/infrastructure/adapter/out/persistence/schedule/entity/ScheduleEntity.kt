@@ -17,6 +17,9 @@ import java.time.LocalTime
 	name = "schedule",
 	indexes = [
 		Index(name = "idx_schedule_circle_sort", columnList = "circle_id, del_yn, start_date, start_time_sort, schedule_id"),
+		Index(name = "idx_schedule_reminder_daily", columnList = "del_yn, start_date, created_at"),
+		Index(name = "idx_schedule_reminder_timed", columnList = "del_yn, start_date, start_time, created_at"),
+		Index(name = "idx_schedule_confirmation_request", columnList = "del_yn, need_confirm, created_at"),
 	],
 )
 class ScheduleEntity protected constructor() {

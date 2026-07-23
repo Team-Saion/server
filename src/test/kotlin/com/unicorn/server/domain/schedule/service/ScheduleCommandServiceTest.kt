@@ -1,8 +1,12 @@
 package com.unicorn.server.domain.schedule.service
 
 import com.unicorn.server.common.exception.BusinessException
+import com.unicorn.server.common.domain.Event
+import com.unicorn.server.common.port.out.event.EventPublisher
 import com.unicorn.server.domain.schedule.Schedule
 import com.unicorn.server.domain.schedule.ScheduleConfirmation
+import com.unicorn.server.domain.schedule.event.ScheduleCreatedEvent
+import com.unicorn.server.domain.schedule.event.ScheduleDeletedEvent
 import com.unicorn.server.domain.schedule.exception.ScheduleErrorCode
 import com.unicorn.server.domain.schedule.port.dto.ConfirmationCountResult
 import com.unicorn.server.domain.schedule.port.dto.CreateScheduleCommand
@@ -29,11 +33,13 @@ class ScheduleCommandServiceTest {
 	private val confirmationOutPort = FakeScheduleConfirmationOutPort()
 	private val circleAccessOutPort = FakeCircleAccessOutPort()
 	private val scheduleIdGenerator = FakeScheduleIdGenerator()
+	private val eventPublisher = RecordingEventPublisher()
 	private val scheduleCommandService = ScheduleCommandService(
 		scheduleOutPort,
 		confirmationOutPort,
 		circleAccessOutPort,
 		scheduleIdGenerator,
+		eventPublisher,
 	)
 
 	@Test
@@ -48,6 +54,11 @@ class ScheduleCommandServiceTest {
 		assertThat(scheduleId.value).startsWith("SC")
 		assertThat(scheduleOutPort.saved).hasSize(1)
 		assertThat(scheduleOutPort.saved.single().title).isEqualTo("제주도 여행")
+		val event = eventPublisher.events.filterIsInstance<ScheduleCreatedEvent>().single()
+		assertThat(event.scheduleId).isEqualTo(scheduleId.value)
+		assertThat(event.circleId).isEqualTo(CIRCLE_ID)
+		assertThat(event.creatorMemberId).isEqualTo(MEMBER_ID)
+		assertThat(event.scheduleTitle).isEqualTo("제주도 여행")
 	}
 
 	@Test
@@ -176,6 +187,9 @@ class ScheduleCommandServiceTest {
 
 		assertThat(scheduleOutPort.findById(SCHEDULE_ID)?.isDeleted).isTrue()
 		assertThat(confirmationOutPort.deletedScheduleIds).containsExactly(SCHEDULE_ID)
+		val event = eventPublisher.events.filterIsInstance<ScheduleDeletedEvent>().single()
+		assertThat(event.scheduleId).isEqualTo(SCHEDULE_ID.value)
+		assertThat(event.deletedByMemberId).isEqualTo(MEMBER_ID)
 	}
 
 	private fun createCommand(): CreateScheduleCommand =
@@ -239,9 +253,45 @@ class ScheduleCommandServiceTest {
 
 		override fun findActiveByCircleId(
 			circleId: String,
+			today: LocalDate,
 			cursor: SchedulePageCursor?,
 			size: Int,
-		): List<Schedule> = store.values.filter { it.circleId == circleId && !it.isDeleted }.take(size)
+		): List<Schedule> = store.values
+			.filter { it.circleId == circleId && !it.isDeleted && !it.endDate.isBefore(today) }
+			.take(size)
+
+		override fun findActiveByStartDateAndCreatedBefore(
+			startDate: LocalDate,
+			createdBefore: LocalDateTime,
+		): List<Schedule> = error("not used")
+
+		override fun findActiveAllDayByStartDateAndCreatedBefore(
+			startDate: LocalDate,
+			createdBefore: LocalDateTime,
+		): List<Schedule> = error("not used")
+
+		override fun findActiveTimedByStartAtAndCreatedBefore(
+			startDate: LocalDate,
+			startTime: LocalTime,
+			createdBefore: LocalDateTime,
+		): List<Schedule> = error("not used")
+
+		override fun findActiveConfirmationRequiredCreatedBetween(
+			createdFrom: LocalDateTime,
+			createdBefore: LocalDateTime,
+		): List<Schedule> = error("not used")
+
+		override fun findUpcomingByCircleId(
+			circleId: String,
+			today: LocalDate,
+			limit: Int,
+		): List<Schedule> =
+			store.values
+				.filter { it.circleId == circleId && !it.isDeleted && !it.endDate.isBefore(today) }
+				.take(limit)
+
+		override fun countActiveByCircleId(circleId: String): Long =
+			store.values.count { it.circleId == circleId && !it.isDeleted }.toLong()
 	}
 
 	private class FakeScheduleConfirmationOutPort : ScheduleConfirmationOutPort {
@@ -299,6 +349,14 @@ class ScheduleCommandServiceTest {
 		override fun isMember(circleId: String, memberId: String): Boolean = circleId to memberId in members
 
 		override fun isInitiator(circleId: String, memberId: String): Boolean = circleId to memberId in initiators
+	}
+
+	private class RecordingEventPublisher : EventPublisher {
+		val events = mutableListOf<Event>()
+
+		override fun publish(event: Event) {
+			events += event
+		}
 	}
 
 	companion object {
