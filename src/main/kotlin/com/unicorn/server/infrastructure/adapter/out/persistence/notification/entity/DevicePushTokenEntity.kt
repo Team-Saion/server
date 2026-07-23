@@ -44,7 +44,7 @@ open class DevicePushTokenEntity internal constructor() : AuditableJpaEntity() {
 	@Enumerated(EnumType.STRING)
 	@Column(name = "platform", nullable = false, length = 20)
 	lateinit var platform: DevicePlatform
-		internal set
+			internal set
 
 	@Column(name = "active", nullable = false)
 	var active: Boolean = true
