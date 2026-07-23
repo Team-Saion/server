@@ -18,6 +18,7 @@ import java.time.LocalDateTime
 	name = "device_push_token",
 	indexes = [
 		Index(name = "idx_device_push_token_member_active", columnList = "member_id,active"),
+		Index(name = "uk_device_push_token_installation_id", columnList = "installation_id", unique = true),
 		Index(name = "uk_device_push_token_token", columnList = "token", unique = true),
 	],
 )
@@ -32,6 +33,10 @@ open class DevicePushTokenEntity internal constructor() : AuditableJpaEntity() {
 	var memberId: String = ""
 		internal set
 
+	@Column(name = "installation_id", nullable = false, length = 255)
+	var installationId: String = ""
+		internal set
+
 	@Column(name = "token", nullable = false, length = 512)
 	var token: String = ""
 		internal set
@@ -39,14 +44,6 @@ open class DevicePushTokenEntity internal constructor() : AuditableJpaEntity() {
 	@Enumerated(EnumType.STRING)
 	@Column(name = "platform", nullable = false, length = 20)
 	lateinit var platform: DevicePlatform
-		internal set
-
-	@Column(name = "os_notification_permission_granted", nullable = false)
-	var osNotificationPermissionGranted: Boolean = false
-		internal set
-
-	@Column(name = "app_version", length = 50)
-	var appVersion: String? = null
 		internal set
 
 	@Column(name = "active", nullable = false)
