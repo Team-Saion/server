@@ -115,12 +115,11 @@ class ScheduleNotificationEventListenerTest {
 		)
 
 		val events = eventPublisher.events.filterIsInstance<NotificationRequestedEvent>()
-		assertThat(events).singleElement().satisfies { event ->
-			assertThat(event.receiver).isEqualTo("enabled-token")
-			assertThat(event.channel).isEqualTo(NotificationChannel.PUSH)
-			assertThat(event.payload.toVariables()).containsEntry("schedule_title", "제주도 여행")
-			assertThat(event.dedupKey).isEqualTo("schedule-reminder:d7:SC1:enabled:token:1")
-		}
+		val event = events.single()
+		assertThat(event.receiver).isEqualTo("enabled-token")
+		assertThat(event.channel).isEqualTo(NotificationChannel.PUSH)
+		assertThat(event.payload.toVariables()).containsEntry("schedule_title", "제주도 여행")
+		assertThat(event.dedupKey).isEqualTo("schedule-reminder:d7:SC1:enabled:token:1")
 	}
 
 	@Test
