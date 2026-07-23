@@ -1,8 +1,11 @@
 package com.unicorn.server.domain.schedule.service
 
 import com.unicorn.server.common.exception.BusinessException
+import com.unicorn.server.common.domain.Event
+import com.unicorn.server.common.port.out.event.EventPublisher
 import com.unicorn.server.domain.schedule.Schedule
 import com.unicorn.server.domain.schedule.ScheduleConfirmation
+import com.unicorn.server.domain.schedule.event.ScheduleCreatedEvent
 import com.unicorn.server.domain.schedule.exception.ScheduleErrorCode
 import com.unicorn.server.domain.schedule.port.dto.ConfirmationCountResult
 import com.unicorn.server.domain.schedule.port.dto.CreateScheduleCommand
@@ -29,11 +32,13 @@ class ScheduleCommandServiceTest {
 	private val confirmationOutPort = FakeScheduleConfirmationOutPort()
 	private val circleAccessOutPort = FakeCircleAccessOutPort()
 	private val scheduleIdGenerator = FakeScheduleIdGenerator()
+	private val eventPublisher = RecordingEventPublisher()
 	private val scheduleCommandService = ScheduleCommandService(
 		scheduleOutPort,
 		confirmationOutPort,
 		circleAccessOutPort,
 		scheduleIdGenerator,
+		eventPublisher,
 	)
 
 	@Test
@@ -48,6 +53,11 @@ class ScheduleCommandServiceTest {
 		assertThat(scheduleId.value).startsWith("SC")
 		assertThat(scheduleOutPort.saved).hasSize(1)
 		assertThat(scheduleOutPort.saved.single().title).isEqualTo("제주도 여행")
+		val event = eventPublisher.events.filterIsInstance<ScheduleCreatedEvent>().single()
+		assertThat(event.scheduleId).isEqualTo(scheduleId.value)
+		assertThat(event.circleId).isEqualTo(CIRCLE_ID)
+		assertThat(event.creatorMemberId).isEqualTo(MEMBER_ID)
+		assertThat(event.scheduleTitle).isEqualTo("제주도 여행")
 	}
 
 	@Test
@@ -299,6 +309,14 @@ class ScheduleCommandServiceTest {
 		override fun isMember(circleId: String, memberId: String): Boolean = circleId to memberId in members
 
 		override fun isInitiator(circleId: String, memberId: String): Boolean = circleId to memberId in initiators
+	}
+
+	private class RecordingEventPublisher : EventPublisher {
+		val events = mutableListOf<Event>()
+
+		override fun publish(event: Event) {
+			events += event
+		}
 	}
 
 	companion object {
