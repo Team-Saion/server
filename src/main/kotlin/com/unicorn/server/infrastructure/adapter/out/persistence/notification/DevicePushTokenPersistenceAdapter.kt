@@ -19,6 +19,10 @@ class DevicePushTokenPersistenceAdapter(
 	}
 
 	@Transactional(readOnly = true)
+	override fun findByInstallationId(installationId: String): DevicePushToken? =
+		devicePushTokenJpaRepository.findByInstallationId(installationId)?.toDomain()
+
+	@Transactional(readOnly = true)
 	override fun findByToken(token: String): DevicePushToken? =
 		devicePushTokenJpaRepository.findByToken(token)?.toDomain()
 
@@ -28,6 +32,6 @@ class DevicePushTokenPersistenceAdapter(
 
 	@Transactional(readOnly = true)
 	override fun findActiveReceivableByMemberId(memberId: String): List<DevicePushToken> =
-		devicePushTokenJpaRepository.findAllByMemberIdAndActiveTrueAndOsNotificationPermissionGrantedTrue(memberId)
+		devicePushTokenJpaRepository.findAllByMemberIdAndActiveTrue(memberId)
 			.map { it.toDomain() }
 }

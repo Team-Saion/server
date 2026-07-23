@@ -5,6 +5,8 @@ import com.unicorn.server.domain.notification.DevicePushToken
 interface NotificationPushTokenOutPort {
 	fun save(pushToken: DevicePushToken): DevicePushToken
 
+	fun findByInstallationId(installationId: String): DevicePushToken?
+
 	fun findByToken(token: String): DevicePushToken?
 
 	fun findByIdAndMemberId(tokenId: Long, memberId: String): DevicePushToken?
