@@ -72,7 +72,7 @@ class InvitationServiceTest {
 			id = TestIdFactory.invitationId(),
 			type = InvitationType.CIRCLE,
 			targetId = circleId,
-			token = InvitationToken("abcdefghijklmnopqrstuvwxABCDEFGH"),
+			token = InvitationToken("Ab12_-"),
 			inviterId = owner.id,
 			status = com.unicorn.server.domain.invitation.enums.InvitationStatus.ACTIVE,
 			expiresAt = LocalDateTime.now().minusMinutes(1),
@@ -154,7 +154,7 @@ class InvitationServiceTest {
 			id = TestIdFactory.invitationId(),
 			type = InvitationType.CIRCLE,
 			targetId = circleId,
-			token = InvitationToken("abcdefghijklmnopqrstuvwxABCDEFGH"),
+			token = InvitationToken("Ab12_-"),
 			inviterId = owner.id,
 		)
 		fixture.invitationOutPort.save(invitation)
@@ -178,7 +178,7 @@ class InvitationServiceTest {
 			invitationOutPort = invitationOutPort,
 			invitationIdGenerator = object : InvitationIdGenerator { override fun next() = TestIdFactory.invitationId() },
 			tokenGenerator = object : InvitationTokenGenerator {
-				override fun generate(): InvitationToken = InvitationToken("abcdefghijklmnopqrstuvwxABCDEFGH")
+				override fun generate(): InvitationToken = InvitationToken("Ab12_-")
 			},
 			circleInPort = circleInPort,
 			circleMemberInPort = circleMemberInPort,
