@@ -18,47 +18,64 @@ class NotificationPushTokenServiceTest {
 	private val notificationPushTokenService = NotificationPushTokenService(notificationPushTokenOutPort)
 
 	@Test
-	@DisplayName("새 푸시 토큰을 등록한다")
+	@DisplayName("새 푸시 토큰을 설치 식별자와 함께 등록한다")
 	fun register_newToken_savesToken() {
 		val command = RegisterPushTokenCommand(
+			installationId = "installation-1",
 			token = "token-1",
 			platform = DevicePlatform.IOS,
-			osNotificationPermissionGranted = true,
-			appVersion = "1.0.0",
 		)
 
 		val pushToken = notificationPushTokenService.register("member-1", command)
 
 		assertThat(pushToken.id).isNotNull()
 		assertThat(pushToken.memberId).isEqualTo("member-1")
+		assertThat(pushToken.installationId).isEqualTo("installation-1")
 		assertThat(pushToken.canReceivePush()).isTrue()
 	}
 
 	@Test
-	@DisplayName("기존 푸시 토큰을 다시 등록하면 최신 권한 상태로 갱신한다")
-	fun register_existingToken_refreshesToken() {
+	@DisplayName("같은 설치의 FCM 토큰이 변경되면 기존 행을 갱신한다")
+	fun register_existingInstallationWithNewToken_updatesToken() {
 		notificationPushTokenService.register(
 			"member-1",
-			RegisterPushTokenCommand("token-1", DevicePlatform.IOS, true, "1.0.0"),
+			RegisterPushTokenCommand("installation-1", "token-1", DevicePlatform.IOS),
 		)
 
 		val refreshed = notificationPushTokenService.register(
 			"member-1",
-			RegisterPushTokenCommand("token-1", DevicePlatform.IOS, false, "1.0.1"),
+			RegisterPushTokenCommand("installation-1", "token-2", DevicePlatform.ANDROID),
 		)
 
 		assertThat(notificationPushTokenOutPort.tokens).hasSize(1)
-		assertThat(refreshed.osNotificationPermissionGranted).isFalse()
-		assertThat(refreshed.appVersion).isEqualTo("1.0.1")
+		assertThat(refreshed.token).isEqualTo("token-2")
+		assertThat(refreshed.platform).isEqualTo(DevicePlatform.ANDROID)
 		assertThat(refreshed.active).isTrue()
 	}
 
 	@Test
-	@DisplayName("푸시 토큰 비활성화 시 발송 대상에서 제외된다")
+	@DisplayName("기존 토큰이 실제 설치 식별자로 처음 등록되면 기존 행을 갱신한다")
+	fun register_existingTokenWithNewInstallationId_updatesInstallationId() {
+		notificationPushTokenService.register(
+			"member-1",
+			RegisterPushTokenCommand("legacy-1", "token-1", DevicePlatform.IOS),
+		)
+
+		val refreshed = notificationPushTokenService.register(
+			"member-1",
+			RegisterPushTokenCommand("installation-1", "token-1", DevicePlatform.IOS),
+		)
+
+		assertThat(notificationPushTokenOutPort.tokens).hasSize(1)
+		assertThat(refreshed.installationId).isEqualTo("installation-1")
+	}
+
+	@Test
+	@DisplayName("푸시 토큰을 비활성화하면 발송 대상에서 제외한다")
 	fun deactivate_existingToken_deactivatesToken() {
 		val pushToken = notificationPushTokenService.register(
 			"member-1",
-			RegisterPushTokenCommand("token-1", DevicePlatform.ANDROID, true, "1.0.0"),
+			RegisterPushTokenCommand("installation-1", "token-1", DevicePlatform.ANDROID),
 		)
 
 		notificationPushTokenService.deactivate("member-1", requireNotNull(pushToken.id).value)
@@ -69,11 +86,11 @@ class NotificationPushTokenServiceTest {
 	}
 
 	@Test
-	@DisplayName("다른 멤버의 푸시 토큰 비활성화 시 예외가 발생한다")
+	@DisplayName("다른 멤버의 푸시 토큰을 비활성화하면 예외가 발생한다")
 	fun deactivate_otherMemberToken_throwsException() {
 		val pushToken = notificationPushTokenService.register(
 			"member-1",
-			RegisterPushTokenCommand("token-1", DevicePlatform.ANDROID, true, "1.0.0"),
+			RegisterPushTokenCommand("installation-1", "token-1", DevicePlatform.ANDROID),
 		)
 
 		assertThatThrownBy { notificationPushTokenService.deactivate("member-2", requireNotNull(pushToken.id).value) }
@@ -90,10 +107,9 @@ class NotificationPushTokenServiceTest {
 				DevicePushToken.reconstitute(
 					id = DevicePushTokenId.of(id),
 					memberId = pushToken.memberId,
+					installationId = pushToken.installationId,
 					token = pushToken.token,
 					platform = pushToken.platform,
-					osNotificationPermissionGranted = pushToken.osNotificationPermissionGranted,
-					appVersion = pushToken.appVersion,
 					active = pushToken.active,
 					lastSeenAt = pushToken.lastSeenAt,
 					invalidatedAt = pushToken.invalidatedAt,
@@ -108,7 +124,11 @@ class NotificationPushTokenServiceTest {
 			return saved
 		}
 
-		override fun findByToken(token: String): DevicePushToken? = tokens.values.firstOrNull { it.token == token }
+		override fun findByInstallationId(installationId: String): DevicePushToken? =
+			tokens.values.firstOrNull { it.installationId == installationId }
+
+		override fun findByToken(token: String): DevicePushToken? =
+			tokens.values.firstOrNull { it.token == token }
 
 		override fun findByIdAndMemberId(tokenId: Long, memberId: String): DevicePushToken? =
 			tokens[tokenId]?.takeIf { it.memberId == memberId }
