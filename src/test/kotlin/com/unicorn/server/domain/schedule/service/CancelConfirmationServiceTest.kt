@@ -134,6 +134,11 @@ class CancelConfirmationServiceTest {
 			startTime: java.time.LocalTime,
 			createdBefore: java.time.LocalDateTime,
 		): List<Schedule> = error("not used")
+
+		override fun findActiveConfirmationRequiredCreatedBetween(
+			createdFrom: java.time.LocalDateTime,
+			createdBefore: java.time.LocalDateTime,
+		): List<Schedule> = error("not used")
 	}
 
 	private class FakeScheduleConfirmationOutPort : ScheduleConfirmationOutPort {

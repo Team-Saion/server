@@ -77,4 +77,11 @@ class SchedulePersistenceAdapter(
 		createdBefore: LocalDateTime,
 	): List<Schedule> =
 		scheduleJpaRepository.findActiveTimedByStartAtAndCreatedBefore(startDate, startTime, createdBefore).map { it.toDomain() }
+
+	@Transactional(readOnly = true)
+	override fun findActiveConfirmationRequiredCreatedBetween(
+		createdFrom: LocalDateTime,
+		createdBefore: LocalDateTime,
+	): List<Schedule> =
+		scheduleJpaRepository.findActiveConfirmationRequiredCreatedBetween(createdFrom, createdBefore).map { it.toDomain() }
 }

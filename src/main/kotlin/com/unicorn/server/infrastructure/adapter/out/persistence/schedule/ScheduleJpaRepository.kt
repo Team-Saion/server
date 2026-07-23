@@ -103,4 +103,20 @@ interface ScheduleJpaRepository : JpaRepository<ScheduleEntity, String> {
 		@Param("startTime") startTime: LocalTime,
 		@Param("createdBefore") createdBefore: LocalDateTime,
 	): List<ScheduleEntity>
+
+	@Query(
+		value = """
+			SELECT *
+			FROM schedule
+			WHERE del_yn = 'N'
+			  AND need_confirm = 'Y'
+			  AND created_at >= :createdFrom
+			  AND created_at < :createdBefore
+		""",
+		nativeQuery = true,
+	)
+	fun findActiveConfirmationRequiredCreatedBetween(
+		@Param("createdFrom") createdFrom: LocalDateTime,
+		@Param("createdBefore") createdBefore: LocalDateTime,
+	): List<ScheduleEntity>
 }

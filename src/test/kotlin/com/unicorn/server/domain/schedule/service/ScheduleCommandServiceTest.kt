@@ -6,6 +6,7 @@ import com.unicorn.server.common.port.out.event.EventPublisher
 import com.unicorn.server.domain.schedule.Schedule
 import com.unicorn.server.domain.schedule.ScheduleConfirmation
 import com.unicorn.server.domain.schedule.event.ScheduleCreatedEvent
+import com.unicorn.server.domain.schedule.event.ScheduleDeletedEvent
 import com.unicorn.server.domain.schedule.exception.ScheduleErrorCode
 import com.unicorn.server.domain.schedule.port.dto.ConfirmationCountResult
 import com.unicorn.server.domain.schedule.port.dto.CreateScheduleCommand
@@ -186,6 +187,9 @@ class ScheduleCommandServiceTest {
 
 		assertThat(scheduleOutPort.findById(SCHEDULE_ID)?.isDeleted).isTrue()
 		assertThat(confirmationOutPort.deletedScheduleIds).containsExactly(SCHEDULE_ID)
+		val event = eventPublisher.events.filterIsInstance<ScheduleDeletedEvent>().single()
+		assertThat(event.scheduleId).isEqualTo(SCHEDULE_ID.value)
+		assertThat(event.deletedByMemberId).isEqualTo(MEMBER_ID)
 	}
 
 	private fun createCommand(): CreateScheduleCommand =
@@ -266,6 +270,11 @@ class ScheduleCommandServiceTest {
 		override fun findActiveTimedByStartAtAndCreatedBefore(
 			startDate: LocalDate,
 			startTime: LocalTime,
+			createdBefore: LocalDateTime,
+		): List<Schedule> = error("not used")
+
+		override fun findActiveConfirmationRequiredCreatedBetween(
+			createdFrom: LocalDateTime,
 			createdBefore: LocalDateTime,
 		): List<Schedule> = error("not used")
 	}

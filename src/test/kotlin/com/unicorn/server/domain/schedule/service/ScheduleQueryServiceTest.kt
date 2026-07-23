@@ -210,6 +210,11 @@ class ScheduleQueryServiceTest {
 			createdBefore: java.time.LocalDateTime,
 		): List<Schedule> = error("not used")
 
+		override fun findActiveConfirmationRequiredCreatedBetween(
+			createdFrom: java.time.LocalDateTime,
+			createdBefore: java.time.LocalDateTime,
+		): List<Schedule> = error("not used")
+
 		private fun isAfterCursor(schedule: Schedule, cursor: SchedulePageCursor): Boolean {
 			val dateCompare = schedule.startDate.compareTo(cursor.startDate)
 			if (dateCompare != 0) return dateCompare > 0

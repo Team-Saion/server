@@ -4,6 +4,7 @@ import com.unicorn.server.common.exception.BusinessException
 import com.unicorn.server.common.port.out.event.EventPublisher
 import com.unicorn.server.domain.schedule.Schedule
 import com.unicorn.server.domain.schedule.event.ScheduleCreatedEvent
+import com.unicorn.server.domain.schedule.event.ScheduleDeletedEvent
 import com.unicorn.server.domain.schedule.exception.ScheduleErrorCode
 import com.unicorn.server.domain.schedule.port.`in`.CreateScheduleInPort
 import com.unicorn.server.domain.schedule.port.`in`.DeleteScheduleInPort
@@ -109,6 +110,14 @@ class ScheduleCommandService(
 		schedule.delete(memberId)
 		scheduleOutPort.save(schedule)
 		scheduleConfirmationOutPort.deleteAllByScheduleId(scheduleId)
+		eventPublisher.publish(
+			ScheduleDeletedEvent(
+				scheduleId = schedule.id.value,
+				circleId = schedule.circleId,
+				deletedByMemberId = memberId,
+				scheduleTitle = schedule.title,
+			),
+		)
 	}
 
 	private fun canModify(createdBy: String, circleId: String, memberId: String): Boolean =

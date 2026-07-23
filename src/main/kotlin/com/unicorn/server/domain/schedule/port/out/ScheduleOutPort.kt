@@ -35,4 +35,9 @@ interface ScheduleOutPort {
 		startTime: LocalTime,
 		createdBefore: LocalDateTime,
 	): List<Schedule>
+
+	fun findActiveConfirmationRequiredCreatedBetween(
+		createdFrom: LocalDateTime,
+		createdBefore: LocalDateTime,
+	): List<Schedule>
 }

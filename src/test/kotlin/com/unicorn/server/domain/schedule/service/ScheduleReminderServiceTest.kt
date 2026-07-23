@@ -128,6 +128,11 @@ class ScheduleReminderServiceTest {
 					it.startTime == startTime &&
 					it.createdAt.isBefore(createdBefore)
 			}
+
+		override fun findActiveConfirmationRequiredCreatedBetween(
+			createdFrom: LocalDateTime,
+			createdBefore: LocalDateTime,
+		): List<Schedule> = error("not used")
 	}
 
 	private class RecordingEventPublisher : EventPublisher {
