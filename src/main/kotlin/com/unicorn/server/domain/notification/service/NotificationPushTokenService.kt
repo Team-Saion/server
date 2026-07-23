@@ -17,19 +17,21 @@ class NotificationPushTokenService(
 	@Transactional
 	override fun register(memberId: String, command: RegisterPushTokenCommand): DevicePushToken {
 		require(memberId.isNotBlank()) { "Member id cannot be blank" }
-		val pushToken = notificationPushTokenOutPort.findByToken(command.token)?.also { existing ->
+		val pushToken = (
+			notificationPushTokenOutPort.findByInstallationId(command.installationId)
+				?: notificationPushTokenOutPort.findByToken(command.token)
+			)?.also { existing ->
 			existing.refresh(
 				memberId = memberId,
+				installationId = command.installationId,
+				token = command.token,
 				platform = command.platform,
-				osNotificationPermissionGranted = command.osNotificationPermissionGranted,
-				appVersion = command.appVersion,
 			)
 		} ?: DevicePushToken.register(
 			memberId = memberId,
+			installationId = command.installationId,
 			token = command.token,
 			platform = command.platform,
-			osNotificationPermissionGranted = command.osNotificationPermissionGranted,
-			appVersion = command.appVersion,
 		)
 
 		return notificationPushTokenOutPort.save(pushToken)

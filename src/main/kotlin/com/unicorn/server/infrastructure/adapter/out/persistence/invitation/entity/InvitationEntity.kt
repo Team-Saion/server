@@ -3,6 +3,7 @@ package com.unicorn.server.infrastructure.adapter.out.persistence.invitation.ent
 import com.unicorn.server.common.persistence.AuditableJpaEntity
 import com.unicorn.server.domain.invitation.enums.InvitationStatus
 import com.unicorn.server.domain.invitation.enums.InvitationType
+import com.unicorn.server.domain.invitation.vo.InvitationToken
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -36,7 +37,7 @@ class InvitationEntity internal constructor() : AuditableJpaEntity() {
 	var targetId: String = ""
 		internal set
 
-	@Column(name = "token", nullable = false, length = 64, unique = true)
+	@Column(name = "token", nullable = false, length = InvitationToken.LENGTH, unique = true)
 	var token: String = ""
 		internal set
 

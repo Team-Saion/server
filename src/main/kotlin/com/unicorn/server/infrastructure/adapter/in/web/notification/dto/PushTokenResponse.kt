@@ -12,12 +12,6 @@ data class PushTokenResponse(
 	@field:Schema(description = "기기 플랫폼", example = "IOS")
 	val platform: DevicePlatform,
 
-	@field:Schema(description = "OS 알림 권한 허용 여부", example = "true")
-	val osNotificationPermissionGranted: Boolean,
-
-	@field:Schema(description = "앱 버전", nullable = true, example = "1.0.0")
-	val appVersion: String?,
-
 	@field:Schema(description = "활성 여부", example = "true")
 	val active: Boolean,
 ) {
@@ -25,8 +19,6 @@ data class PushTokenResponse(
 		fun from(pushToken: DevicePushToken): PushTokenResponse = PushTokenResponse(
 			id = requireNotNull(pushToken.id) { "Push token id must not be null" }.value,
 			platform = pushToken.platform,
-			osNotificationPermissionGranted = pushToken.osNotificationPermissionGranted,
-			appVersion = pushToken.appVersion,
 			active = pushToken.active,
 		)
 	}

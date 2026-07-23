@@ -7,14 +7,13 @@ import java.security.SecureRandom
 
 @Component
 class RandomInvitationTokenGenerator : InvitationTokenGenerator {
-	override fun generate(): InvitationToken = InvitationToken(buildString(TOKEN_LENGTH) {
-		repeat(TOKEN_LENGTH) {
+	override fun generate(): InvitationToken = InvitationToken(buildString(InvitationToken.LENGTH) {
+		repeat(InvitationToken.LENGTH) {
 			append(ALPHABET[random.nextInt(ALPHABET.length)])
 		}
 	})
 
 	companion object {
-		private const val TOKEN_LENGTH = 32
 		private const val ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-"
 		private val random = SecureRandom()
 	}
