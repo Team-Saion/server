@@ -253,9 +253,12 @@ class ScheduleCommandServiceTest {
 
 		override fun findActiveByCircleId(
 			circleId: String,
+			today: LocalDate,
 			cursor: SchedulePageCursor?,
 			size: Int,
-		): List<Schedule> = store.values.filter { it.circleId == circleId && !it.isDeleted }.take(size)
+		): List<Schedule> = store.values
+			.filter { it.circleId == circleId && !it.isDeleted && !it.endDate.isBefore(today) }
+			.take(size)
 
 		override fun findActiveByStartDateAndCreatedBefore(
 			startDate: LocalDate,
@@ -277,6 +280,18 @@ class ScheduleCommandServiceTest {
 			createdFrom: LocalDateTime,
 			createdBefore: LocalDateTime,
 		): List<Schedule> = error("not used")
+
+		override fun findUpcomingByCircleId(
+			circleId: String,
+			today: LocalDate,
+			limit: Int,
+		): List<Schedule> =
+			store.values
+				.filter { it.circleId == circleId && !it.isDeleted && !it.endDate.isBefore(today) }
+				.take(limit)
+
+		override fun countActiveByCircleId(circleId: String): Long =
+			store.values.count { it.circleId == circleId && !it.isDeleted }.toLong()
 	}
 
 	private class FakeScheduleConfirmationOutPort : ScheduleConfirmationOutPort {

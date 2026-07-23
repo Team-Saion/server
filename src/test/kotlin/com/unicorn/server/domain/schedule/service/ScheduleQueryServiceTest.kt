@@ -185,11 +185,12 @@ class ScheduleQueryServiceTest {
 
 		override fun findActiveByCircleId(
 			circleId: String,
+			today: LocalDate,
 			cursor: SchedulePageCursor?,
 			size: Int,
 		): List<Schedule> =
 			store.values
-				.filter { it.circleId == circleId && !it.isDeleted }
+				.filter { it.circleId == circleId && !it.isDeleted && !it.endDate.isBefore(today) }
 				.sortedWith(compareBy<Schedule> { it.startDate }.thenBy { it.startTime ?: LocalTime.MIDNIGHT }.thenBy { it.id.value })
 				.dropWhile { cursor != null && !isAfterCursor(it, cursor) }
 				.take(size)
@@ -214,6 +215,19 @@ class ScheduleQueryServiceTest {
 			createdFrom: java.time.LocalDateTime,
 			createdBefore: java.time.LocalDateTime,
 		): List<Schedule> = error("not used")
+
+		override fun findUpcomingByCircleId(
+			circleId: String,
+			today: LocalDate,
+			limit: Int,
+		): List<Schedule> =
+			store.values
+				.filter { it.circleId == circleId && !it.isDeleted && !it.endDate.isBefore(today) }
+				.sortedWith(compareBy<Schedule> { it.startDate }.thenBy { it.startTime ?: LocalTime.MIDNIGHT }.thenBy { it.id.value })
+				.take(limit)
+
+		override fun countActiveByCircleId(circleId: String): Long =
+			store.values.count { it.circleId == circleId && !it.isDeleted }.toLong()
 
 		private fun isAfterCursor(schedule: Schedule, cursor: SchedulePageCursor): Boolean {
 			val dateCompare = schedule.startDate.compareTo(cursor.startDate)

@@ -198,10 +198,9 @@ class ScheduleNotificationEventListenerTest {
 		return DevicePushToken.reconstitute(
 			id = DevicePushTokenId.of(id),
 			memberId = "member-$id",
+			installationId = "installation-$id",
 			token = token,
 			platform = DevicePlatform.IOS,
-			osNotificationPermissionGranted = true,
-			appVersion = null,
 			active = true,
 			lastSeenAt = now,
 			invalidatedAt = null,
