@@ -18,7 +18,7 @@ class InvitationTest {
 			id = TestIdFactory.invitationId(),
 			type = InvitationType.CIRCLE,
 			targetId = TestIdFactory.circleId().toString(),
-			token = InvitationToken("abcdefghijklmnopqrstuvwxABCDEFGH"),
+			token = InvitationToken("Ab12_-"),
 			inviterId = inviterId,
 		)
 
