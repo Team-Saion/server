@@ -194,6 +194,22 @@ class ScheduleQueryServiceTest {
 				.dropWhile { cursor != null && !isAfterCursor(it, cursor) }
 				.take(size)
 
+		override fun findActiveByStartDateAndCreatedBefore(
+			startDate: java.time.LocalDate,
+			createdBefore: java.time.LocalDateTime,
+		): List<Schedule> = error("not used")
+
+		override fun findActiveAllDayByStartDateAndCreatedBefore(
+			startDate: java.time.LocalDate,
+			createdBefore: java.time.LocalDateTime,
+		): List<Schedule> = error("not used")
+
+		override fun findActiveTimedByStartAtAndCreatedBefore(
+			startDate: java.time.LocalDate,
+			startTime: LocalTime,
+			createdBefore: java.time.LocalDateTime,
+		): List<Schedule> = error("not used")
+
 		private fun isAfterCursor(schedule: Schedule, cursor: SchedulePageCursor): Boolean {
 			val dateCompare = schedule.startDate.compareTo(cursor.startDate)
 			if (dateCompare != 0) return dateCompare > 0

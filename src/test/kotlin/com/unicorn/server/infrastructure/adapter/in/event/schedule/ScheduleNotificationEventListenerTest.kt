@@ -7,15 +7,20 @@ import com.unicorn.server.domain.circle.port.dto.CircleMemberDto
 import com.unicorn.server.domain.circle.port.dto.CircleSummary
 import com.unicorn.server.domain.circle.port.dto.JoinCircleResult
 import com.unicorn.server.domain.notification.DevicePushToken
+import com.unicorn.server.domain.notification.NotificationSetting
 import com.unicorn.server.domain.notification.enums.DevicePlatform
 import com.unicorn.server.domain.notification.enums.NotificationChannel
 import com.unicorn.server.domain.notification.enums.NotificationEventType
 import com.unicorn.server.domain.notification.event.NotificationRequestedEvent
 import com.unicorn.server.domain.notification.event.ScheduleCreatedPayload
 import com.unicorn.server.domain.notification.port.`in`.NotificationPushTokenInPort
+import com.unicorn.server.domain.notification.port.`in`.NotificationSettingInPort
 import com.unicorn.server.domain.notification.port.dto.RegisterPushTokenCommand
+import com.unicorn.server.domain.notification.port.dto.UpdateNotificationSettingCommand
 import com.unicorn.server.domain.notification.vo.DevicePushTokenId
 import com.unicorn.server.domain.schedule.event.ScheduleCreatedEvent
+import com.unicorn.server.domain.schedule.enums.ScheduleReminderType
+import com.unicorn.server.domain.schedule.event.ScheduleReminderDueEvent
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -41,7 +46,12 @@ class ScheduleNotificationEventListenerTest {
 			),
 		)
 		val eventPublisher = RecordingEventPublisher()
-		val listener = ScheduleNotificationEventListener(circleMemberInPort, notificationPushTokenInPort, eventPublisher)
+		val listener = ScheduleNotificationEventListener(
+			circleMemberInPort,
+			notificationPushTokenInPort,
+			FakeNotificationSettingInPort(),
+			eventPublisher,
+		)
 
 		listener.handle(
 			ScheduleCreatedEvent(
@@ -61,6 +71,50 @@ class ScheduleNotificationEventListenerTest {
 			assertThat(event.payload).isEqualTo(ScheduleCreatedPayload("유니콘", "제주도 여행"))
 		}
 		assertThat(events.map { it.dedupKey }).doesNotHaveDuplicates()
+	}
+
+	@Test
+	@DisplayName("D-7 리마인드는 D-7 설정이 ON인 활성 구성원의 토큰에만 알림을 요청한다")
+	fun handle_d7Reminder_requestsPushOnlyForMembersWithD7Enabled() {
+		val circleMemberInPort = FakeCircleMemberInPort(
+			listOf(
+				CircleMemberDto("enabled", "수신", "MEMBER", true),
+				CircleMemberDto("disabled", "미수신", "MEMBER", true),
+				CircleMemberDto("inactive", "비활성", "MEMBER", false),
+			),
+		)
+		val notificationPushTokenInPort = FakeNotificationPushTokenInPort(
+			mapOf(
+				"enabled" to listOf(pushToken(1, "enabled-token")),
+				"disabled" to listOf(pushToken(2, "disabled-token")),
+				"inactive" to listOf(pushToken(3, "inactive-token")),
+			),
+		)
+		val eventPublisher = RecordingEventPublisher()
+		val listener = ScheduleNotificationEventListener(
+			circleMemberInPort,
+			notificationPushTokenInPort,
+			FakeNotificationSettingInPort(disabledMembers = setOf("disabled")),
+			eventPublisher,
+		)
+
+		listener.handle(
+			ScheduleReminderDueEvent(
+				reminderType = ScheduleReminderType.D7,
+				scheduleId = "SC1",
+				circleId = "circle-1",
+				scheduleTitle = "제주도 여행",
+				startTime = null,
+			),
+		)
+
+		val events = eventPublisher.events.filterIsInstance<NotificationRequestedEvent>()
+		assertThat(events).singleElement().satisfies { event ->
+			assertThat(event.receiver).isEqualTo("enabled-token")
+			assertThat(event.channel).isEqualTo(NotificationChannel.PUSH)
+			assertThat(event.payload.toVariables()).containsEntry("schedule_title", "제주도 여행")
+			assertThat(event.dedupKey).isEqualTo("schedule-reminder:d7:SC1:enabled:token:1")
+		}
 	}
 
 	private fun pushToken(id: Long, token: String): DevicePushToken {
@@ -97,6 +151,27 @@ class ScheduleNotificationEventListenerTest {
 		override fun getActiveReceivable(memberId: String): List<DevicePushToken> = tokensByMemberId[memberId].orEmpty()
 		override fun register(memberId: String, command: RegisterPushTokenCommand): DevicePushToken = error("not used")
 		override fun deactivate(memberId: String, tokenId: Long) = error("not used")
+	}
+
+	private class FakeNotificationSettingInPort(
+		private val disabledMembers: Set<String> = emptySet(),
+	) : NotificationSettingInPort {
+		override fun getSetting(memberId: String): NotificationSetting {
+			val enabled = memberId !in disabledMembers
+			val now = LocalDateTime.now()
+			return NotificationSetting.reconstitute(
+				memberId = memberId,
+				d7Enabled = enabled,
+				d1Enabled = enabled,
+				dDayEnabled = enabled,
+				familyScheduleCheckEnabled = enabled,
+				createdAt = now,
+				updatedAt = now,
+			)
+		}
+
+		override fun updateSetting(memberId: String, command: UpdateNotificationSettingCommand): NotificationSetting =
+			error("not used")
 	}
 
 	private class RecordingEventPublisher : EventPublisher {

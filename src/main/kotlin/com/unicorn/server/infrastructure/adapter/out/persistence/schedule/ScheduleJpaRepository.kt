@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
 
 interface ScheduleJpaRepository : JpaRepository<ScheduleEntity, String> {
@@ -53,5 +54,53 @@ interface ScheduleJpaRepository : JpaRepository<ScheduleEntity, String> {
 		@Param("cursorTime") cursorTime: LocalTime,
 		@Param("cursorId") cursorId: String,
 		@Param("size") size: Int,
+	): List<ScheduleEntity>
+
+	@Query(
+		value = """
+			SELECT *
+			FROM schedule
+			WHERE del_yn = 'N'
+			  AND start_date = :startDate
+			  AND created_at < :createdBefore
+		""",
+		nativeQuery = true,
+	)
+	fun findActiveByStartDateAndCreatedBefore(
+		@Param("startDate") startDate: LocalDate,
+		@Param("createdBefore") createdBefore: LocalDateTime,
+	): List<ScheduleEntity>
+
+	@Query(
+		value = """
+			SELECT *
+			FROM schedule
+			WHERE del_yn = 'N'
+			  AND start_date = :startDate
+			  AND start_time IS NULL
+			  AND created_at < :createdBefore
+		""",
+		nativeQuery = true,
+	)
+	fun findActiveAllDayByStartDateAndCreatedBefore(
+		@Param("startDate") startDate: LocalDate,
+		@Param("createdBefore") createdBefore: LocalDateTime,
+	): List<ScheduleEntity>
+
+	@Query(
+		value = """
+			SELECT *
+			FROM schedule
+			WHERE del_yn = 'N'
+			  AND start_date = :startDate
+			  AND start_time = :startTime
+			  AND created_at < :createdBefore
+		""",
+		nativeQuery = true,
+	)
+	fun findActiveTimedByStartAtAndCreatedBefore(
+		@Param("startDate") startDate: LocalDate,
+		@Param("startTime") startTime: LocalTime,
+		@Param("createdBefore") createdBefore: LocalDateTime,
 	): List<ScheduleEntity>
 }

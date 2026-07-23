@@ -118,6 +118,22 @@ class CancelConfirmationServiceTest {
 			cursor: SchedulePageCursor?,
 			size: Int,
 		): List<Schedule> = emptyList()
+
+		override fun findActiveByStartDateAndCreatedBefore(
+			startDate: java.time.LocalDate,
+			createdBefore: java.time.LocalDateTime,
+		): List<Schedule> = error("not used")
+
+		override fun findActiveAllDayByStartDateAndCreatedBefore(
+			startDate: java.time.LocalDate,
+			createdBefore: java.time.LocalDateTime,
+		): List<Schedule> = error("not used")
+
+		override fun findActiveTimedByStartAtAndCreatedBefore(
+			startDate: java.time.LocalDate,
+			startTime: java.time.LocalTime,
+			createdBefore: java.time.LocalDateTime,
+		): List<Schedule> = error("not used")
 	}
 
 	private class FakeScheduleConfirmationOutPort : ScheduleConfirmationOutPort {

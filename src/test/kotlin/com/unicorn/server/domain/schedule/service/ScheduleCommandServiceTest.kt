@@ -252,6 +252,22 @@ class ScheduleCommandServiceTest {
 			cursor: SchedulePageCursor?,
 			size: Int,
 		): List<Schedule> = store.values.filter { it.circleId == circleId && !it.isDeleted }.take(size)
+
+		override fun findActiveByStartDateAndCreatedBefore(
+			startDate: LocalDate,
+			createdBefore: LocalDateTime,
+		): List<Schedule> = error("not used")
+
+		override fun findActiveAllDayByStartDateAndCreatedBefore(
+			startDate: LocalDate,
+			createdBefore: LocalDateTime,
+		): List<Schedule> = error("not used")
+
+		override fun findActiveTimedByStartAtAndCreatedBefore(
+			startDate: LocalDate,
+			startTime: LocalTime,
+			createdBefore: LocalDateTime,
+		): List<Schedule> = error("not used")
 	}
 
 	private class FakeScheduleConfirmationOutPort : ScheduleConfirmationOutPort {
