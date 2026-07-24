@@ -322,6 +322,33 @@ interface ScheduleApiDoc {
 	): ApiResponse<Unit>
 
 	@Operation(
+		summary = "가족에게 전하기",
+		description = """
+			일정을 써클의 다른 활성 구성원에게 전합니다.
+
+			**권한**: 써클 구성원(MEMBER 이상)만 요청 가능합니다.
+			**수신 대상**: 요청자를 제외한 활성 구성원입니다. 확인 여부와 무관하게 발송합니다.
+			**알림 설정**: 가족 일정 확인 알림을 ON으로 설정한 구성원에게만 푸시 요청을 생성합니다.
+			**발송 횟수**: 제한 없이 요청할 수 있습니다.
+		""",
+	)
+	@ApiErrorCodeExamples(
+		ApiErrorCodeExample(codeType = CommonErrorCode::class, code = "UNAUTHORIZED"),
+		ApiErrorCodeExample(codeType = ScheduleErrorCode::class, code = "FAMILY_SCHEDULE_NOTIFICATION_NOT_AVAILABLE"),
+		ApiErrorCodeExample(codeType = ScheduleErrorCode::class, code = "CIRCLE_ACCESS_DENIED"),
+		ApiErrorCodeExample(codeType = ScheduleErrorCode::class, code = "SCHEDULE_NOT_FOUND"),
+	)
+	@ApiSuccessCodeExample(Unit::class)
+	fun requestFamilyNotification(
+		@Parameter(hidden = true)
+		@AuthenticationPrincipal memberId: String,
+		@Parameter(description = "써클 ID", example = "CC202506010000000001")
+		@PathVariable circleId: String,
+		@Parameter(description = "일정 ID", example = "SC202407070000000001")
+		@PathVariable scheduleId: String,
+	): ApiResponse<Unit>
+
+	@Operation(
 		summary = "일정 확인 종류 조회",
 		description = """
 

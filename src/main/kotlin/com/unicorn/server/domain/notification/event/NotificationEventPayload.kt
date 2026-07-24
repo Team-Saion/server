@@ -99,3 +99,17 @@ data class ScheduleConfirmationRequestedPayload(
 
 	override fun toVariables(): Map<String, String> = mapOf("schedule_title" to scheduleTitle)
 }
+
+data class ScheduleFamilyNotificationPayload(
+	val senderName: String,
+	val scheduleTitle: String,
+	val dDay: String,
+) : NotificationEventPayload {
+	override val eventType: NotificationEventType = NotificationEventType.SCHEDULE_FAMILY_NOTIFICATION_REQUESTED
+
+	override fun toVariables(): Map<String, String> = mapOf(
+		"sender_name" to senderName,
+		"schedule_title" to scheduleTitle,
+		"d_day" to dDay,
+	)
+}
