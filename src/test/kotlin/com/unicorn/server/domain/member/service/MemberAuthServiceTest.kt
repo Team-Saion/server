@@ -138,11 +138,9 @@ class MemberAuthServiceTest {
 	}
 
 	@Test
-	@DisplayName("login 호출 시 기존 소셜 계정의 멤버가 탈퇴 상태이면 WithdrawnMemberException이 발생한다")
-	fun login_existingWithdrawnMember_throwsWithdrawnMemberException() {
+	@DisplayName("탈퇴로 소셜 계정 연결이 삭제된 뒤 같은 소셜 계정으로 로그인하면 신규 가입된다")
+	fun login_afterSocialAccountDeletion_createsNewMember() {
 		val member = memberOutPort.save(Member.create(Email("withdrawn-login@example.com"), "홍길동", "길동이"))
-		member.withdraw()
-		memberOutPort.save(member)
 		socialAccountOutPort.save(
 			SocialAccount.create(
 				member.id,
@@ -153,10 +151,16 @@ class MemberAuthServiceTest {
 				"https://example.com/withdrawn.png",
 			),
 		)
+		member.withdraw()
+		memberOutPort.save(member)
+		socialAccountOutPort.deleteByMemberId(member.id)
 		val command = SocialLoginCommand(SocialProvider.KAKAO, "kakao-withdrawn", "withdrawn-login@example.com", "홍길동")
 
-		assertThatThrownBy { memberAuthService.login(command) }
-			.isInstanceOf(WithdrawnMemberException::class.java)
+		val result = memberAuthService.login(command)
+
+		assertThat(result.isNewMember).isTrue()
+		assertThat(socialAccountOutPort.findByProviderAndProviderId(SocialProvider.KAKAO, "kakao-withdrawn")!!.memberId)
+			.isNotEqualTo(member.id)
 	}
 
 	@Test
@@ -269,6 +273,10 @@ class MemberAuthServiceTest {
 
 		override fun findByMemberId(memberId: MemberId): SocialAccount? =
 			store.values.firstOrNull { it.memberId == memberId }
+
+		override fun deleteByMemberId(memberId: MemberId) {
+			store.entries.removeIf { it.value.memberId == memberId }
+		}
 	}
 
 	private class FakeTokenIssuer : TokenIssuer {

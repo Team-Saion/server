@@ -263,6 +263,20 @@ class MemberProfileServiceTest {
 	}
 
 	@Test
+	@DisplayName("withdraw 호출 시 소셜 provider를 로그에 남기고 소셜 계정 연결을 삭제한다")
+	fun withdraw_logsSocialProviderAndDeletesSocialAccount() {
+		val member = memberOutPort.save(Member.create(Email("social-log@example.com"), "홍길동", "길동이"))
+		socialAccountOutPort.save(
+			SocialAccount.create(member.id, SocialProvider.KAKAO, "kakao-social-log", "social-log@example.com", "카카오닉네임", null),
+		)
+
+		memberProfileService.withdraw(member.id.toString(), "서비스 불만족")
+
+		assertThat(withdrawalLogOutPort.logs.single().socialProvider).isEqualTo(SocialProvider.KAKAO)
+		assertThat(socialAccountOutPort.findByMemberId(member.id)).isNull()
+	}
+
+	@Test
 	@DisplayName("기존 프로필 이미지는 트랜잭션 커밋 후에만 삭제한다")
 	fun uploadProfileImage_withActiveTransaction_deletesPreviousImageAfterCommit() {
 		val member = memberOutPort.save(Member.create(Email("commit@example.com"), "member", "nickname"))
@@ -340,6 +354,10 @@ class MemberProfileServiceTest {
 
 		override fun findByMemberId(memberId: MemberId): SocialAccount? =
 			store.values.firstOrNull { it.memberId == memberId }
+
+		override fun deleteByMemberId(memberId: MemberId) {
+			store.entries.removeIf { it.value.memberId == memberId }
+		}
 	}
 
 	private class FakeWithdrawalLogOutPort : WithdrawalLogOutPort {
