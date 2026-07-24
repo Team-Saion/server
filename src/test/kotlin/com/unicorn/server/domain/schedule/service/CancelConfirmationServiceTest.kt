@@ -1,6 +1,8 @@
 package com.unicorn.server.domain.schedule.service
 
 import com.unicorn.server.common.exception.BusinessException
+import com.unicorn.server.common.domain.Event
+import com.unicorn.server.common.port.out.event.EventPublisher
 import com.unicorn.server.domain.schedule.Schedule
 import com.unicorn.server.domain.schedule.ScheduleConfirmation
 import com.unicorn.server.domain.schedule.enums.ConfirmationType
@@ -19,16 +21,17 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 
-@DisplayName("CancelConfirmationService 단위 테스트")
-class CancelConfirmationServiceTest {
+@DisplayName("ScheduleConfirmationService 취소 기능 단위 테스트")
+class ScheduleConfirmationCancellationTest {
 
 	private val scheduleOutPort = FakeScheduleOutPort()
 	private val confirmationOutPort = FakeScheduleConfirmationOutPort()
 	private val circleAccessOutPort = FakeCircleAccessOutPort()
-	private val cancelConfirmationService = CancelConfirmationService(
+	private val scheduleConfirmationService = ScheduleConfirmationService(
 		scheduleOutPort,
 		confirmationOutPort,
 		circleAccessOutPort,
+		NoOpEventPublisher,
 	)
 
 	@Test
@@ -38,7 +41,7 @@ class CancelConfirmationServiceTest {
 		scheduleOutPort.seed(schedule())
 		confirmationOutPort.seed(confirmation(id = CONFIRMATION_ID, memberId = MEMBER_ID))
 
-		cancelConfirmationService.cancel(CONFIRMATION_ID, SCHEDULE_ID, CIRCLE_ID, MEMBER_ID)
+		scheduleConfirmationService.cancel(CONFIRMATION_ID, SCHEDULE_ID, CIRCLE_ID, MEMBER_ID)
 
 		assertThat(confirmationOutPort.deletedIds).containsExactly(CONFIRMATION_ID)
 		assertThat(confirmationOutPort.findById(CONFIRMATION_ID)).isNull()
@@ -50,7 +53,7 @@ class CancelConfirmationServiceTest {
 		circleAccessOutPort.seedMember(CIRCLE_ID, MEMBER_ID)
 		scheduleOutPort.seed(schedule())
 
-		assertThatThrownBy { cancelConfirmationService.cancel(CONFIRMATION_ID, SCHEDULE_ID, CIRCLE_ID, MEMBER_ID) }
+		assertThatThrownBy { scheduleConfirmationService.cancel(CONFIRMATION_ID, SCHEDULE_ID, CIRCLE_ID, MEMBER_ID) }
 			.isInstanceOf(BusinessException::class.java)
 			.extracting { (it as BusinessException).errorCode }
 			.isEqualTo(ScheduleErrorCode.CONFIRMATION_NOT_FOUND)
@@ -63,7 +66,7 @@ class CancelConfirmationServiceTest {
 		scheduleOutPort.seed(schedule())
 		confirmationOutPort.seed(confirmation(id = CONFIRMATION_ID, memberId = "member-2"))
 
-		assertThatThrownBy { cancelConfirmationService.cancel(CONFIRMATION_ID, SCHEDULE_ID, CIRCLE_ID, MEMBER_ID) }
+		assertThatThrownBy { scheduleConfirmationService.cancel(CONFIRMATION_ID, SCHEDULE_ID, CIRCLE_ID, MEMBER_ID) }
 			.isInstanceOf(BusinessException::class.java)
 			.extracting { (it as BusinessException).errorCode }
 			.isEqualTo(ScheduleErrorCode.CONFIRMATION_ACCESS_DENIED)
@@ -197,6 +200,10 @@ class CancelConfirmationServiceTest {
 	}
 
 	companion object {
+		private object NoOpEventPublisher : EventPublisher {
+			override fun publish(event: Event) = Unit
+		}
+
 		private const val CIRCLE_ID = "CC202506010000000001"
 		private val SCHEDULE_ID = ScheduleId.of("SC202407070000000001")
 		private const val MEMBER_ID = "member-1"

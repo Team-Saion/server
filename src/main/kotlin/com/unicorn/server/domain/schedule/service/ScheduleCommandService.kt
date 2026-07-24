@@ -6,9 +6,7 @@ import com.unicorn.server.domain.schedule.Schedule
 import com.unicorn.server.domain.schedule.event.ScheduleCreatedEvent
 import com.unicorn.server.domain.schedule.event.ScheduleDeletedEvent
 import com.unicorn.server.domain.schedule.exception.ScheduleErrorCode
-import com.unicorn.server.domain.schedule.port.`in`.CreateScheduleInPort
-import com.unicorn.server.domain.schedule.port.`in`.DeleteScheduleInPort
-import com.unicorn.server.domain.schedule.port.`in`.UpdateScheduleInPort
+import com.unicorn.server.domain.schedule.port.`in`.ManageScheduleInPort
 import com.unicorn.server.domain.schedule.port.dto.CreateScheduleCommand
 import com.unicorn.server.domain.schedule.port.dto.UpdateScheduleCommand
 import com.unicorn.server.domain.schedule.port.out.CircleAccessOutPort
@@ -27,7 +25,7 @@ class ScheduleCommandService(
 	private val circleAccessOutPort: CircleAccessOutPort,
 	private val scheduleIdGenerator: ScheduleIdGenerator,
 	private val eventPublisher: EventPublisher,
-) : CreateScheduleInPort, UpdateScheduleInPort, DeleteScheduleInPort {
+) : ManageScheduleInPort {
 
 	override fun create(command: CreateScheduleCommand): ScheduleId {
 		if (!circleAccessOutPort.existsById(command.circleId)) {

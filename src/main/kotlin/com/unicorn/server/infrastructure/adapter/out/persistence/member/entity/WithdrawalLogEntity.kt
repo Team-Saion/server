@@ -1,7 +1,10 @@
 package com.unicorn.server.infrastructure.adapter.out.persistence.member.entity
 
+import com.unicorn.server.domain.member.enums.SocialProvider
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
@@ -30,6 +33,11 @@ class WithdrawalLogEntity protected constructor() {
 	var originalEmail: String? = null
 		internal set
 
+	@Enumerated(EnumType.STRING)
+	@Column(name = "social_provider", nullable = true, length = 20)
+	var socialProvider: SocialProvider? = null
+		internal set
+
 	@Column(name = "reason", nullable = false, length = 500)
 	var reason: String = ""
 		internal set
@@ -45,11 +53,13 @@ class WithdrawalLogEntity protected constructor() {
 	constructor(
 		memberId: String,
 		originalEmail: String?,
+		socialProvider: SocialProvider?,
 		reason: String,
 		withdrawnAt: LocalDateTime,
 	) : this() {
 		this.memberId = memberId
 		this.originalEmail = originalEmail
+		this.socialProvider = socialProvider
 		this.reason = reason
 		this.withdrawnAt = withdrawnAt
 	}
