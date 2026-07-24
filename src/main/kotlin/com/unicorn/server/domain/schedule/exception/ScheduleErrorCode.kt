@@ -20,6 +20,7 @@ enum class ScheduleErrorCode(
 	MEMO_TOO_LONG("S400_10", "Memo must not exceed 500 characters", HttpStatus.BAD_REQUEST),
 	CONFIRMATION_NOT_SUPPORTED("S400_11", "This schedule does not support confirmation", HttpStatus.BAD_REQUEST),
 	INVALID_CONFIRMATION_TYPE("S400_12", "Invalid confirmation type", HttpStatus.BAD_REQUEST),
+	FAMILY_SCHEDULE_NOTIFICATION_NOT_AVAILABLE("S400_13", "Family schedule notification is only available on or before the schedule start date", HttpStatus.BAD_REQUEST),
 	CIRCLE_ACCESS_DENIED("S403_1", "No access to this circle", HttpStatus.FORBIDDEN),
 	SCHEDULE_MODIFICATION_DENIED("S403_2", "Only the author or circle initiator can modify this schedule", HttpStatus.FORBIDDEN),
 	CONFIRMATION_ACCESS_DENIED("S403_3", "Only circle members can register confirmation", HttpStatus.FORBIDDEN),

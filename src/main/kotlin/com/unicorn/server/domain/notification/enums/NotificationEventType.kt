@@ -27,4 +27,7 @@ enum class NotificationEventType {
 
 	/** 미확인 일정 확인 요청 */
 	SCHEDULE_CONFIRMATION_REQUESTED,
+
+	/** 가족에게 전하기 */
+	SCHEDULE_FAMILY_NOTIFICATION_REQUESTED,
 }

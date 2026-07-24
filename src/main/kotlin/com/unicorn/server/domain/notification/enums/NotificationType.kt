@@ -60,4 +60,10 @@ enum class NotificationType(
 		settingType = NotificationSettingType.FAMILY_SCHEDULE_CHECK,
 		defaultRouteType = NotificationRouteType.SCHEDULE_DETAIL,
 	),
+	SCHEDULE_FAMILY_NOTIFICATION_REQUESTED(
+		createsInbox = true,
+		sendsPush = true,
+		settingType = NotificationSettingType.FAMILY_SCHEDULE_CHECK,
+		defaultRouteType = NotificationRouteType.SCHEDULE_DETAIL,
+	),
 }

@@ -9,6 +9,7 @@ import com.unicorn.server.domain.notification.event.NotificationRequestedEvent
 import com.unicorn.server.domain.notification.event.ScheduleCreatedPayload
 import com.unicorn.server.domain.notification.event.ScheduleConfirmationRequestedPayload
 import com.unicorn.server.domain.notification.event.ScheduleConfirmedByFamilyPayload
+import com.unicorn.server.domain.notification.event.ScheduleFamilyNotificationPayload
 import com.unicorn.server.domain.notification.event.ScheduleReminderD1Payload
 import com.unicorn.server.domain.notification.event.ScheduleReminderDDayAllDayPayload
 import com.unicorn.server.domain.notification.event.ScheduleReminderDDayTimedPayload
@@ -18,6 +19,7 @@ import com.unicorn.server.domain.notification.port.`in`.NotificationSettingInPor
 import com.unicorn.server.domain.schedule.event.ScheduleCreatedEvent
 import com.unicorn.server.domain.schedule.event.ScheduleConfirmationRequestDueEvent
 import com.unicorn.server.domain.schedule.event.ScheduleConfirmedEvent
+import com.unicorn.server.domain.schedule.event.FamilyScheduleNotificationRequestedEvent
 import com.unicorn.server.domain.schedule.enums.ScheduleReminderType
 import com.unicorn.server.domain.schedule.event.ScheduleReminderDueEvent
 import com.unicorn.server.domain.schedule.port.`in`.ScheduleConfirmationStatusInPort
@@ -117,6 +119,34 @@ class ScheduleNotificationEventListener(
 			.filterNot { scheduleConfirmationStatusInPort.hasConfirmed(ScheduleId.of(event.scheduleId), it.memberId) }
 			.forEach { member ->
 				val receiverDedupKey = "schedule-confirmation-request:${event.scheduleId}:${member.memberId}"
+				notificationPushTokenInPort.getActiveReceivable(member.memberId).forEach { pushToken ->
+					eventPublisher.publish(
+						NotificationRequestedEvent(
+							channel = NotificationChannel.PUSH,
+							receiver = pushToken.token,
+							payload = payload,
+							dedupKey = "$receiverDedupKey:token:${requireNotNull(pushToken.id).value}",
+						),
+					)
+				}
+			}
+	}
+
+	@EventListener
+	fun handle(event: FamilyScheduleNotificationRequestedEvent) {
+		val members = circleMemberInPort.getCircleMembers(event.circleId)
+		val payload = ScheduleFamilyNotificationPayload(
+			senderName = members.nicknameOf(event.senderMemberId),
+			scheduleTitle = event.scheduleTitle,
+			dDay = event.dDay,
+		)
+
+		members
+			.asSequence()
+			.filter { it.active && it.memberId != event.senderMemberId }
+			.filter { notificationSettingInPort.getSetting(it.memberId).isEnabled(NotificationSettingType.FAMILY_SCHEDULE_CHECK) }
+			.forEach { member ->
+				val receiverDedupKey = "schedule-family-notification:${event.requestId}:${member.memberId}"
 				notificationPushTokenInPort.getActiveReceivable(member.memberId).forEach { pushToken ->
 					eventPublisher.publish(
 						NotificationRequestedEvent(

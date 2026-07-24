@@ -450,6 +450,23 @@ class ScheduleControllerTest(
 			.andExpect(jsonPath("$.errorCode").value("S400_11"))
 	}
 
+	@Test
+	@DisplayName("다가오는 일정에 가족에게 전하기를 요청하면 성공한다")
+	fun requestFamilyNotification_withUpcomingSchedule_returnsSuccess() {
+		val token = memberToken(AUTHOR_ID)
+		val scheduleId = createSchedule(
+			token,
+			createRequestJson(startDate = today.plusDays(3), needConfirm = false),
+		)
+
+		mockMvc.perform(
+			post("$BASE_URL/$scheduleId/family-notifications")
+				.header(HttpHeaders.AUTHORIZATION, "Bearer $token"),
+		)
+			.andExpect(status().isOk)
+			.andExpect(jsonPath("$.success").value(true))
+	}
+
 	private fun memberToken(memberId: String): String =
 		jwtProvider.issue(memberId, Role.MEMBER).accessToken
 
