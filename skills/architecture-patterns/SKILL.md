@@ -574,6 +574,50 @@ Map persistence entities back to domain objects before crossing the port boundar
 
 Introduce a lightweight ID or snapshot value object, or add an anti-corruption port. Do not share aggregate internals across contexts.
 
+## Naming Conventions
+
+### Platform and Service Names Belong in Infrastructure Only
+
+Class names in `domain` and `common/port/out` must express **business intent**, not the technology or platform that fulfills it.
+Concrete platform names such as `Discord`, `Slack`, `Firebase`, `S3`, `Redis`, or `Kafka` are infrastructure details.
+Exposing them in the Application layer couples the domain to a vendor and leaks infrastructure concerns inward.
+
+| Layer | Correct | Wrong |
+|---|---|---|
+| `common/port/out` | `ErrorAlertPort` | `DiscordNotificationPort` |
+| `common/port/out` | `ObjectStorage` | `S3StoragePort` |
+| `common/port/out` | `PushNotificationPort` | `FirebasePushPort` |
+| `common/port/out` | `MessageQueuePort` | `KafkaMessagePort` |
+| `infrastructure/adapter/out` | `DiscordNotificationAdapter` | *(any name is fine here)* |
+
+**Rule:** if renaming the port would require knowing which vendor you chose, the name is wrong.
+The port name should still make sense if you swap Discord for Slack tomorrow.
+
+```kotlin
+// common/port/out/alert/ErrorAlertPort.kt  ✅
+interface ErrorAlertPort {
+    fun sendErrorAlert(message: String)
+}
+
+// infrastructure/adapter/out/discord/DiscordNotificationAdapter.kt  ✅
+@Component
+class DiscordNotificationAdapter(
+    private val discordProperties: DiscordProperties,
+    private val restTemplate: RestTemplate,
+) : ErrorAlertPort {
+    override fun sendErrorAlert(message: String) { ... }
+}
+```
+
+This rule applies to:
+
+- Output port interfaces under `common/port/out` or `domain/<context>/port/out`
+- Annotation names intended to be applied to Application-layer classes
+- AOP pointcut descriptions referencing internal behavior
+- Any DTO, event, or command that crosses the Application boundary
+
+It does **not** apply to adapters under `infrastructure/adapter/out`, configuration classes, or properties classes — those are explicitly infrastructure and may use vendor names freely.
+
 ## Review Checklist
 
 Before accepting a new architecture change, check:
@@ -586,6 +630,7 @@ Before accepting a new architecture change, check:
 - Are business invariants enforced by entities/value objects, not controllers?
 - Can the use case be tested with fake ports?
 - Is the new abstraction justified by a real boundary, not just ceremony?
+- Do port and annotation names in `domain` and `common` express **business intent** rather than a vendor or platform name?
 
 ## Advanced Patterns
 
