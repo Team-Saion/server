@@ -21,6 +21,7 @@ import com.unicorn.server.domain.notification.vo.DevicePushTokenId
 import com.unicorn.server.domain.schedule.event.ScheduleCreatedEvent
 import com.unicorn.server.domain.schedule.event.ScheduleConfirmationRequestDueEvent
 import com.unicorn.server.domain.schedule.event.ScheduleConfirmedEvent
+import com.unicorn.server.domain.schedule.event.FamilyScheduleNotificationRequestedEvent
 import com.unicorn.server.domain.schedule.enums.ScheduleReminderType
 import com.unicorn.server.domain.schedule.event.ScheduleReminderDueEvent
 import com.unicorn.server.domain.schedule.port.`in`.ScheduleConfirmationStatusInPort
@@ -191,6 +192,59 @@ class ScheduleNotificationEventListenerTest {
 		assertThat(event.receiver).isEqualTo("unconfirmed-token")
 		assertThat(event.payload.toVariables()).containsEntry("schedule_title", "제주도 여행")
 		assertThat(event.dedupKey).isEqualTo("schedule-confirmation-request:SC1:unconfirmed:token:1")
+	}
+
+	@Test
+	@DisplayName("가족에게 전하기는 발신자를 제외한 설정 ON 활성 구성원의 모든 토큰에 알림을 요청한다")
+	fun handle_familyScheduleNotification_requestsPushForOtherEnabledMembers() {
+		val eventPublisher = RecordingEventPublisher()
+		val listener = ScheduleNotificationEventListener(
+			FakeCircleMemberInPort(
+				listOf(
+					CircleMemberDto("sender", "보낸사람", "MEMBER", true),
+					CircleMemberDto("receiver", "받는사람", "MEMBER", true),
+					CircleMemberDto("disabled", "미수신", "MEMBER", true),
+				),
+			),
+			FakeNotificationPushTokenInPort(
+				mapOf(
+					"sender" to listOf(pushToken(1, "sender-token")),
+					"receiver" to listOf(pushToken(2, "receiver-token-1"), pushToken(3, "receiver-token-2")),
+					"disabled" to listOf(pushToken(4, "disabled-token")),
+				),
+			),
+			FakeNotificationSettingInPort(disabledMembers = setOf("disabled")),
+			FakeScheduleConfirmationStatusInPort(),
+			eventPublisher,
+		)
+
+		listener.handle(
+			FamilyScheduleNotificationRequestedEvent(
+				requestId = "request-1",
+				scheduleId = "SC1",
+				circleId = "circle-1",
+				senderMemberId = "sender",
+				scheduleTitle = "제주도 여행",
+				dDay = "D-3",
+			),
+		)
+
+		val events = eventPublisher.events.filterIsInstance<NotificationRequestedEvent>()
+		assertThat(events).extracting<String> { it.receiver }
+			.containsExactlyInAnyOrder("receiver-token-1", "receiver-token-2")
+		assertThat(events).allSatisfy { event ->
+			assertThat(event.payload.eventType)
+				.isEqualTo(NotificationEventType.SCHEDULE_FAMILY_NOTIFICATION_REQUESTED)
+			assertThat(event.payload.toVariables())
+				.containsEntry("sender_name", "보낸사람")
+				.containsEntry("schedule_title", "제주도 여행")
+				.containsEntry("d_day", "D-3")
+		}
+		assertThat(events.map { it.dedupKey })
+			.containsExactlyInAnyOrder(
+				"schedule-family-notification:request-1:receiver:token:2",
+				"schedule-family-notification:request-1:receiver:token:3",
+			)
 	}
 
 	private fun pushToken(id: Long, token: String): DevicePushToken {

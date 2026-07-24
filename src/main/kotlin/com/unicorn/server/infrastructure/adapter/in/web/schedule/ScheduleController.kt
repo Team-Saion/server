@@ -7,9 +7,12 @@ import com.unicorn.server.domain.schedule.port.`in`.DeleteScheduleInPort
 import com.unicorn.server.domain.schedule.port.`in`.GetScheduleDetailInPort
 import com.unicorn.server.domain.schedule.port.`in`.GetScheduleListInPort
 import com.unicorn.server.domain.schedule.port.`in`.RegisterConfirmationInPort
+
+import com.unicorn.server.domain.schedule.port.`in`.RequestFamilyScheduleNotificationInPort
 import com.unicorn.server.domain.schedule.port.`in`.UpdateScheduleInPort
 import com.unicorn.server.domain.schedule.port.dto.CreateScheduleCommand
 import com.unicorn.server.domain.schedule.port.dto.RegisterConfirmationCommand
+import com.unicorn.server.domain.schedule.port.dto.RequestFamilyScheduleNotificationCommand
 import com.unicorn.server.domain.schedule.port.dto.UpdateScheduleCommand
 import com.unicorn.server.domain.schedule.vo.ScheduleId
 import com.unicorn.server.infrastructure.adapter.`in`.web.common.dto.ApiResponse
@@ -43,6 +46,7 @@ class ScheduleController(
 	private val getScheduleDetailInPort: GetScheduleDetailInPort,
 	private val registerConfirmationInPort: RegisterConfirmationInPort,
 	private val cancelConfirmationInPort: CancelConfirmationInPort,
+	private val requestFamilyScheduleNotificationInPort: RequestFamilyScheduleNotificationInPort,
 ) : ScheduleApiDoc {
 
 	@PostMapping
@@ -151,6 +155,22 @@ class ScheduleController(
 		@PathVariable confirmationId: Long,
 	): ApiResponse<Unit> {
 		cancelConfirmationInPort.cancel(confirmationId, ScheduleId.of(scheduleId), circleId, memberId)
+		return ApiResponse.success()
+	}
+
+	@PostMapping("/{scheduleId}/family-notifications")
+	override fun requestFamilyNotification(
+		@AuthenticationPrincipal memberId: String,
+		@PathVariable circleId: String,
+		@PathVariable scheduleId: String,
+	): ApiResponse<Unit> {
+		requestFamilyScheduleNotificationInPort.request(
+			RequestFamilyScheduleNotificationCommand(
+				scheduleId = ScheduleId.of(scheduleId),
+				circleId = circleId,
+				memberId = memberId,
+			),
+		)
 		return ApiResponse.success()
 	}
 
