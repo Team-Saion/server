@@ -24,6 +24,12 @@ app:
     issuer: ${KAKAO_ISSUER:https://kauth.kakao.com}
   s3:
     region: ${AWS_REGION:ap-northeast-2}
+  discord:
+    bot-token: ${DISCORD_BOT_TOKEN:}
+    error-channel-id: ${DISCORD_ERROR_CHANNEL_ID:}
+    enabled: ${DISCORD_ENABLED:false}
+    api-base-url: https://discord.com/api/v10
+    max-message-length: 2000
 
 management:
   endpoints:
