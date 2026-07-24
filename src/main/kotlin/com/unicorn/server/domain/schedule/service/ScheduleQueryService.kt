@@ -6,8 +6,7 @@ import com.unicorn.server.domain.circle.vo.CircleId
 import com.unicorn.server.domain.schedule.Schedule
 import com.unicorn.server.domain.schedule.enums.UrgencyLevel
 import com.unicorn.server.domain.schedule.exception.ScheduleErrorCode
-import com.unicorn.server.domain.schedule.port.`in`.GetScheduleDetailInPort
-import com.unicorn.server.domain.schedule.port.`in`.GetScheduleListInPort
+import com.unicorn.server.domain.schedule.port.`in`.GetScheduleInPort
 import com.unicorn.server.domain.schedule.port.`in`.GetSchedulesForCircleInPort
 import com.unicorn.server.domain.schedule.port.dto.MyConfirmationInfo
 import com.unicorn.server.domain.schedule.port.dto.ScheduleDetailResult
@@ -30,7 +29,7 @@ class ScheduleQueryService(
 	private val scheduleOutPort: ScheduleOutPort,
 	private val scheduleConfirmationOutPort: ScheduleConfirmationOutPort,
 	private val circleAccessOutPort: CircleAccessOutPort,
-) : GetScheduleListInPort, GetScheduleDetailInPort, GetSchedulesForCircleInPort {
+) : GetScheduleInPort, GetSchedulesForCircleInPort {
 
 	override fun getList(
 		circleId: String,
