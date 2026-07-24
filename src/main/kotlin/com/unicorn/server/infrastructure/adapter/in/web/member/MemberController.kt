@@ -7,9 +7,8 @@ import com.unicorn.server.domain.member.port.`in`.CompleteOnboardingInPort
 import com.unicorn.server.domain.member.port.`in`.GetMemberInPort
 import com.unicorn.server.domain.member.port.`in`.GetOnboardingInfoInPort
 import com.unicorn.server.domain.member.port.`in`.LogoutInPort
+import com.unicorn.server.domain.member.port.`in`.ManageMemberProfileInPort
 import com.unicorn.server.domain.member.port.`in`.UpdateMemberStateInPort
-import com.unicorn.server.domain.member.port.`in`.UpdateProfileInPort
-import com.unicorn.server.domain.member.port.`in`.UploadProfileImageInPort
 import com.unicorn.server.domain.member.port.`in`.WithdrawMemberInPort
 import com.unicorn.server.domain.member.port.dto.CompleteOnboardingCommand
 import com.unicorn.server.domain.member.port.dto.UpdateProfileCommand
@@ -42,8 +41,7 @@ import org.springframework.web.multipart.MultipartFile
 class MemberController(
 	private val getMemberInPort: GetMemberInPort,
 	private val getOnboardingInfoInPort: GetOnboardingInfoInPort,
-	private val updateProfileInPort: UpdateProfileInPort,
-	private val uploadProfileImageInPort: UploadProfileImageInPort,
+	private val manageMemberProfileInPort: ManageMemberProfileInPort,
 	private val logoutInPort: LogoutInPort,
 	private val withdrawMemberInPort: WithdrawMemberInPort,
 	private val completeOnboardingInPort: CompleteOnboardingInPort,
@@ -88,7 +86,7 @@ class MemberController(
 		@AuthenticationPrincipal memberId: String,
 		@RequestBody @Valid request: UpdateProfileRequest,
 	): ApiResponse<MemberResponse> {
-		val member = updateProfileInPort.updateProfile(memberId, UpdateProfileCommand(request.nickname))
+		val member = manageMemberProfileInPort.updateProfile(memberId, UpdateProfileCommand(request.nickname))
 		return ApiResponse.success(toMemberResponse(member))
 	}
 
@@ -104,7 +102,7 @@ class MemberController(
 			contentLength = image.size,
 			inputStream = image.inputStream,
 		)
-		val member = uploadProfileImageInPort.uploadProfileImage(memberId, command)
+		val member = manageMemberProfileInPort.uploadProfileImage(memberId, command)
 		return ApiResponse.success(toMemberResponse(member))
 	}
 

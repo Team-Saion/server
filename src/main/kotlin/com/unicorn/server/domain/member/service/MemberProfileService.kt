@@ -14,9 +14,8 @@ import com.unicorn.server.domain.member.exception.WithdrawnMemberException
 import com.unicorn.server.domain.member.port.`in`.GetMemberInPort
 import com.unicorn.server.domain.member.port.`in`.GetMemberProfileInPort
 import com.unicorn.server.domain.member.port.`in`.GetOnboardingInfoInPort
+import com.unicorn.server.domain.member.port.`in`.ManageMemberProfileInPort
 import com.unicorn.server.domain.member.port.`in`.UpdateMemberStateInPort
-import com.unicorn.server.domain.member.port.`in`.UpdateProfileInPort
-import com.unicorn.server.domain.member.port.`in`.UploadProfileImageInPort
 import com.unicorn.server.domain.member.port.`in`.WithdrawMemberInPort
 import com.unicorn.server.domain.member.port.dto.MemberProfileDto
 import com.unicorn.server.domain.member.port.dto.OnboardingInfoResult
@@ -41,7 +40,7 @@ class MemberProfileService(
 	private val eventPublisher: EventPublisher,
 	private val objectStorage: ObjectStorage,
 	private val withdrawalLogOutPort: WithdrawalLogOutPort,
-) : GetMemberInPort, GetMemberProfileInPort, GetOnboardingInfoInPort, UpdateProfileInPort, WithdrawMemberInPort, UploadProfileImageInPort, UpdateMemberStateInPort {
+) : GetMemberInPort, GetMemberProfileInPort, GetOnboardingInfoInPort, ManageMemberProfileInPort, WithdrawMemberInPort, UpdateMemberStateInPort {
 
 	// 멤버 식별자로 저장된 멤버를 조회한다.
 	override fun getById(memberId: String): Member = findMemberOrThrow(memberId)
