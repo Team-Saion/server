@@ -618,6 +618,134 @@ This rule applies to:
 
 It does **not** apply to adapters under `infrastructure/adapter/out`, configuration classes, or properties classes — those are explicitly infrastructure and may use vendor names freely.
 
+## Spring Configuration Management
+
+Choose between `@Value`, `@ConfigurationProperties`, and `@Configuration` based on the scope and purpose of the configuration.
+
+### 1. When to use @Value
+
+Use `@Value` only when **all** of the following conditions are true:
+
+- Only 1–2 properties need to be injected.
+- The properties are not reused by any other class.
+- The configuration is flat with no nested structure.
+- No bean creation is involved.
+
+Typical examples: application version, a single feature flag, a single timeout value, a single base URL.
+
+### 2. When to use @ConfigurationProperties
+
+Use `@ConfigurationProperties` when **any** of the following conditions is true:
+
+- Three or more properties share the same prefix.
+- The properties represent a single feature or external system.
+- A nested YAML structure needs to be mapped to an object.
+- Multiple classes reference the same configuration.
+- Type safety or `@Validated` startup validation is required.
+
+Typical examples: Redis, Kafka, FCM, AWS, SMTP, Database, Notification, API Client settings.
+Group all related properties into **a single Properties class**.
+
+```kotlin
+// ✅ CORRECT — 3+ properties under the same prefix, nested structure, multiple consumers
+@ConfigurationProperties(prefix = "app.notification")
+data class NotificationProperties(
+    val dispatch: DispatchConfig,
+    val fcm: FcmConfig,
+) {
+    data class DispatchConfig(
+        val enabled: Boolean,
+        val intervalMs: Long,
+        val batchSize: Int,
+        val maxAttempts: Int,
+    )
+    data class FcmConfig(
+        val enabled: Boolean,
+        val projectId: String,
+        val credentialsPath: String,
+    )
+}
+```
+
+### 3. When to use @Configuration
+
+`@Configuration` is responsible only for **creating and wiring beans**. Never use it as a container for configuration values.
+Write a `@Configuration` class only when a bean must be instantiated from a Properties object.
+
+Typical examples: `FirebaseApp` creation, `RedisTemplate` creation, `ObjectMapper` customization, `RestClient`/`WebClient` construction, Kafka Producer/Consumer setup.
+
+### 4. Recommended layering
+
+```text
+application.yml          ← define property values
+      ↓
+@ConfigurationProperties ← bind and validate values
+      ↓
+@Configuration           ← create and assemble beans
+      ↓
+Spring Bean              ← used by services
+```
+
+### 5. Anti-patterns
+
+```kotlin
+// ❌ WRONG — 5 properties under the same prefix scattered across @Value annotations
+@Component
+class DiscordNotificationAdapter(
+    @Value("\${app.discord.enabled}") private val enabled: Boolean,
+    @Value("\${app.discord.bot-token}") private val botToken: String,
+    @Value("\${app.discord.error-channel-id}") private val errorChannelId: String,
+    @Value("\${app.discord.api-base-url}") private val apiBaseUrl: String,
+    @Value("\${app.discord.max-message-length}") private val maxMessageLength: Int,
+) : ErrorAlertPort
+// → 3+ properties under "app.discord" prefix; use @ConfigurationProperties instead.
+```
+
+```kotlin
+// ❌ WRONG — bean creation logic and property storage mixed in one class
+@Configuration
+@ConfigurationProperties(prefix = "app.discord")
+class DiscordConfig {
+    var botToken: String = ""
+    @Bean fun restTemplate() = RestTemplate()
+}
+// → Separate the responsibility of binding values (@ConfigurationProperties) from creating beans (@Configuration).
+```
+
+Avoid the following patterns:
+
+- Injecting multiple properties sharing a prefix via individual `@Value` annotations.
+- Declaring many `@Value` fields in a single service class.
+- Spreading related configuration across multiple classes.
+- Combining bean creation logic with property storage in one class.
+
+### 6. Decision reference
+
+| Condition | Choice |
+|---|---|
+| 1–2 properties, single consumer, flat values | `@Value` |
+| 3+ properties under the same prefix | `@ConfigurationProperties` |
+| Configuration for a single feature or external system | `@ConfigurationProperties` |
+| Nested YAML structure | `@ConfigurationProperties` |
+| Multiple classes share the same configuration | `@ConfigurationProperties` |
+| `@Validated` startup validation required | `@ConfigurationProperties` |
+| Bean must be created from a Properties object | `@Configuration` (separate from Properties class) |
+
+> When adding a new feature, prefer structuring configuration with `@ConfigurationProperties` over adding multiple `@Value` fields.
+>
+> Reference: [Spring Boot — Type-safe Configuration Properties](https://docs.spring.io/spring-boot/reference/features/external-config.html#features.external-config.typesafe-configuration-properties)
+
+### 7. Package placement
+
+`@ConfigurationProperties` and `@Configuration` classes are **infrastructure-only**. Do not reference them from `domain` or `common/port`.
+
+```text
+infrastructure/
+└── config/
+    ├── NotificationProperties.kt  ← @ConfigurationProperties
+    └── FcmConfig.kt               ← @Configuration (bean creation)
+```
+
 ## Review Checklist
 
 Before accepting a new architecture change, check:
@@ -631,6 +759,7 @@ Before accepting a new architecture change, check:
 - Can the use case be tested with fake ports?
 - Is the new abstraction justified by a real boundary, not just ceremony?
 - Do port and annotation names in `domain` and `common` express **business intent** rather than a vendor or platform name?
+- Does the configuration injection approach follow the decision table in the **Spring Configuration Management** section?
 
 ## Advanced Patterns
 
