@@ -32,7 +32,6 @@ import com.unicorn.server.domain.invitation.vo.InvitationToken
 import com.unicorn.server.domain.member.exception.MemberNotFoundException
 import com.unicorn.server.domain.member.port.`in`.MemberProfileInPort
 import com.unicorn.server.domain.member.vo.MemberId
-import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
@@ -127,24 +126,7 @@ class InvitationService(
 		val redeemer = getMemberProfileInPort.getMemberProfile(memberId) ?: throw MemberNotFoundException(memberId)
 		val circle = circleInPort.getCircleSummary(invitation.targetId)
 
-		log.debug(
-			"[CircleJoinNotification] accepting invitation: invitationId={}, circleId={}, redeemerMemberId={}",
-			invitation.id,
-			invitation.targetId,
-			memberId,
-		)
 		val joinResult = circleMemberInPort.join(invitation.targetId, memberId)
-		log.debug(
-			"[CircleJoinNotification] circle member joined: invitationId={}, circleId={}, redeemerMemberId={}",
-			invitation.id,
-			joinResult.circleId,
-			memberId,
-		)
-		log.debug(
-			"[CircleJoinNotification] publishing InvitationRedeemedEvent: invitationId={}, circleId={}",
-			invitation.id,
-			invitation.targetId,
-		)
 		eventPublisher.publish(
 			InvitationRedeemedEvent(
 				invitationId = invitation.id.toString(),
@@ -156,16 +138,10 @@ class InvitationService(
 				redeemerNickname = redeemer.nickname,
 			),
 		)
-		log.debug(
-			"[CircleJoinNotification] InvitationRedeemedEvent handling completed: invitationId={}, circleId={}",
-			invitation.id,
-			invitation.targetId,
-		)
 		return AcceptResult(joinResult.circleId)
 	}
 
 	companion object {
 		private const val MAX_MEMBERS = 10
-		private val log = LoggerFactory.getLogger(InvitationService::class.java)
 	}
 }
