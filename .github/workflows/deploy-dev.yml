@@ -10,6 +10,7 @@ permissions:
   contents: read
 
 env:
+  TZ: Asia/Seoul
   AWS_REGION: ap-northeast-2
   S3_BUCKET: saion-codedeploy-artifacts
 
