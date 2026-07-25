@@ -40,6 +40,9 @@ logging:
 app:
   server:
     url: http://localhost
+  notification:
+    dispatch:
+      enabled: false
   jwt:
     secret: aqr3l4WUSfDEauYcRmAJPH1TXW9ym3Zs5EPMhzekPI3
     access-token-expiration: 3600

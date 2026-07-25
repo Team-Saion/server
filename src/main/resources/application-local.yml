@@ -32,6 +32,9 @@ logging:
     org.hibernate.orm.jdbc.bind: trace
 
 app:
+  notification:
+    dispatch:
+      enabled: false
   jwt:
     secret: ${JWT_SECRET:dev-secret-key-for-local-development-only-min-32-chars}
     access-token-expiration: 2592000
