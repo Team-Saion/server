@@ -2,7 +2,7 @@ package com.unicorn.server.domain.notification.service
 
 import com.unicorn.server.domain.notification.Notification
 import com.unicorn.server.domain.notification.enums.NotificationChannel
-import com.unicorn.server.domain.notification.enums.NotificationEventType
+import com.unicorn.server.domain.notification.enums.NotificationType
 import com.unicorn.server.domain.notification.enums.NotificationStatus
 import com.unicorn.server.domain.notification.exception.PermanentNotificationSendException
 import com.unicorn.server.domain.notification.exception.RetryableNotificationSendException
@@ -90,7 +90,7 @@ class NotificationDispatchServiceTest {
     private fun createNotification(dedupKey: String = "schedule-created-1"): Notification = Notification.create(
         channel = NotificationChannel.PUSH,
         receiver = "token-1",
-        eventType = NotificationEventType.SCHEDULE_CREATED,
+        type = NotificationType.SCHEDULE_CREATED,
         payload = mapOf(
 			"actor_name" to "민수",
 			"schedule_title" to "병원 방문",

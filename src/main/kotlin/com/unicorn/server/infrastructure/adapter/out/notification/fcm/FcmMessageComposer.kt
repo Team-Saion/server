@@ -20,7 +20,7 @@ class FcmMessageComposer : NotificationMessageComposeOutPort {
 			?: throw PermanentNotificationSendException("Missing FCM body payload")
 		val data = notification.payload
 			.filterKeys { it != KEY_TITLE && it != KEY_BODY }
-			.plus(KEY_EVENT_TYPE to notification.eventType.name)
+			.plus(KEY_EVENT_TYPE to notification.type.name)
 
 		return FcmNotificationMessage(
 			token = notification.receiver,

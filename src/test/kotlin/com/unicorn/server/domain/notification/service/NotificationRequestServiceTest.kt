@@ -1,62 +1,106 @@
 package com.unicorn.server.domain.notification.service
 
+import com.unicorn.server.domain.notification.DevicePushToken
 import com.unicorn.server.domain.notification.Notification
-import com.unicorn.server.domain.notification.NotificationTemplate
-import com.unicorn.server.domain.notification.enums.NotificationChannel
-import com.unicorn.server.domain.notification.enums.NotificationEventType
+import com.unicorn.server.domain.notification.NotificationInboxItem
+import com.unicorn.server.domain.notification.NotificationSetting
+import com.unicorn.server.domain.notification.enums.DevicePlatform
+import com.unicorn.server.domain.notification.enums.NotificationType
+import com.unicorn.server.domain.notification.event.CircleJoinCompletedPayload
 import com.unicorn.server.domain.notification.event.ScheduleCreatedPayload
+import com.unicorn.server.domain.notification.event.ScheduleReminderD7Payload
+import com.unicorn.server.domain.notification.port.`in`.NotificationPushTokenInPort
+import com.unicorn.server.domain.notification.port.`in`.NotificationSettingInPort
+import com.unicorn.server.domain.notification.port.dto.RegisterPushTokenCommand
 import com.unicorn.server.domain.notification.port.dto.RequestNotificationCommand
+import com.unicorn.server.domain.notification.port.dto.UpdateNotificationSettingCommand
+import com.unicorn.server.domain.notification.port.out.NotificationInboxOutPort
 import com.unicorn.server.domain.notification.port.out.NotificationOutPort
-import com.unicorn.server.domain.notification.port.out.NotificationTemplateOutPort
+import com.unicorn.server.domain.notification.vo.DevicePushTokenId
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 
 @DisplayName("NotificationRequestService 단위 테스트")
 class NotificationRequestServiceTest {
-	private val notificationOutPort = FakeNotificationOutPort()
-	private val notificationTemplateOutPort = FakeNotificationTemplateOutPort()
-	private val notificationRequestService = NotificationRequestService(notificationOutPort, notificationTemplateOutPort)
-
 	@Test
-	@DisplayName("동일 dedup key 알림은 한 번만 저장된다")
-	fun request_duplicateDedupKey_savedOnce() {
-		val command = RequestNotificationCommand(
-			channel = NotificationChannel.PUSH,
-			receiver = "token-1",
-			payload = ScheduleCreatedPayload(actorName = "민수", scheduleTitle = "병원 방문"),
-			dedupKey = "schedule-created-1",
+	@DisplayName("써클 참여 알림은 보관함과 활성 토큰별 푸시 발송 작업을 생성한다")
+	fun request_circleJoin_createsInboxAndPush() {
+		val fixture = Fixture()
+
+		fixture.service.request(
+			RequestNotificationCommand(
+				receiverMemberId = "member-1",
+				payload = CircleJoinCompletedPayload("민수", "우리 가족"),
+				eventId = "invitation-1",
+				circleId = "circle-1",
+			),
 		)
 
-		notificationRequestService.request(command)
-		notificationRequestService.request(command)
-
-		assertThat(notificationOutPort.notifications).hasSize(1)
-		assertThat(notificationOutPort.notifications.getValue(command.dedupKey).payload)
-			.containsEntry("title", "새 일정이 등록됐어요")
-			.containsEntry("body", "민수님이 '병원 방문' 일정을 추가했어요.")
+		val item = fixture.inboxOutPort.items.single()
+		assertThat(item.receiverMemberId).isEqualTo("member-1")
+		assertThat(item.type).isEqualTo(NotificationType.CIRCLE_JOIN_COMPLETED)
+		assertThat(item.title).isEqualTo("새 가족이 참여했어요")
+		assertThat(item.route.circleId).isEqualTo("circle-1")
+		assertThat(fixture.notificationOutPort.notifications).hasSize(1)
 	}
 
 	@Test
-	@DisplayName("DB 템플릿 변수와 payload 계약이 다르면 알림을 저장하지 않는다")
-	fun request_templateVariablesMismatch_doesNotSave() {
-		val service = NotificationRequestService(
-			notificationOutPort,
-			FakeNotificationTemplateOutPort(bodyTemplate = "{actor_nmae}님이 '{schedule_title}' 일정을 추가했어요."),
-		)
+	@DisplayName("일정 생성 알림은 보관함 하나와 활성 토큰별 푸시 작업을 생성한다")
+	fun request_scheduleCreated_createsOneInboxAndPushPerToken() {
+		val fixture = Fixture(tokens = listOf(pushToken(1), pushToken(2)))
 		val command = RequestNotificationCommand(
-			channel = NotificationChannel.PUSH,
-			receiver = "token-1",
-			payload = ScheduleCreatedPayload(actorName = "민수", scheduleTitle = "병원 방문"),
-			dedupKey = "schedule-created-2",
+			receiverMemberId = "member-1",
+			payload = ScheduleCreatedPayload("민수", "병원 방문"),
+			eventId = "schedule-1",
+			circleId = "circle-1",
+			scheduleId = "schedule-1",
 		)
 
-		assertThatThrownBy { service.request(command) }
-			.isInstanceOf(IllegalArgumentException::class.java)
-			.hasMessageContaining("actor_nmae")
-		assertThat(notificationOutPort.notifications).isEmpty()
+		fixture.service.request(command)
+		fixture.service.request(command)
+
+		assertThat(fixture.inboxOutPort.items).hasSize(1)
+		assertThat(fixture.notificationOutPort.notifications).hasSize(2)
+		assertThat(fixture.notificationOutPort.notifications.values)
+			.extracting<String> { it.receiver }
+			.containsExactlyInAnyOrder("token-1", "token-2")
+		assertThat(fixture.notificationOutPort.notifications.keys)
+			.allMatch { it.startsWith("schedule_created:schedule-1:member-1:token:") }
+	}
+
+	@Test
+	@DisplayName("푸시 설정이 꺼져 있어도 보관함은 생성하고 푸시 작업은 생성하지 않는다")
+	fun request_pushSettingDisabled_createsInboxWithoutPush() {
+		val fixture = Fixture(pushEnabled = false)
+
+		fixture.service.request(
+			RequestNotificationCommand(
+				receiverMemberId = "member-1",
+				payload = ScheduleReminderD7Payload("병원 방문"),
+				eventId = "d7:schedule-1",
+				circleId = "circle-1",
+				scheduleId = "schedule-1",
+			),
+		)
+
+		assertThat(fixture.inboxOutPort.items).hasSize(1)
+		assertThat(fixture.notificationOutPort.notifications).isEmpty()
+	}
+
+	private class Fixture(
+		tokens: List<DevicePushToken> = listOf(pushToken(1)),
+		pushEnabled: Boolean = true,
+	) {
+		val notificationOutPort = FakeNotificationOutPort()
+		val inboxOutPort = FakeNotificationInboxOutPort()
+		val service = NotificationRequestService(
+			notificationOutPort = notificationOutPort,
+			notificationInboxOutPort = inboxOutPort,
+			notificationPushTokenInPort = FakeNotificationPushTokenInPort(tokens),
+			notificationSettingInPort = FakeNotificationSettingInPort(pushEnabled),
+		)
 	}
 
 	private class FakeNotificationOutPort : NotificationOutPort {
@@ -68,18 +112,67 @@ class NotificationRequestServiceTest {
 		}
 
 		override fun findByDedupKey(dedupKey: String): Notification? = notifications[dedupKey]
-
 		override fun findDispatchTargets(limit: Int, now: LocalDateTime): List<Notification> = emptyList()
 	}
 
-	private class FakeNotificationTemplateOutPort(
-		private val bodyTemplate: String = "{actor_name}님이 '{schedule_title}' 일정을 추가했어요.",
-	) : NotificationTemplateOutPort {
-		override fun findActiveByEventType(eventType: NotificationEventType): NotificationTemplate? =
-			NotificationTemplate(
-				eventType = NotificationEventType.SCHEDULE_CREATED,
-				titleTemplate = "새 일정이 등록됐어요",
-				bodyTemplate = bodyTemplate,
-			).takeIf { it.eventType == eventType }
+	private class FakeNotificationInboxOutPort : NotificationInboxOutPort {
+		val items = mutableListOf<NotificationInboxItem>()
+
+		override fun save(item: NotificationInboxItem): NotificationInboxItem {
+			items += item
+			return item
+		}
+
+		override fun findByDedupKey(dedupKey: String): NotificationInboxItem? =
+			items.firstOrNull { it.dedupKey == dedupKey }
+
+		override fun findPageByReceiver(memberId: String, cursor: Long?, limit: Int) = emptyList<NotificationInboxItem>()
+		override fun findByIdAndReceiver(notificationId: Long, memberId: String): NotificationInboxItem? = null
+		override fun deleteCreatedBefore(threshold: LocalDateTime): Int = 0
+	}
+
+	private class FakeNotificationPushTokenInPort(
+		private val tokens: List<DevicePushToken>,
+	) : NotificationPushTokenInPort {
+		override fun getActiveReceivable(memberId: String): List<DevicePushToken> = tokens
+		override fun register(memberId: String, command: RegisterPushTokenCommand): DevicePushToken = error("not used")
+		override fun deactivate(memberId: String, tokenId: Long) = error("not used")
+	}
+
+	private class FakeNotificationSettingInPort(
+		private val pushEnabled: Boolean,
+	) : NotificationSettingInPort {
+		override fun getSetting(memberId: String): NotificationSetting {
+			val now = LocalDateTime.now()
+			return NotificationSetting.reconstitute(
+				memberId = memberId,
+				d7Enabled = pushEnabled,
+				d1Enabled = pushEnabled,
+				dDayEnabled = pushEnabled,
+				familyScheduleCheckEnabled = pushEnabled,
+				createdAt = now,
+				updatedAt = now,
+			)
+		}
+		override fun updateSetting(memberId: String, command: UpdateNotificationSettingCommand): NotificationSetting =
+			error("not used")
+	}
+
+	companion object {
+		private fun pushToken(id: Long): DevicePushToken {
+			val now = LocalDateTime.now()
+			return DevicePushToken.reconstitute(
+				id = DevicePushTokenId.of(id),
+				memberId = "member-1",
+				installationId = "installation-$id",
+				token = "token-$id",
+				platform = DevicePlatform.IOS,
+				active = true,
+				lastSeenAt = now,
+				invalidatedAt = null,
+				createdAt = now,
+				updatedAt = now,
+			)
+		}
 	}
 }

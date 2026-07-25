@@ -2,7 +2,7 @@ package com.unicorn.server.infrastructure.adapter.out.persistence.notification.e
 
 import com.unicorn.server.common.persistence.AuditableJpaEntity
 import com.unicorn.server.domain.notification.enums.NotificationChannel
-import com.unicorn.server.domain.notification.enums.NotificationEventType
+import com.unicorn.server.domain.notification.enums.NotificationType
 import com.unicorn.server.domain.notification.enums.NotificationStatus
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -41,7 +41,7 @@ open class NotificationEntity internal constructor() : AuditableJpaEntity() {
 
 	@Enumerated(EnumType.STRING)
 	@Column(name = "event_type", nullable = false, length = 50)
-	lateinit var eventType: NotificationEventType
+	lateinit var type: NotificationType
 		internal set
 
 	@Column(name = "payload", nullable = false, columnDefinition = "TEXT")

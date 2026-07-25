@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.ZoneId
 
 @DisplayName("FamilyScheduleNotificationService 단위 테스트")
 class FamilyScheduleNotificationServiceTest {
@@ -35,7 +36,7 @@ class FamilyScheduleNotificationServiceTest {
 	fun request_withUpcomingSchedule_publishesFamilyScheduleNotificationEvent() {
 		circleAccessOutPort.seedMember(CIRCLE_ID, MEMBER_ID)
 		circleAccessOutPort.seedMember(CIRCLE_ID, OTHER_MEMBER_ID)
-		scheduleOutPort.seed(schedule(startDate = LocalDate.now().plusDays(3)))
+		scheduleOutPort.seed(schedule(startDate = LocalDate.now(KST).plusDays(3)))
 
 		service.request(command())
 
@@ -53,7 +54,7 @@ class FamilyScheduleNotificationServiceTest {
 	fun request_withInProgressSchedule_publishesFamilyScheduleNotificationEvent() {
 		circleAccessOutPort.seedMember(CIRCLE_ID, MEMBER_ID)
 		circleAccessOutPort.seedMember(CIRCLE_ID, OTHER_MEMBER_ID)
-		scheduleOutPort.seed(schedule(startDate = LocalDate.now().minusDays(1), endDate = LocalDate.now()))
+		scheduleOutPort.seed(schedule(startDate = LocalDate.now(KST).minusDays(1), endDate = LocalDate.now(KST)))
 
 		service.request(command())
 
@@ -173,5 +174,6 @@ class FamilyScheduleNotificationServiceTest {
 		private const val MEMBER_ID = "member-1"
 		private const val OTHER_MEMBER_ID = "member-2"
 		private val SCHEDULE_ID = ScheduleId.of("SC202407070000000001")
+		private val KST: ZoneId = ZoneId.of("Asia/Seoul")
 	}
 }

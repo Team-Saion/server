@@ -20,6 +20,7 @@ interface NotificationInboxJpaRepository : JpaRepository<NotificationInboxItemEn
 	): List<NotificationInboxItemEntity>
 
 	fun findByIdAndReceiverMemberId(id: Long, receiverMemberId: String): NotificationInboxItemEntity?
+	fun findByDedupKey(dedupKey: String): NotificationInboxItemEntity?
 
 	@Modifying
 	@Query("delete from NotificationInboxItemEntity n where n.createdAt < :threshold")

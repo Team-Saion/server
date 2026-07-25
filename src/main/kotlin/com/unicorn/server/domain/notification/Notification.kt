@@ -1,7 +1,7 @@
 package com.unicorn.server.domain.notification
 
 import com.unicorn.server.domain.notification.enums.NotificationChannel
-import com.unicorn.server.domain.notification.enums.NotificationEventType
+import com.unicorn.server.domain.notification.enums.NotificationType
 import com.unicorn.server.domain.notification.enums.NotificationStatus
 import com.unicorn.server.domain.notification.vo.NotificationId
 import java.time.LocalDateTime
@@ -15,7 +15,7 @@ class Notification private constructor(
 	// 알림 수신 대상 식별자
 	receiver: String,
 	// 알림 생성 원인 비즈니스 이벤트 타입
-	val eventType: NotificationEventType,
+	val type: NotificationType,
 	// 메시지 조합 및 후처리용 치환 데이터
 	payload: Map<String, String>,
 	// 동일 알림 중복 생성 방지용 멱등 키
@@ -123,7 +123,7 @@ class Notification private constructor(
 		fun create(
 			channel: NotificationChannel,
 			receiver: String,
-			eventType: NotificationEventType,
+			type: NotificationType,
 			payload: Map<String, String>,
 			dedupKey: String,
 		): Notification {
@@ -136,7 +136,7 @@ class Notification private constructor(
 				id = null,
 				channel = channel,
 				receiver = receiver,
-				eventType = eventType,
+				type = type,
 				payload = payload,
 				dedupKey = dedupKey,
 				status = NotificationStatus.READY,
@@ -154,7 +154,7 @@ class Notification private constructor(
 			id: NotificationId,
 			channel: NotificationChannel,
 			receiver: String,
-			eventType: NotificationEventType,
+			type: NotificationType,
 			payload: Map<String, String>,
 			dedupKey: String,
 			status: NotificationStatus,
@@ -174,7 +174,7 @@ class Notification private constructor(
 				id = id,
 				channel = channel,
 				receiver = receiver,
-				eventType = eventType,
+				type = type,
 				payload = payload,
 				dedupKey = dedupKey,
 				status = status,
