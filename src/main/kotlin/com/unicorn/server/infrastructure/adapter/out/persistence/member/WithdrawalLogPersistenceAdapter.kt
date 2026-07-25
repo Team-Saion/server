@@ -16,6 +16,7 @@ class WithdrawalLogPersistenceAdapter(
 		val entity = WithdrawalLogEntity(
 			memberId = log.memberId.toString(),
 			originalEmail = log.originalEmail,
+			socialProvider = log.socialProvider,
 			reason = log.reason,
 			withdrawnAt = log.withdrawnAt,
 		)

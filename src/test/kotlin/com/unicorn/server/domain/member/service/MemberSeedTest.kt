@@ -90,7 +90,11 @@ class MemberSeedTest : BaseTest() {
         override fun findByProviderAndProviderId(provider: SocialProvider, providerId: String): SocialAccount? =
             store[provider to providerId]
 
-        override fun findByMemberId(memberId: MemberId): SocialAccount? =
-            store.values.firstOrNull { it.memberId == memberId }
-    }
+		override fun findByMemberId(memberId: MemberId): SocialAccount? =
+			store.values.firstOrNull { it.memberId == memberId }
+
+		override fun deleteByMemberId(memberId: MemberId) {
+			store.entries.removeIf { it.value.memberId == memberId }
+		}
+	}
 }

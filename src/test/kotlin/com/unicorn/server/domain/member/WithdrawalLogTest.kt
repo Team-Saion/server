@@ -13,7 +13,7 @@ class WithdrawalLogTest {
 	@DisplayName("reason이 blank이면 create에서 예외가 발생한다")
 	fun create_whenReasonIsBlank_throwsException() {
 		assertThatThrownBy {
-			WithdrawalLog.create(MemberId.generate(), "test@example.com", " ", LocalDateTime.now())
+			WithdrawalLog.create(MemberId.generate(), "test@example.com", null, " ", LocalDateTime.now())
 		}.isInstanceOf(IllegalArgumentException::class.java)
 	}
 
@@ -21,7 +21,7 @@ class WithdrawalLogTest {
 	@DisplayName("reason이 500자를 초과하면 create에서 예외가 발생한다")
 	fun create_whenReasonExceeds500Chars_throwsException() {
 		assertThatThrownBy {
-			WithdrawalLog.create(MemberId.generate(), "test@example.com", "a".repeat(501), LocalDateTime.now())
+			WithdrawalLog.create(MemberId.generate(), "test@example.com", null, "a".repeat(501), LocalDateTime.now())
 		}.isInstanceOf(IllegalArgumentException::class.java)
 	}
 }

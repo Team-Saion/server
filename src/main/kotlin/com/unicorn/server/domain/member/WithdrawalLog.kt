@@ -1,11 +1,13 @@
 package com.unicorn.server.domain.member
 
+import com.unicorn.server.domain.member.enums.SocialProvider
 import com.unicorn.server.domain.member.vo.MemberId
 import java.time.LocalDateTime
 
 class WithdrawalLog private constructor(
 	val memberId: MemberId,
 	val originalEmail: String?,
+	val socialProvider: SocialProvider?,
 	val reason: String,
 	val withdrawnAt: LocalDateTime,
 ) {
@@ -13,12 +15,13 @@ class WithdrawalLog private constructor(
 		fun create(
 			memberId: MemberId,
 			originalEmail: String?,
+			socialProvider: SocialProvider?,
 			reason: String,
 			withdrawnAt: LocalDateTime,
 		): WithdrawalLog {
 			require(reason.isNotBlank()) { "Reason cannot be blank" }
 			require(reason.length <= 500) { "Reason cannot exceed 500 characters" }
-			return WithdrawalLog(memberId, originalEmail, reason, withdrawnAt)
+			return WithdrawalLog(memberId, originalEmail, socialProvider, reason, withdrawnAt)
 		}
 	}
 }

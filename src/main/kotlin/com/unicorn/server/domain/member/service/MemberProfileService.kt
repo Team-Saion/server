@@ -122,10 +122,14 @@ class MemberProfileService(
 			WithdrawalLog.create(
 				memberId = savedMember.id,
 				originalEmail = originalEmail?.value,
+				socialProvider = socialAccountOutPort.findByMemberId(savedMember.id)?.provider,
 				reason = reason,
 				withdrawnAt = requireNotNull(savedMember.deletedAt) { "deletedAt must not be null after withdrawal" },
 			),
 		)
+
+		// 재가입 시 새 소셜 연결을 생성할 수 있도록 기존 연결을 제거한다.
+		socialAccountOutPort.deleteByMemberId(savedMember.id)
 
 		// 탈퇴 이벤트 발행
 		eventPublisher.publish(MemberWithdrawnEvent(savedMember.id.toString()))

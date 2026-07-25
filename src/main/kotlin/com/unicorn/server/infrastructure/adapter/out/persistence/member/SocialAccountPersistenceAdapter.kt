@@ -35,4 +35,10 @@ class SocialAccountPersistenceAdapter(
 	@Transactional(readOnly = true)
 	override fun findByMemberId(memberId: MemberId): SocialAccount? =
 		socialAccountJpaRepository.findByMemberId(memberId.toString())?.toDomain()
+
+	// 멤버 탈퇴 시 기존 소셜 계정 연결을 삭제한다.
+	@Transactional
+	override fun deleteByMemberId(memberId: MemberId) {
+		socialAccountJpaRepository.deleteByMemberId(memberId.toString())
+	}
 }
