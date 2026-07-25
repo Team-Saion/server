@@ -34,8 +34,8 @@ import java.time.LocalDateTime
 @DisplayName("ScheduleNotificationEventListener 단위 테스트")
 class ScheduleNotificationEventListenerTest {
 	@Test
-	@DisplayName("일정 생성 시 작성자를 포함한 활성 구성원의 모든 활성 토큰에 기존 알림 요청 이벤트를 발행한다")
-	fun handle_scheduleCreated_publishesNotificationRequestForEveryActiveToken() {
+	@DisplayName("일정 생성 시 작성자를 제외한 활성 구성원의 모든 활성 토큰에 알림 요청 이벤트를 발행한다")
+	fun handle_scheduleCreated_excludesCreatorAndPublishesNotificationRequestForEveryActiveToken() {
 		val circleMemberInPort = FakeCircleMemberInPort(
 			listOf(
 				CircleMemberDto("creator", "유니콘", "MEMBER", true),
@@ -70,7 +70,7 @@ class ScheduleNotificationEventListenerTest {
 
 		val events = eventPublisher.events.filterIsInstance<NotificationRequestedEvent>()
 		assertThat(events).extracting<String> { it.receiver }
-			.containsExactlyInAnyOrder("creator-token", "family-token-1", "family-token-2")
+			.containsExactlyInAnyOrder("family-token-1", "family-token-2")
 		assertThat(events).allSatisfy { event ->
 			assertThat(event.channel).isEqualTo(NotificationChannel.PUSH)
 			assertThat(event.payload.eventType).isEqualTo(NotificationEventType.SCHEDULE_CREATED)
@@ -124,18 +124,27 @@ class ScheduleNotificationEventListenerTest {
 	}
 
 	@Test
-	@DisplayName("다른 구성원이 확인했어요를 누르면 작성자 설정이 ON일 때 작성자 토큰에 알림을 요청한다")
-	fun handle_scheduleConfirmed_requestsPushForScheduleCreator() {
+	@DisplayName("구성원이 확인했어요를 누르면 확인한 본인을 제외한 설정 ON 활성 구성원에게 알림을 요청한다")
+	fun handle_scheduleConfirmed_requestsPushForOtherEnabledMembers() {
 		val eventPublisher = RecordingEventPublisher()
 		val listener = ScheduleNotificationEventListener(
 			FakeCircleMemberInPort(
 				listOf(
-					CircleMemberDto("creator", "작성자", "MEMBER", true),
-					CircleMemberDto("confirmer", "가족", "MEMBER", true),
+				CircleMemberDto("creator", "작성자", "MEMBER", true),
+				CircleMemberDto("confirmer", "가족", "MEMBER", true),
+				CircleMemberDto("other", "다른 가족", "MEMBER", true),
+				CircleMemberDto("disabled", "알림끔", "MEMBER", true),
 				),
 			),
-			FakeNotificationPushTokenInPort(mapOf("creator" to listOf(pushToken(1, "creator-token")))),
-			FakeNotificationSettingInPort(),
+			FakeNotificationPushTokenInPort(
+				mapOf(
+					"creator" to listOf(pushToken(1, "creator-token")),
+					"confirmer" to listOf(pushToken(2, "confirmer-token")),
+					"other" to listOf(pushToken(3, "other-token")),
+					"disabled" to listOf(pushToken(4, "disabled-token")),
+				),
+			),
+			FakeNotificationSettingInPort(disabledMembers = setOf("disabled")),
 			FakeScheduleConfirmationStatusInPort(),
 			eventPublisher,
 		)
@@ -150,10 +159,16 @@ class ScheduleNotificationEventListenerTest {
 			),
 		)
 
-		val event = eventPublisher.events.filterIsInstance<NotificationRequestedEvent>().single()
-		assertThat(event.receiver).isEqualTo("creator-token")
-		assertThat(event.payload.toVariables()).containsEntry("member_name", "가족")
-		assertThat(event.dedupKey).isEqualTo("schedule-confirmed:SC1:confirmer:creator:token:1")
+		val events = eventPublisher.events.filterIsInstance<NotificationRequestedEvent>()
+		assertThat(events).extracting<String> { it.receiver }
+			.containsExactlyInAnyOrder("creator-token", "other-token")
+		assertThat(events).allSatisfy { event ->
+			assertThat(event.payload.toVariables()).containsEntry("member_name", "가족")
+		}
+		assertThat(events.map { it.dedupKey }).containsExactlyInAnyOrder(
+			"schedule-confirmed:SC1:confirmer:creator:token:1",
+			"schedule-confirmed:SC1:confirmer:other:token:3",
+		)
 	}
 
 	@Test

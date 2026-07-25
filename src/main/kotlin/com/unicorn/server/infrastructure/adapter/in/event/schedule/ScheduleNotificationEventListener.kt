@@ -27,7 +27,7 @@ import com.unicorn.server.domain.schedule.vo.ScheduleId
 import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Component
 import java.time.format.DateTimeFormatter
-
+l
 @Component
 class ScheduleNotificationEventListener(
 	private val circleMemberInPort: CircleMemberInPort,
@@ -44,7 +44,7 @@ class ScheduleNotificationEventListener(
 
 		members
 			.asSequence()
-			.filter { it.active }
+			.filter { it.active && it.memberId != event.creatorMemberId }
 			.forEach { member ->
 				val receiverDedupKey = "schedule-created:${event.scheduleId}:${member.memberId}"
 				notificationPushTokenInPort.getActiveReceivable(member.memberId).forEach { pushToken ->
@@ -86,27 +86,25 @@ class ScheduleNotificationEventListener(
 
 	@EventListener
 	fun handle(event: ScheduleConfirmedEvent) {
-		if (event.scheduleCreatorMemberId == event.confirmerMemberId) {
-			return
-		}
-		if (!notificationSettingInPort.getSetting(event.scheduleCreatorMemberId)
-			.isEnabled(NotificationSettingType.FAMILY_SCHEDULE_CHECK)) {
-			return
-		}
-
 		val confirmerName = circleMemberInPort.getCircleMembers(event.circleId).nicknameOf(event.confirmerMemberId)
 		val payload = ScheduleConfirmedByFamilyPayload(confirmerName, event.scheduleTitle)
-		val receiverDedupKey = "schedule-confirmed:${event.scheduleId}:${event.confirmerMemberId}:${event.scheduleCreatorMemberId}"
-		notificationPushTokenInPort.getActiveReceivable(event.scheduleCreatorMemberId).forEach { pushToken ->
-			eventPublisher.publish(
-				NotificationRequestedEvent(
-					channel = NotificationChannel.PUSH,
-					receiver = pushToken.token,
-					payload = payload,
-					dedupKey = "$receiverDedupKey:token:${requireNotNull(pushToken.id).value}",
-				),
-			)
-		}
+		circleMemberInPort.getCircleMembers(event.circleId)
+			.asSequence()
+			.filter { it.active && it.memberId != event.confirmerMemberId }
+			.filter { notificationSettingInPort.getSetting(it.memberId).isEnabled(NotificationSettingType.FAMILY_SCHEDULE_CHECK) }
+			.forEach { member ->
+				val receiverDedupKey = "schedule-confirmed:${event.scheduleId}:${event.confirmerMemberId}:${member.memberId}"
+				notificationPushTokenInPort.getActiveReceivable(member.memberId).forEach { pushToken ->
+					eventPublisher.publish(
+						NotificationRequestedEvent(
+							channel = NotificationChannel.PUSH,
+							receiver = pushToken.token,
+							payload = payload,
+							dedupKey = "$receiverDedupKey:token:${requireNotNull(pushToken.id).value}",
+						),
+					)
+				}
+			}
 	}
 
 	@EventListener
