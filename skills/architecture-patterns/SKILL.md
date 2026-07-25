@@ -618,6 +618,159 @@ This rule applies to:
 
 It does **not** apply to adapters under `infrastructure/adapter/out`, configuration classes, or properties classes — those are explicitly infrastructure and may use vendor names freely.
 
+### Port Name Format
+
+Port interface names follow: `<Domain>[<Purpose>]<In|Out>Port`
+
+- `<Domain>`: the aggregate/bounded-context noun the port belongs to (e.g. `Member`, `Schedule`).
+- `<Purpose>` (optional): a noun narrowing the port's responsibility, used only when a domain needs more than one port in the same direction (e.g. `Info`, `Persist`). Omit it when a single `In`/`Out` port per domain is enough.
+- `<In|Out>`: driving (`In`) or driven (`Out`) port.
+- `Port`: fixed suffix.
+
+Do not prefix a port name with a verb for a single use case (`Get`, `Create`, `Register`, `Save`, ...). A port is a contract for the domain, not one action — the verbs belong to the methods inside the interface, not the interface name.
+
+| Wrong | Correct |
+|---|---|
+| `GetMemberInPort` | `MemberInPort` |
+| `GetMemberInfoInPort` | `MemberInfoInPort` |
+| `SaveScheduleOutPort` | `ScheduleOutPort` |
+| `PersistScheduleOutPort` | `SchedulePersistOutPort` |
+
+```kotlin
+// domain/member/port/in/MemberInPort.kt ✅
+interface MemberInPort {
+    fun getMember(memberId: MemberId): Member
+    fun registerMember(request: CreateMemberRequest): Member
+}
+
+// domain/schedule/port/out/ScheduleOutPort.kt ✅
+interface ScheduleOutPort {
+    fun findById(scheduleId: ScheduleId): Schedule?
+}
+
+// domain/schedule/port/out/SchedulePersistOutPort.kt ✅ (separate purpose from ScheduleOutPort)
+interface SchedulePersistOutPort {
+    fun save(schedule: Schedule): Schedule
+}
+```
+
+This format applies to every driven port under `port/out`, even ones that today read like a plain capability noun (`TokenIssuer`, `TokenStore`, `NotificationSender`, `KakaoAuthPort`, ...). The package location (`port/out`) already marks these as ports; the class name must say so too, so a grep for `OutPort` or an IDE autocomplete on `Port` reliably finds them all:
+
+| Wrong | Correct |
+|---|---|
+| `TokenIssuer` | `MemberTokenIssueOutPort` |
+| `TokenStore` | `MemberTokenStoreOutPort` |
+| `NotificationSender` | `NotificationSendOutPort` |
+| `KakaoAuthPort` | `MemberKakaoAuthOutPort` |
+
+### Port Name Format: Common Ports
+
+`common/port/out` has no bounded-context domain to anchor `<Domain>`, so the format becomes `<Capability>[<Purpose>]OutPort`, where `<Capability>` is the cross-cutting concern the port abstracts (still vendor-neutral, per [Platform and Service Names Belong in Infrastructure Only](#platform-and-service-names-belong-in-infrastructure-only)).
+
+| Wrong | Correct |
+|---|---|
+| `ErrorAlertPort` | `AlertOutPort` |
+| `EventPublisher` | `EventOutPort` |
+| `ObjectStorage` | `ObjectStorageOutPort` |
+
+### Port Name Format: Exceptions
+
+Two categories are intentionally exempt from the `<Domain>[<Purpose>]<In|Out>Port` suffix rule:
+
+**ID/token generators.** A generator's only responsibility is producing a new identifier, and `Generator` already communicates both the responsibility and that it is a driven port. Appending `OutPort` adds length without adding information.
+
+```kotlin
+// domain/schedule/port/out/ScheduleIdGenerator.kt ✅ (exception — no OutPort suffix)
+interface ScheduleIdGenerator {
+    fun next(): ScheduleId
+}
+```
+
+**Anti-corruption ports.** When a port exists solely to let one bounded context read another context's aggregate without importing it directly, name the port after the *target* context/capability it exposes, not the package it physically lives in. The name should tell the reader what the port guards against, not where the file happens to sit.
+
+```kotlin
+// domain/schedule/port/out/CircleAccessOutPort.kt ✅ (exception — target-context name, not "Schedule...")
+interface CircleAccessOutPort {
+    fun existsById(circleId: String): Boolean
+    fun isMember(circleId: String, memberId: String): Boolean
+}
+```
+
+## Port Cohesion
+
+Naming tells you how to spell a port. Cohesion tells you whether it should exist as one port or several. Judge every split-or-merge decision — including one that a naming refactor makes tempting — against three independent criteria. All three must match before merging two methods into one port.
+
+1. **Same actor.** Who or what calls this method: an authenticated end user, an anonymous caller, a refresh-token holder, a scheduled job, an event listener, another bounded context reading through this port? Two methods with different actors stay on different ports even if nothing else differs.
+2. **Same call pattern.** Synchronous HTTP request/response, async event handling, and scheduled batch are different call patterns. A method invoked by a controller and a method invoked by a `@Scheduled` job or an event listener do not belong on the same port, even if a human would group them under the same feature name.
+3. **Same reason to change.** Would a single business-rule change touch both methods together, or does one method carry side effects/dependencies (issuing tokens, publishing events, enforcing a different validation rule) that the other doesn't share? If the two methods' reasons to change are independent, keep them apart.
+
+**Do not use "the same class currently implements both" as a merge signal.** In this codebase a driving (`In`) port has exactly one real implementation by construction — the use-case service — so "same implementer" is true almost by default and filters out nothing. The only reliable signals are the three criteria above, checked against the actual caller (open the controller, event listener, or scheduled job — don't infer from the port name).
+
+### Worked Examples
+
+**Merge — all three criteria match:**
+
+```kotlin
+// Before: three single-method ports, all called from the same
+// ScheduleController endpoint group with @AuthenticationPrincipal,
+// all synchronous HTTP writes on the same resource.
+interface ScheduleCreateInPort { fun create(command: CreateScheduleCommand): ScheduleId }
+interface ScheduleUpdateInPort { fun update(command: UpdateScheduleCommand) }
+interface ScheduleDeleteInPort { fun delete(scheduleId: ScheduleId, circleId: String, memberId: String) }
+
+// After: same actor, same call pattern, same reason to change (schedule CRUD rules).
+interface ScheduleCommandInPort {
+    fun create(command: CreateScheduleCommand): ScheduleId
+    fun update(command: UpdateScheduleCommand)
+    fun delete(scheduleId: ScheduleId, circleId: String, memberId: String)
+}
+```
+
+**Keep separate — actor differs despite an identical implementing class:**
+
+```kotlin
+// Both methods happen to be implemented by the same MemberAuthService,
+// but the callers are different actors at different auth stages:
+// kakaoLogin is called by an anonymous pre-auth caller (AuthController /kakao),
+// reissue is called by a refresh-token holder (AuthController /refresh),
+// logout is called by an authenticated session (MemberController /me/logout).
+// Do not merge these into one MemberAuthInPort just because one class implements all three.
+interface MemberKakaoLoginInPort { fun kakaoLogin(idToken: String): SocialLoginResult }
+interface MemberTokenReissueInPort { fun reissue(refreshToken: String): TokenPair }
+interface MemberLogoutInPort { fun logout(memberId: String) }
+```
+
+**Keep separate — call pattern differs despite an identical implementing class:**
+
+```kotlin
+// Both methods are implemented by the same ScheduleConfirmationService.
+// register() is a synchronous HTTP write from an authenticated circle member.
+// hasConfirmed() is called from ScheduleNotificationEventListener — an event
+// listener, not a human actor — to decide whether to send a reminder.
+interface ScheduleConfirmationRegisterInPort { fun register(command: RegisterConfirmationCommand): ConfirmationType }
+interface ScheduleConfirmationStatusInPort { fun hasConfirmed(scheduleId: ScheduleId, memberId: String): Boolean }
+```
+
+**Keep separate — looks like the same feature, but the caller is a different bounded context:**
+
+```kotlin
+// MemberInPort is called by MemberController (the member managing their own profile).
+// MemberProfileInPort with the same-looking getMemberProfile() method is called by
+// HomeQueryService, CircleService, and InvitationService — other domains reading a
+// member's public profile. Same-sounding name, unrelated actor and reason to change.
+interface MemberInPort { fun getById(memberId: String): Member }
+interface MemberProfileInPort { fun getMemberProfile(memberId: String): MemberProfileDto? }
+```
+
+### Checklist
+
+Before merging ports, or before adding a new method to an existing port instead of creating a new one:
+
+- Open every adapter that calls the port (controller, event listener, scheduled job, another domain's service) — don't guess from the port's name or the feature it "sounds like" it belongs to.
+- Confirm actor, call pattern, and reason to change all match across every method involved.
+- If a merge is justified but the methods currently live in different service classes, plan the service consolidation as part of the same change — don't merge the interface while leaving two divergent implementations behind it.
+- A port with unusually many single-method siblings implemented by one class is a prompt to *check* cohesion, not a conclusion that they should merge.
+
 ## Spring Configuration Management
 
 Choose between `@Value`, `@ConfigurationProperties`, and `@Configuration` based on the scope and purpose of the configuration.

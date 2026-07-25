@@ -7,8 +7,8 @@ import com.unicorn.server.domain.notification.enums.NotificationStatus
 import com.unicorn.server.domain.notification.exception.PermanentNotificationSendException
 import com.unicorn.server.domain.notification.exception.RetryableNotificationSendException
 import com.unicorn.server.domain.notification.port.dto.NotificationMessage
-import com.unicorn.server.domain.notification.port.out.NotificationMessageComposer
-import com.unicorn.server.domain.notification.port.out.NotificationSender
+import com.unicorn.server.domain.notification.port.out.NotificationMessageComposeOutPort
+import com.unicorn.server.domain.notification.port.out.NotificationSendOutPort
 import com.unicorn.server.domain.notification.port.out.NotificationOutPort
 import com.unicorn.server.infrastructure.config.NotificationProperties
 import org.assertj.core.api.Assertions.assertThat
@@ -114,7 +114,7 @@ class NotificationDispatchServiceTest {
             notifications.values.filter { it.isDispatchable(now) }.take(limit)
     }
 
-    private class FakeComposer : NotificationMessageComposer {
+    private class FakeComposer : NotificationMessageComposeOutPort {
         override fun channel(): NotificationChannel = NotificationChannel.PUSH
 
         override fun compose(notification: Notification): NotificationMessage =
@@ -123,7 +123,7 @@ class NotificationDispatchServiceTest {
             }
     }
 
-    private class RecordingSender : NotificationSender {
+    private class RecordingSender : NotificationSendOutPort {
         val messages = mutableListOf<NotificationMessage>()
 
         override fun channel(): NotificationChannel = NotificationChannel.PUSH
@@ -133,7 +133,7 @@ class NotificationDispatchServiceTest {
         }
     }
 
-    private class RetryableFailSender : NotificationSender {
+    private class RetryableFailSender : NotificationSendOutPort {
         override fun channel(): NotificationChannel = NotificationChannel.PUSH
 
         override fun send(message: NotificationMessage) {
@@ -141,7 +141,7 @@ class NotificationDispatchServiceTest {
         }
     }
 
-    private class PermanentFailSender : NotificationSender {
+    private class PermanentFailSender : NotificationSendOutPort {
         override fun channel(): NotificationChannel = NotificationChannel.PUSH
 
         override fun send(message: NotificationMessage) {

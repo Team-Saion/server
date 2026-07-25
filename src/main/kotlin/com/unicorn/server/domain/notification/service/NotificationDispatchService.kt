@@ -5,9 +5,9 @@ import com.unicorn.server.domain.notification.enums.NotificationChannel
 import com.unicorn.server.domain.notification.exception.PermanentNotificationSendException
 import com.unicorn.server.domain.notification.exception.RetryableNotificationSendException
 import com.unicorn.server.domain.notification.port.`in`.NotificationDispatchInPort
-import com.unicorn.server.domain.notification.port.out.NotificationMessageComposer
+import com.unicorn.server.domain.notification.port.out.NotificationMessageComposeOutPort
 import com.unicorn.server.domain.notification.port.out.NotificationOutPort
-import com.unicorn.server.domain.notification.port.out.NotificationSender
+import com.unicorn.server.domain.notification.port.out.NotificationSendOutPort
 import com.unicorn.server.infrastructure.config.NotificationProperties
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -17,13 +17,13 @@ import java.time.LocalDateTime
 @Transactional(readOnly = true)
 class NotificationDispatchService(
     private val notificationOutPort: NotificationOutPort,
-    composers: List<NotificationMessageComposer>,
-    senders: List<NotificationSender>,
+    composers: List<NotificationMessageComposeOutPort>,
+    senders: List<NotificationSendOutPort>,
     private val notificationProperties: NotificationProperties,
 ) : NotificationDispatchInPort {
-    private val composerRegistry: Map<NotificationChannel, NotificationMessageComposer> =
+    private val composerRegistry: Map<NotificationChannel, NotificationMessageComposeOutPort> =
         composers.associateBy { it.channel() }
-    private val senderRegistry: Map<NotificationChannel, NotificationSender> = senders.associateBy { it.channel() }
+    private val senderRegistry: Map<NotificationChannel, NotificationSendOutPort> = senders.associateBy { it.channel() }
 
     @Transactional
     override fun dispatch(limit: Int) {

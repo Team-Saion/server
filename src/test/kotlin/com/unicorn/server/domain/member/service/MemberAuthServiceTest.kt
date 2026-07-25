@@ -13,8 +13,8 @@ import com.unicorn.server.domain.member.port.dto.SocialLoginCommand
 import com.unicorn.server.domain.member.port.dto.TokenPair
 import com.unicorn.server.domain.member.port.out.MemberOutPort
 import com.unicorn.server.domain.member.port.out.SocialAccountOutPort
-import com.unicorn.server.domain.member.port.out.TokenIssuer
-import com.unicorn.server.domain.member.port.out.TokenStore
+import com.unicorn.server.domain.member.port.out.MemberTokenIssueOutPort
+import com.unicorn.server.domain.member.port.out.MemberTokenStoreOutPort
 import com.unicorn.server.domain.member.vo.MemberId
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -138,11 +138,9 @@ class MemberAuthServiceTest {
 	}
 
 	@Test
-	@DisplayName("login 호출 시 기존 소셜 계정의 멤버가 탈퇴 상태이면 WithdrawnMemberException이 발생한다")
-	fun login_existingWithdrawnMember_throwsWithdrawnMemberException() {
+	@DisplayName("탈퇴로 소셜 계정 연결이 삭제된 뒤 같은 소셜 계정으로 로그인하면 신규 가입된다")
+	fun login_afterSocialAccountDeletion_createsNewMember() {
 		val member = memberOutPort.save(Member.create(Email("withdrawn-login@example.com"), "홍길동", "길동이"))
-		member.withdraw()
-		memberOutPort.save(member)
 		socialAccountOutPort.save(
 			SocialAccount.create(
 				member.id,
@@ -153,10 +151,16 @@ class MemberAuthServiceTest {
 				"https://example.com/withdrawn.png",
 			),
 		)
+		member.withdraw()
+		memberOutPort.save(member)
+		socialAccountOutPort.deleteByMemberId(member.id)
 		val command = SocialLoginCommand(SocialProvider.KAKAO, "kakao-withdrawn", "withdrawn-login@example.com", "홍길동")
 
-		assertThatThrownBy { memberAuthService.login(command) }
-			.isInstanceOf(WithdrawnMemberException::class.java)
+		val result = memberAuthService.login(command)
+
+		assertThat(result.isNewMember).isTrue()
+		assertThat(socialAccountOutPort.findByProviderAndProviderId(SocialProvider.KAKAO, "kakao-withdrawn")!!.memberId)
+			.isNotEqualTo(member.id)
 	}
 
 	@Test
@@ -170,7 +174,7 @@ class MemberAuthServiceTest {
 	}
 
 	@Test
-	@DisplayName("logout 호출 시 TokenStore에서 refresh token을 삭제한다")
+	@DisplayName("logout 호출 시 MemberTokenStoreOutPort에서 refresh token을 삭제한다")
 	fun logout_deletesRefreshTokenFromTokenStore() {
 		val member = memberOutPort.save(Member.create(Email("test@example.com"), "홍길동", "길동이"))
 		tokenStore.save(member.id.toString(), "some-refresh-token")
@@ -269,9 +273,13 @@ class MemberAuthServiceTest {
 
 		override fun findByMemberId(memberId: MemberId): SocialAccount? =
 			store.values.firstOrNull { it.memberId == memberId }
+
+		override fun deleteByMemberId(memberId: MemberId) {
+			store.entries.removeIf { it.value.memberId == memberId }
+		}
 	}
 
-	private class FakeTokenIssuer : TokenIssuer {
+	private class FakeTokenIssuer : MemberTokenIssueOutPort {
 		private val refreshTokens = mutableMapOf<String, String>()
 
 		override fun issue(memberId: String, role: Role): TokenPair =
@@ -285,7 +293,7 @@ class MemberAuthServiceTest {
 		}
 	}
 
-	private class FakeTokenStore : TokenStore {
+	private class FakeTokenStore : MemberTokenStoreOutPort {
 		private val memberToToken = mutableMapOf<String, String>()
 		private val tokenToMember = mutableMapOf<String, String>()
 

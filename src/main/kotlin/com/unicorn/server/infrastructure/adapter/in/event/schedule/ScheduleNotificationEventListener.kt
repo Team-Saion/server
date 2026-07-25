@@ -1,6 +1,6 @@
 package com.unicorn.server.infrastructure.adapter.`in`.event.schedule
 
-import com.unicorn.server.common.port.out.event.EventPublisher
+import com.unicorn.server.common.port.out.event.EventOutPort
 import com.unicorn.server.domain.circle.port.`in`.CircleMemberInPort
 import com.unicorn.server.domain.circle.port.dto.CircleMemberDto
 import com.unicorn.server.domain.notification.enums.NotificationChannel
@@ -34,7 +34,7 @@ class ScheduleNotificationEventListener(
 	private val notificationPushTokenInPort: NotificationPushTokenInPort,
 	private val notificationSettingInPort: NotificationSettingInPort,
 	private val scheduleConfirmationStatusInPort: ScheduleConfirmationStatusInPort,
-	private val eventPublisher: EventPublisher,
+	private val eventPublisher: EventOutPort,
 ) {
 	@EventListener
 	fun handle(event: ScheduleCreatedEvent) {

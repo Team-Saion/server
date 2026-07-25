@@ -1,9 +1,9 @@
 package com.unicorn.server.infrastructure.adapter.`in`.web.invitation
 
 import com.unicorn.server.domain.invitation.port.dto.IssueInvitationCommand
-import com.unicorn.server.domain.invitation.port.`in`.AcceptCircleInvitationInPort
-import com.unicorn.server.domain.invitation.port.`in`.GetInvitationByTokenInPort
-import com.unicorn.server.domain.invitation.port.`in`.IssueInvitationInPort
+import com.unicorn.server.domain.invitation.port.`in`.InvitationAcceptInPort
+import com.unicorn.server.domain.invitation.port.`in`.InvitationByTokenInPort
+import com.unicorn.server.domain.invitation.port.`in`.InvitationIssueInPort
 import com.unicorn.server.infrastructure.adapter.`in`.web.common.dto.ApiResponse
 import com.unicorn.server.infrastructure.adapter.`in`.web.invitation.dto.AcceptInvitationResponse
 import com.unicorn.server.infrastructure.adapter.`in`.web.invitation.dto.InvitationDetailResponse
@@ -21,9 +21,9 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/v1/invitations")
 class InvitationController(
-    private val issueInvitationInPort: IssueInvitationInPort,
-    private val getInvitationByTokenInPort: GetInvitationByTokenInPort,
-    private val acceptCircleInvitationInPort: AcceptCircleInvitationInPort,
+    private val issueInvitationInPort: InvitationIssueInPort,
+    private val getInvitationByTokenInPort: InvitationByTokenInPort,
+    private val acceptCircleInvitationInPort: InvitationAcceptInPort,
 ) : InvitationApiDoc {
     @PostMapping
     override fun issue(

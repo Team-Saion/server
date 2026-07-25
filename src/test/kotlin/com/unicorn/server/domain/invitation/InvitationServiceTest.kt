@@ -3,7 +3,7 @@ package com.unicorn.server.domain.invitation
 import com.unicorn.server.TestIdFactory
 import com.unicorn.server.common.exception.BusinessException
 import com.unicorn.server.common.domain.Event
-import com.unicorn.server.common.port.out.event.EventPublisher
+import com.unicorn.server.common.port.out.event.EventOutPort
 import com.unicorn.server.common.vo.Email
 import com.unicorn.server.domain.circle.port.dto.CircleMemberDto
 import com.unicorn.server.domain.circle.port.dto.CircleSummary
@@ -27,7 +27,7 @@ import com.unicorn.server.domain.invitation.vo.InvitationToken
 import com.unicorn.server.domain.member.Member
 import com.unicorn.server.domain.member.enums.Role
 import com.unicorn.server.domain.member.port.dto.MemberProfileDto
-import com.unicorn.server.domain.member.port.`in`.GetMemberProfileInPort
+import com.unicorn.server.domain.member.port.`in`.MemberProfileInPort
 import com.unicorn.server.domain.member.vo.MemberId
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -221,7 +221,7 @@ class InvitationServiceTest {
 		fun put(circleId: String, memberId: String) { members.add(circleId to memberId) }
 	}
 
-	private class FakeMemberProfileInPort : GetMemberProfileInPort {
+	private class FakeMemberProfileInPort : MemberProfileInPort {
 		private val members = linkedMapOf<MemberId, Member>()
 		fun save(member: Member): Member { members[member.id] = member; return member }
 			override fun getMemberProfile(memberId: String): MemberProfileDto? =
@@ -237,7 +237,7 @@ class InvitationServiceTest {
 				}
 	}
 
-	private class RecordingEventPublisher : EventPublisher {
+	private class RecordingEventPublisher : EventOutPort {
 		val events = mutableListOf<Event>()
 
 		override fun publish(event: Event) {

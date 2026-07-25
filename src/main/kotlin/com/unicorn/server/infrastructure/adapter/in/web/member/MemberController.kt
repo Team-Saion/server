@@ -3,14 +3,10 @@ package com.unicorn.server.infrastructure.adapter.`in`.web.member
 import com.unicorn.server.domain.member.Member
 import com.unicorn.server.domain.member.enums.MemberStatus
 import com.unicorn.server.domain.member.enums.Role
-import com.unicorn.server.domain.member.port.`in`.CompleteOnboardingInPort
-import com.unicorn.server.domain.member.port.`in`.GetMemberInPort
-import com.unicorn.server.domain.member.port.`in`.GetOnboardingInfoInPort
-import com.unicorn.server.domain.member.port.`in`.LogoutInPort
-import com.unicorn.server.domain.member.port.`in`.UpdateMemberStateInPort
-import com.unicorn.server.domain.member.port.`in`.UpdateProfileInPort
-import com.unicorn.server.domain.member.port.`in`.UploadProfileImageInPort
-import com.unicorn.server.domain.member.port.`in`.WithdrawMemberInPort
+import com.unicorn.server.domain.member.port.`in`.MemberOnboardingCompleteInPort
+import com.unicorn.server.domain.member.port.`in`.MemberInPort
+import com.unicorn.server.domain.member.port.`in`.MemberLogoutInPort
+import com.unicorn.server.domain.member.port.`in`.MemberStateUpdateInPort
 import com.unicorn.server.domain.member.port.dto.CompleteOnboardingCommand
 import com.unicorn.server.domain.member.port.dto.UpdateProfileCommand
 import com.unicorn.server.domain.member.port.dto.UploadProfileImageCommand
@@ -40,14 +36,10 @@ import org.springframework.web.multipart.MultipartFile
 @RestController
 @RequestMapping("/api/v1/members")
 class MemberController(
-	private val getMemberInPort: GetMemberInPort,
-	private val getOnboardingInfoInPort: GetOnboardingInfoInPort,
-	private val updateProfileInPort: UpdateProfileInPort,
-	private val uploadProfileImageInPort: UploadProfileImageInPort,
-	private val logoutInPort: LogoutInPort,
-	private val withdrawMemberInPort: WithdrawMemberInPort,
-	private val completeOnboardingInPort: CompleteOnboardingInPort,
-	private val updateMemberStateInPort: UpdateMemberStateInPort,
+	private val memberInPort: MemberInPort,
+	private val logoutInPort: MemberLogoutInPort,
+	private val completeOnboardingInPort: MemberOnboardingCompleteInPort,
+	private val updateMemberStateInPort: MemberStateUpdateInPort,
 	@param:Value("\${app.server.url}") private val serverUrl: String,
 ) : MemberApiDoc {
 
@@ -56,7 +48,7 @@ class MemberController(
 	override fun getMyProfile(
 		@AuthenticationPrincipal memberId: String,
 	): ApiResponse<MemberResponse> {
-		val member = getMemberInPort.getById(memberId)
+		val member = memberInPort.getById(memberId)
 		return ApiResponse.success(toMemberResponse(member))
 	}
 
@@ -65,7 +57,7 @@ class MemberController(
 	override fun getOnboardingInfo(
 		@AuthenticationPrincipal memberId: String,
 	): ApiResponse<OnboardingInfoResponse> {
-		val result = getOnboardingInfoInPort.getOnboardingInfo(memberId)
+		val result = memberInPort.getOnboardingInfo(memberId)
 		return ApiResponse.success(OnboardingInfoResponse.from(result))
 	}
 
@@ -88,7 +80,7 @@ class MemberController(
 		@AuthenticationPrincipal memberId: String,
 		@RequestBody @Valid request: UpdateProfileRequest,
 	): ApiResponse<MemberResponse> {
-		val member = updateProfileInPort.updateProfile(memberId, UpdateProfileCommand(request.nickname))
+		val member = memberInPort.updateProfile(memberId, UpdateProfileCommand(request.nickname))
 		return ApiResponse.success(toMemberResponse(member))
 	}
 
@@ -104,7 +96,7 @@ class MemberController(
 			contentLength = image.size,
 			inputStream = image.inputStream,
 		)
-		val member = uploadProfileImageInPort.uploadProfileImage(memberId, command)
+		val member = memberInPort.uploadProfileImage(memberId, command)
 		return ApiResponse.success(toMemberResponse(member))
 	}
 
@@ -123,7 +115,7 @@ class MemberController(
 		@AuthenticationPrincipal memberId: String,
 		@RequestBody @Valid request: WithdrawRequest,
 	): ApiResponse<Unit> {
-		withdrawMemberInPort.withdraw(memberId, request.reason)
+		memberInPort.withdraw(memberId, request.reason)
 		return ApiResponse.success()
 	}
 

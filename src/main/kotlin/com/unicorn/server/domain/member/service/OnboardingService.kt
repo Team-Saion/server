@@ -3,12 +3,12 @@ package com.unicorn.server.domain.member.service
 import com.unicorn.server.common.exception.BusinessException
 import com.unicorn.server.domain.member.exception.MemberNotFoundException
 import com.unicorn.server.domain.member.exception.WithdrawnMemberException
-import com.unicorn.server.domain.member.port.`in`.CompleteOnboardingInPort
+import com.unicorn.server.domain.member.port.`in`.MemberOnboardingCompleteInPort
 import com.unicorn.server.domain.member.port.dto.CompleteOnboardingCommand
 import com.unicorn.server.domain.member.port.dto.TokenPair
 import com.unicorn.server.domain.member.port.out.MemberOutPort
-import com.unicorn.server.domain.member.port.out.TokenIssuer
-import com.unicorn.server.domain.member.port.out.TokenStore
+import com.unicorn.server.domain.member.port.out.MemberTokenIssueOutPort
+import com.unicorn.server.domain.member.port.out.MemberTokenStoreOutPort
 import com.unicorn.server.domain.member.vo.MemberId
 import com.unicorn.server.domain.term.exception.TermErrorCode
 import com.unicorn.server.domain.term.port.out.MemberTermOutPort
@@ -23,9 +23,9 @@ class OnboardingService(
 	private val memberOutPort: MemberOutPort,
 	private val termOutPort: TermOutPort,
 	private val memberTermOutPort: MemberTermOutPort,
-	private val tokenIssuer: TokenIssuer,
-	private val tokenStore: TokenStore,
-) : CompleteOnboardingInPort {
+	private val tokenIssuer: MemberTokenIssueOutPort,
+	private val tokenStore: MemberTokenStoreOutPort,
+) : MemberOnboardingCompleteInPort {
 
 	override fun completeOnboarding(memberId: String, command: CompleteOnboardingCommand): TokenPair {
 		val member = memberOutPort.findById(MemberId.of(memberId))

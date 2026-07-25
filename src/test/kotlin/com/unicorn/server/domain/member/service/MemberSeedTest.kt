@@ -9,7 +9,7 @@ import com.unicorn.server.domain.member.enums.SocialProvider
 import com.unicorn.server.domain.member.port.dto.SocialLoginCommand
 import com.unicorn.server.domain.member.port.out.MemberOutPort
 import com.unicorn.server.domain.member.port.out.SocialAccountOutPort
-import com.unicorn.server.domain.member.port.out.TokenStore
+import com.unicorn.server.domain.member.port.out.MemberTokenStoreOutPort
 import com.unicorn.server.domain.member.vo.MemberId
 import com.unicorn.server.infrastructure.adapter.out.token.InMemoryTokenStoreAdapter
 import com.unicorn.server.infrastructure.adapter.out.token.JwtProvider
@@ -23,7 +23,7 @@ class MemberSeedTest : BaseTest() {
 
     private val memberOutPort = FakeMemberOutPort()
     private val socialAccountOutPort = FakeSocialAccountOutPort()
-    private val tokenStore: TokenStore = InMemoryTokenStoreAdapter()
+    private val tokenStore: MemberTokenStoreOutPort = InMemoryTokenStoreAdapter()
     private val jwtProvider = JwtProvider(testJwtSecret, accessTokenExpirationSeconds, refreshTokenExpirationSeconds)
     private val memberAuthService = MemberAuthService(memberOutPort, socialAccountOutPort, jwtProvider, tokenStore)
 
@@ -90,7 +90,11 @@ class MemberSeedTest : BaseTest() {
         override fun findByProviderAndProviderId(provider: SocialProvider, providerId: String): SocialAccount? =
             store[provider to providerId]
 
-        override fun findByMemberId(memberId: MemberId): SocialAccount? =
-            store.values.firstOrNull { it.memberId == memberId }
-    }
+		override fun findByMemberId(memberId: MemberId): SocialAccount? =
+			store.values.firstOrNull { it.memberId == memberId }
+
+		override fun deleteByMemberId(memberId: MemberId) {
+			store.entries.removeIf { it.value.memberId == memberId }
+		}
+	}
 }

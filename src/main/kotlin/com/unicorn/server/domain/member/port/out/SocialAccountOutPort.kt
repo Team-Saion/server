@@ -14,4 +14,7 @@ interface SocialAccountOutPort {
 
 	// 멤버 식별자로 연결된 소셜 계정을 조회한다.
 	fun findByMemberId(memberId: MemberId): SocialAccount?
+
+	// 멤버 탈퇴 시 연결된 소셜 계정을 삭제한다.
+	fun deleteByMemberId(memberId: MemberId)
 }

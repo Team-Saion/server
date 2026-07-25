@@ -8,4 +8,5 @@ import org.springframework.data.jpa.repository.JpaRepository
 interface SocialAccountJpaRepository : JpaRepository<SocialAccountEntity, String> {
 	fun findByProviderAndProviderId(provider: SocialProvider, providerId: String): SocialAccountEntity?
 	fun findByMemberId(memberId: String): SocialAccountEntity?
+	fun deleteByMemberId(memberId: String)
 }

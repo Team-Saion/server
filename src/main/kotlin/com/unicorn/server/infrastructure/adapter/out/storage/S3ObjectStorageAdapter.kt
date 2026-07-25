@@ -1,7 +1,7 @@
 package com.unicorn.server.infrastructure.adapter.out.storage
 
 import com.unicorn.server.common.exception.BusinessException
-import com.unicorn.server.common.port.out.storage.ObjectStorage
+import com.unicorn.server.common.port.out.storage.ObjectStorageOutPort
 import com.unicorn.server.common.port.out.storage.ObjectUploadCommand
 import com.unicorn.server.common.port.out.storage.StoredObject
 import com.unicorn.server.common.port.out.storage.exception.ObjectStorageErrorCode
@@ -15,14 +15,14 @@ import software.amazon.awssdk.services.s3.model.GetUrlRequest
 import software.amazon.awssdk.services.s3.model.PutObjectRequest
 
 /**
- * S3ObjectStorageAdapter - S3Client 구성(S3Config)에 따라 AWS S3 또는 MinIO에 접근하는 ObjectStorage 구현체.
+ * S3ObjectStorageAdapter - S3Client 구성(S3Config)에 따라 AWS S3 또는 MinIO에 접근하는 ObjectStorageOutPort 구현체.
  * 호출자가 ObjectType으로 이미 검증/objectKey 생성을 끝낸 ObjectUploadCommand만 받는다고 가정한다.
  */
 @Component
 class S3ObjectStorageAdapter(
     private val s3Client: S3Client,
     @param:Value("\${app.s3.bucket}") private val bucket: String,
-) : ObjectStorage {
+) : ObjectStorageOutPort {
     override fun upload(command: ObjectUploadCommand): StoredObject {
         if (command.objectKey.isBlank()) {
             throw BusinessException(ObjectStorageErrorCode.INVALID_OBJECT_KEY, command.objectKey)

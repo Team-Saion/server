@@ -8,16 +8,16 @@ import com.unicorn.server.domain.member.exception.DuplicateEmailException
 import com.unicorn.server.domain.member.exception.InvalidRefreshTokenException
 import com.unicorn.server.domain.member.exception.MemberNotFoundException
 import com.unicorn.server.domain.member.exception.WithdrawnMemberException
-import com.unicorn.server.domain.member.port.`in`.LogoutInPort
-import com.unicorn.server.domain.member.port.`in`.ReissueTokenInPort
-import com.unicorn.server.domain.member.port.`in`.SocialLoginInPort
+import com.unicorn.server.domain.member.port.`in`.MemberLogoutInPort
+import com.unicorn.server.domain.member.port.`in`.MemberTokenReissueInPort
+import com.unicorn.server.domain.member.port.`in`.MemberSocialLoginInPort
 import com.unicorn.server.domain.member.port.dto.SocialLoginCommand
 import com.unicorn.server.domain.member.port.dto.SocialLoginResult
 import com.unicorn.server.domain.member.port.dto.TokenPair
 import com.unicorn.server.domain.member.port.out.MemberOutPort
 import com.unicorn.server.domain.member.port.out.SocialAccountOutPort
-import com.unicorn.server.domain.member.port.out.TokenIssuer
-import com.unicorn.server.domain.member.port.out.TokenStore
+import com.unicorn.server.domain.member.port.out.MemberTokenIssueOutPort
+import com.unicorn.server.domain.member.port.out.MemberTokenStoreOutPort
 import com.unicorn.server.domain.member.vo.MemberId
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -28,9 +28,9 @@ import org.springframework.transaction.annotation.Transactional
 class MemberAuthService(
 	private val memberOutPort: MemberOutPort,
 	private val socialAccountOutPort: SocialAccountOutPort,
-	private val tokenIssuer: TokenIssuer,
-	private val tokenStore: TokenStore,
-) : SocialLoginInPort, LogoutInPort, ReissueTokenInPort {
+	private val tokenIssuer: MemberTokenIssueOutPort,
+	private val tokenStore: MemberTokenStoreOutPort,
+) : MemberSocialLoginInPort, MemberLogoutInPort, MemberTokenReissueInPort {
 
 	// 검증된 소셜 사용자 정보로 신규 가입 또는 기존 로그인을 처리하고 토큰을 발급한다.
 	override fun login(command: SocialLoginCommand): SocialLoginResult {

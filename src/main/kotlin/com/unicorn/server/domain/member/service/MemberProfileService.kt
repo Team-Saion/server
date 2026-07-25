@@ -1,7 +1,7 @@
 package com.unicorn.server.domain.member.service
 
-import com.unicorn.server.common.port.out.event.EventPublisher
-import com.unicorn.server.common.port.out.storage.ObjectStorage
+import com.unicorn.server.common.port.out.event.EventOutPort
+import com.unicorn.server.common.port.out.storage.ObjectStorageOutPort
 import com.unicorn.server.common.port.out.storage.ObjectType
 import com.unicorn.server.common.port.out.storage.ObjectUploadCommand
 import com.unicorn.server.domain.member.Member
@@ -11,13 +11,9 @@ import com.unicorn.server.domain.member.enums.Role
 import com.unicorn.server.domain.member.event.MemberWithdrawnEvent
 import com.unicorn.server.domain.member.exception.MemberNotFoundException
 import com.unicorn.server.domain.member.exception.WithdrawnMemberException
-import com.unicorn.server.domain.member.port.`in`.GetMemberInPort
-import com.unicorn.server.domain.member.port.`in`.GetMemberProfileInPort
-import com.unicorn.server.domain.member.port.`in`.GetOnboardingInfoInPort
-import com.unicorn.server.domain.member.port.`in`.UpdateMemberStateInPort
-import com.unicorn.server.domain.member.port.`in`.UpdateProfileInPort
-import com.unicorn.server.domain.member.port.`in`.UploadProfileImageInPort
-import com.unicorn.server.domain.member.port.`in`.WithdrawMemberInPort
+import com.unicorn.server.domain.member.port.`in`.MemberInPort
+import com.unicorn.server.domain.member.port.`in`.MemberProfileInPort
+import com.unicorn.server.domain.member.port.`in`.MemberStateUpdateInPort
 import com.unicorn.server.domain.member.port.dto.MemberProfileDto
 import com.unicorn.server.domain.member.port.dto.OnboardingInfoResult
 import com.unicorn.server.domain.member.port.dto.UpdateProfileCommand
@@ -38,10 +34,10 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 class MemberProfileService(
 	private val memberOutPort: MemberOutPort,
 	private val socialAccountOutPort: SocialAccountOutPort,
-	private val eventPublisher: EventPublisher,
-	private val objectStorage: ObjectStorage,
+	private val eventPublisher: EventOutPort,
+	private val objectStorage: ObjectStorageOutPort,
 	private val withdrawalLogOutPort: WithdrawalLogOutPort,
-) : GetMemberInPort, GetMemberProfileInPort, GetOnboardingInfoInPort, UpdateProfileInPort, WithdrawMemberInPort, UploadProfileImageInPort, UpdateMemberStateInPort {
+) : MemberInPort, MemberProfileInPort, MemberStateUpdateInPort {
 
 	// 멤버 식별자로 저장된 멤버를 조회한다.
 	override fun getById(memberId: String): Member = findMemberOrThrow(memberId)
@@ -126,10 +122,14 @@ class MemberProfileService(
 			WithdrawalLog.create(
 				memberId = savedMember.id,
 				originalEmail = originalEmail?.value,
+				socialProvider = socialAccountOutPort.findByMemberId(savedMember.id)?.provider,
 				reason = reason,
 				withdrawnAt = requireNotNull(savedMember.deletedAt) { "deletedAt must not be null after withdrawal" },
 			),
 		)
+
+		// 재가입 시 새 소셜 연결을 생성할 수 있도록 기존 연결을 제거한다.
+		socialAccountOutPort.deleteByMemberId(savedMember.id)
 
 		// 탈퇴 이벤트 발행
 		eventPublisher.publish(MemberWithdrawnEvent(savedMember.id.toString()))

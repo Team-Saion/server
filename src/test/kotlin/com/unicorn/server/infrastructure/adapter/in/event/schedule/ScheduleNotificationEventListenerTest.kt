@@ -1,7 +1,7 @@
 package com.unicorn.server.infrastructure.adapter.`in`.event.schedule
 
 import com.unicorn.server.common.domain.Event
-import com.unicorn.server.common.port.out.event.EventPublisher
+import com.unicorn.server.common.port.out.event.EventOutPort
 import com.unicorn.server.domain.circle.port.`in`.CircleMemberInPort
 import com.unicorn.server.domain.circle.port.dto.CircleMemberDto
 import com.unicorn.server.domain.circle.port.dto.CircleSummary
@@ -309,7 +309,7 @@ class ScheduleNotificationEventListenerTest {
 		override fun hasConfirmed(scheduleId: ScheduleId, memberId: String): Boolean = memberId in confirmedMembers
 	}
 
-	private class RecordingEventPublisher : EventPublisher {
+	private class RecordingEventPublisher : EventOutPort {
 		val events = mutableListOf<Event>()
 
 		override fun publish(event: Event) {

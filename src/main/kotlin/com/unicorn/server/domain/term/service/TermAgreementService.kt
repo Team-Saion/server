@@ -4,7 +4,7 @@ import com.unicorn.server.common.exception.BusinessException
 import com.unicorn.server.domain.member.vo.MemberId
 import com.unicorn.server.domain.term.MemberTerm
 import com.unicorn.server.domain.term.exception.TermErrorCode
-import com.unicorn.server.domain.term.port.`in`.AgreeTermsInPort
+import com.unicorn.server.domain.term.port.`in`.TermAgreeInPort
 import com.unicorn.server.domain.term.port.dto.AgreeTermsCommand
 import com.unicorn.server.domain.term.port.out.MemberTermOutPort
 import com.unicorn.server.domain.term.port.out.TermOutPort
@@ -18,7 +18,7 @@ import java.time.LocalDateTime
 class TermAgreementService(
 	private val termOutPort: TermOutPort,
 	private val memberTermOutPort: MemberTermOutPort,
-) : AgreeTermsInPort {
+) : TermAgreeInPort {
 
 	override fun agreeTerms(command: AgreeTermsCommand) {
 		val activeTerms = termOutPort.findAllEffectiveAsOf(LocalDateTime.now())

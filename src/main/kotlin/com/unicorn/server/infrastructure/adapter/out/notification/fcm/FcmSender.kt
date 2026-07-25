@@ -9,7 +9,7 @@ import com.unicorn.server.domain.notification.enums.NotificationChannel
 import com.unicorn.server.domain.notification.exception.PermanentNotificationSendException
 import com.unicorn.server.domain.notification.exception.RetryableNotificationSendException
 import com.unicorn.server.domain.notification.port.dto.NotificationMessage
-import com.unicorn.server.domain.notification.port.out.NotificationSender
+import com.unicorn.server.domain.notification.port.out.NotificationSendOutPort
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
 
@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component
 @ConditionalOnProperty(prefix = "app.notification.fcm", name = ["enabled"], havingValue = "true")
 class FcmSender(
 	private val firebaseMessaging: FirebaseMessaging,
-) : NotificationSender {
+) : NotificationSendOutPort {
 	override fun channel(): NotificationChannel = NotificationChannel.PUSH
 
 	override fun send(message: NotificationMessage) {

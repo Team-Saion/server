@@ -1,7 +1,7 @@
 package com.unicorn.server.domain.schedule.service
 
 import com.unicorn.server.common.domain.Event
-import com.unicorn.server.common.port.out.event.EventPublisher
+import com.unicorn.server.common.port.out.event.EventOutPort
 import com.unicorn.server.domain.schedule.Schedule
 import com.unicorn.server.domain.schedule.event.ScheduleConfirmationRequestDueEvent
 import com.unicorn.server.domain.schedule.port.dto.SchedulePageCursor
@@ -80,7 +80,7 @@ class ScheduleConfirmationRequestServiceTest {
 		}
 	}
 
-	private class RecordingEventPublisher : EventPublisher {
+	private class RecordingEventPublisher : EventOutPort {
 		val events = mutableListOf<Event>()
 
 		override fun publish(event: Event) {
