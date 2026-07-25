@@ -15,6 +15,7 @@ import com.unicorn.server.domain.circle.port.out.CircleMemberIdGenerator
 import com.unicorn.server.domain.circle.port.out.CircleMemberOutPort
 import com.unicorn.server.domain.circle.port.out.CircleOutPort
 import com.unicorn.server.domain.circle.service.CircleService
+import com.unicorn.server.domain.circle.service.CircleMemberService
 import com.unicorn.server.domain.circle.vo.CircleId
 import com.unicorn.server.domain.member.Member
 import com.unicorn.server.domain.member.port.dto.MemberProfileDto
@@ -36,6 +37,7 @@ class CircleServiceTest {
 	private val circleIdGenerator = object : CircleIdGenerator { override fun next() = TestIdFactory.circleId() }
 	private val circleMemberIdGenerator = object : CircleMemberIdGenerator { override fun next() = TestIdFactory.circleMemberId() }
 	private val circleService = CircleService(circleOutPort, circleMemberOutPort, circleIdGenerator, circleMemberIdGenerator, memberQueryInPort, eventPublisher)
+	private val circleMemberService = CircleMemberService(circleOutPort, circleMemberOutPort, circleMemberIdGenerator, memberQueryInPort, eventPublisher)
 
 	@Test
 	@DisplayName("써클 생성 시 initiator 멤버십이 함께 생성된다")
@@ -94,7 +96,7 @@ class CircleServiceTest {
 		val initiator = circleMemberOutPort.save(com.unicorn.server.domain.circle.CircleMember.createInitiator(TestIdFactory.circleMemberId(), circle.id, owner.id, owner.nickname))
 		val member = circleMemberOutPort.save(com.unicorn.server.domain.circle.CircleMember.createMember(TestIdFactory.circleMemberId(), circle.id, target.id, target.nickname))
 
-		val result = circleService.transferInitiator(circle.id.toString(), owner.id.toString(), target.id.toString())
+		val result = circleMemberService.transferInitiator(circle.id.toString(), owner.id.toString(), target.id.toString())
 
 		assertThat(result.ownerId).isEqualTo(target.id.toString())
 		assertThat(circleOutPort.findById(circle.id)?.ownerId).isEqualTo(target.id)
@@ -120,7 +122,7 @@ class CircleServiceTest {
 		circleMemberOutPort.save(com.unicorn.server.domain.circle.CircleMember.createMember(TestIdFactory.circleMemberId(), circle.id, requester.id, requester.nickname))
 		circleMemberOutPort.save(com.unicorn.server.domain.circle.CircleMember.createMember(TestIdFactory.circleMemberId(), circle.id, target.id, target.nickname))
 
-		assertThatThrownBy { circleService.transferInitiator(circle.id.toString(), requester.id.toString(), target.id.toString()) }
+		assertThatThrownBy { circleMemberService.transferInitiator(circle.id.toString(), requester.id.toString(), target.id.toString()) }
 			.isInstanceOf(BusinessException::class.java)
 			.extracting("errorCode")
 			.isEqualTo(CircleErrorCode.INITIATOR_DELEGATION_FORBIDDEN)
@@ -135,7 +137,7 @@ class CircleServiceTest {
 		val circle = circleOutPort.save(Circle.create(TestIdFactory.circleId(), "셀프위임써클", owner.id))
 		circleMemberOutPort.save(com.unicorn.server.domain.circle.CircleMember.createInitiator(TestIdFactory.circleMemberId(), circle.id, owner.id, owner.nickname))
 
-		assertThatThrownBy { circleService.transferInitiator(circle.id.toString(), owner.id.toString(), owner.id.toString()) }
+		assertThatThrownBy { circleMemberService.transferInitiator(circle.id.toString(), owner.id.toString(), owner.id.toString()) }
 			.isInstanceOf(BusinessException::class.java)
 			.extracting("errorCode")
 			.isEqualTo(CircleErrorCode.INITIATOR_DELEGATION_SELF_FORBIDDEN)
@@ -155,7 +157,7 @@ class CircleServiceTest {
 		leftMember.leave()
 		circleMemberOutPort.save(leftMember)
 
-		assertThatThrownBy { circleService.transferInitiator(circle.id.toString(), owner.id.toString(), target.id.toString()) }
+		assertThatThrownBy { circleMemberService.transferInitiator(circle.id.toString(), owner.id.toString(), target.id.toString()) }
 			.isInstanceOf(BusinessException::class.java)
 			.extracting("errorCode")
 			.isEqualTo(CircleErrorCode.INITIATOR_DELEGATION_TARGET_INVALID)
@@ -219,7 +221,7 @@ class CircleServiceTest {
 			),
 		)
 
-		circleService.handleMemberWithdrawal(owner.id.toString())
+		circleMemberService.handleMemberWithdrawal(owner.id.toString())
 
 		assertThat(circleOutPort.findById(circle.id)?.deleted).isFalse()
 		assertThat(circleOutPort.findById(circle.id)?.ownerId).isEqualTo(firstJoiner.id)
@@ -242,7 +244,7 @@ class CircleServiceTest {
 		val circle = circleOutPort.save(Circle.create(TestIdFactory.circleId(), "삭제써클", owner.id))
 		circleMemberOutPort.save(com.unicorn.server.domain.circle.CircleMember.createInitiator(TestIdFactory.circleMemberId(), circle.id, owner.id, owner.nickname))
 
-		circleService.handleMemberWithdrawal(owner.id.toString())
+		circleMemberService.handleMemberWithdrawal(owner.id.toString())
 
 		assertThat(circleOutPort.findById(circle.id)?.deleted).isTrue()
 		assertThat(circleMemberOutPort.findByCircleAndMember(circle.id, owner.id)?.status).isEqualTo(com.unicorn.server.domain.circle.enums.CircleMemberStatus.LEFT)

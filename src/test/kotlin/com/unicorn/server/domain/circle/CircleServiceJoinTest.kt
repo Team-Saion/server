@@ -9,10 +9,9 @@ import com.unicorn.server.domain.circle.enums.CircleRole
 import com.unicorn.server.domain.circle.exception.CircleErrorCode
 import com.unicorn.server.domain.circle.exception.CircleSuccessorNotFoundException
 import com.unicorn.server.domain.circle.port.out.CircleMemberOutPort
-import com.unicorn.server.domain.circle.port.out.CircleIdGenerator
 import com.unicorn.server.domain.circle.port.out.CircleMemberIdGenerator
 import com.unicorn.server.domain.circle.port.out.CircleOutPort
-import com.unicorn.server.domain.circle.service.CircleService
+import com.unicorn.server.domain.circle.service.CircleMemberService
 import com.unicorn.server.domain.circle.vo.CircleId
 import com.unicorn.server.domain.member.Member
 import com.unicorn.server.domain.member.enums.Role
@@ -31,9 +30,8 @@ class CircleServiceJoinTest {
 	private val circleMemberOutPort = FakeCircleMemberOutPort()
 	private val memberQueryInPort = FakeMemberQueryInPort()
 	private val eventPublisher = RecordingEventPublisher()
-	private val circleIdGenerator = object : CircleIdGenerator { override fun next() = TestIdFactory.circleId() }
 	private val circleMemberIdGenerator = object : CircleMemberIdGenerator { override fun next() = TestIdFactory.circleMemberId() }
-	private val circleService = CircleService(circleOutPort, circleMemberOutPort, circleIdGenerator, circleMemberIdGenerator, memberQueryInPort, eventPublisher)
+	private val circleMemberService = CircleMemberService(circleOutPort, circleMemberOutPort, circleMemberIdGenerator, memberQueryInPort, eventPublisher)
 
 	@Test
 	@DisplayName("이미 참여한 사용자가 join 하면 예외를 던진다")
@@ -47,7 +45,7 @@ class CircleServiceJoinTest {
 		circleOutPort.save(circle)
 		circleMemberOutPort.save(CircleMember.createMember(TestIdFactory.circleMemberId(), circle.id, friend.id, friend.nickname))
 
-		assertThatThrownBy { circleService.join(circle.id.toString(), friend.id.toString()) }
+		assertThatThrownBy { circleMemberService.join(circle.id.toString(), friend.id.toString()) }
 			.isInstanceOf(BusinessException::class.java)
 			.extracting("errorCode")
 			.isEqualTo(CircleErrorCode.ALREADY_JOINED)
@@ -68,7 +66,7 @@ class CircleServiceJoinTest {
 		membership.leave()
 		circleMemberOutPort.save(membership)
 
-		val result = circleService.join(circle.id.toString(), friend.id.toString())
+		val result = circleMemberService.join(circle.id.toString(), friend.id.toString())
 
 		assertThat(result.circleId).isEqualTo(circle.id.toString())
 		assertThat(circleMemberOutPort.members).hasSize(1)
@@ -91,7 +89,7 @@ class CircleServiceJoinTest {
 		circleOutPort.save(targetCircle)
 		circleMemberOutPort.save(CircleMember.createMember(TestIdFactory.circleMemberId(), joinedCircle.id, friend.id, friend.nickname))
 
-		assertThatThrownBy { circleService.join(targetCircle.id.toString(), friend.id.toString()) }
+		assertThatThrownBy { circleMemberService.join(targetCircle.id.toString(), friend.id.toString()) }
 			.isInstanceOf(BusinessException::class.java)
 			.extracting("errorCode")
 			.isEqualTo(CircleErrorCode.ALREADY_HAS_ACTIVE_CIRCLE)
@@ -113,7 +111,7 @@ class CircleServiceJoinTest {
 			circleMemberOutPort.save(CircleMember.createMember(TestIdFactory.circleMemberId(), circle.id, member.id, member.nickname))
 		}
 
-		assertThatThrownBy { circleService.join(circle.id.toString(), friend.id.toString()) }
+		assertThatThrownBy { circleMemberService.join(circle.id.toString(), friend.id.toString()) }
 			.isInstanceOf(BusinessException::class.java)
 			.extracting("errorCode")
 			.isEqualTo(CircleErrorCode.CIRCLE_MEMBER_LIMIT_EXCEEDED)
@@ -133,7 +131,7 @@ class CircleServiceJoinTest {
 		membership.leave()
 		circleMemberOutPort.save(membership)
 
-		val result = circleService.isCircleMember(circle.id.toString(), friend.id.toString())
+		val result = circleMemberService.isCircleMember(circle.id.toString(), friend.id.toString())
 
 		assertThat(result).isFalse()
 	}
@@ -149,13 +147,13 @@ class CircleServiceJoinTest {
 		circleMemberOutPort.save(CircleMember.createInitiator(TestIdFactory.circleMemberId(), circle.id, owner.id, owner.nickname))
 		circleMemberOutPort.save(CircleMember.createMember(TestIdFactory.circleMemberId(), circle.id, member.id, member.nickname))
 
-		circleService.leave(circle.id.toString(), member.id.toString())
+		circleMemberService.leave(circle.id.toString(), member.id.toString())
 
 		val membership = circleMemberOutPort.findByCircleAndMember(circle.id, member.id)
 		assertThat(membership?.status).isEqualTo(CircleMemberStatus.LEFT)
 		assertThat(membership?.deleted).isTrue()
 		assertThat(membership?.leftAt).isNotNull()
-		assertThat(circleService.isCircleMember(circle.id.toString(), member.id.toString())).isFalse()
+		assertThat(circleMemberService.isCircleMember(circle.id.toString(), member.id.toString())).isFalse()
 	}
 
 	@Test
@@ -173,7 +171,7 @@ class CircleServiceJoinTest {
 		circleMemberOutPort.save(circleMember(circle, oldestMember, CircleRole.MEMBER, baseTime.plusMinutes(1)))
 		circleMemberOutPort.save(circleMember(circle, latestMember, CircleRole.MEMBER, baseTime.plusMinutes(2)))
 
-		circleService.leave(circle.id.toString(), owner.id.toString())
+		circleMemberService.leave(circle.id.toString(), owner.id.toString())
 
 		assertThat(circleOutPort.findById(circle.id)?.ownerId).isEqualTo(oldestMember.id)
 		assertThat(circleOutPort.findById(circle.id)?.deleted).isFalse()
@@ -191,7 +189,7 @@ class CircleServiceJoinTest {
 		val circle = circleOutPort.save(Circle.create(TestIdFactory.circleId(), "단독방장탈퇴", owner.id))
 		circleMemberOutPort.save(CircleMember.createInitiator(TestIdFactory.circleMemberId(), circle.id, owner.id, owner.nickname))
 
-		circleService.leave(circle.id.toString(), owner.id.toString())
+		circleMemberService.leave(circle.id.toString(), owner.id.toString())
 
 		assertThat(circleOutPort.findById(circle.id)?.deleted).isTrue()
 		assertThat(circleMemberOutPort.findByCircleAndMember(circle.id, owner.id)?.status).isEqualTo(CircleMemberStatus.LEFT)
@@ -210,7 +208,7 @@ class CircleServiceJoinTest {
 		circleMemberOutPort.save(CircleMember.createMember(TestIdFactory.circleMemberId(), circle.id, member.id, member.nickname))
 		circleMemberOutPort.successorDisappearsOnLookup = true
 
-		circleService.leave(circle.id.toString(), owner.id.toString())
+		circleMemberService.leave(circle.id.toString(), owner.id.toString())
 
 		assertThat(circleOutPort.findById(circle.id)?.deleted).isTrue()
 		assertThat(circleMemberOutPort.findByCircleAndMember(circle.id, owner.id)?.status).isEqualTo(CircleMemberStatus.LEFT)
