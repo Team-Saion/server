@@ -23,87 +23,112 @@ data class CircleJoinCompletedPayload(
 data class ScheduleCreatedPayload(
 	val actorName: String,
 	val scheduleTitle: String,
+	val scheduleId: String,
 ) : NotificationEventPayload {
 	override val type: NotificationType = NotificationType.SCHEDULE_CREATED
 
 	override fun toVariables(): Map<String, String> = mapOf(
 		"actor_name" to actorName,
 		"schedule_title" to scheduleTitle,
+		"schedule_id" to scheduleId,
 	)
 }
 
 data class ScheduleDeletedPayload(
 	val actorName: String,
 	val scheduleTitle: String,
+	val scheduleId: String,
 ) : NotificationEventPayload {
 	override val type: NotificationType = NotificationType.SCHEDULE_DELETED
 
 	override fun toVariables(): Map<String, String> = mapOf(
 		"actor_name" to actorName,
 		"schedule_title" to scheduleTitle,
+		"schedule_id" to scheduleId,
 	)
 }
 
 data class ScheduleReminderD7Payload(
 	val scheduleTitle: String,
+	val scheduleId: String,
 ) : NotificationEventPayload {
 	override val type: NotificationType = NotificationType.SCHEDULE_REMINDER_D7
 
-	override fun toVariables(): Map<String, String> = mapOf("schedule_title" to scheduleTitle)
+	override fun toVariables(): Map<String, String> = mapOf(
+		"schedule_title" to scheduleTitle,
+		"schedule_id" to scheduleId,
+	)
 }
 
 data class ScheduleReminderD1Payload(
 	val scheduleTitle: String,
+	val scheduleId: String,
 ) : NotificationEventPayload {
 	override val type: NotificationType = NotificationType.SCHEDULE_REMINDER_D1
 
-	override fun toVariables(): Map<String, String> = mapOf("schedule_title" to scheduleTitle)
+	override fun toVariables(): Map<String, String> = mapOf(
+		"schedule_title" to scheduleTitle,
+		"schedule_id" to scheduleId,
+	)
 }
 
 data class ScheduleReminderDDayAllDayPayload(
 	val scheduleTitle: String,
+	val scheduleId: String,
 ) : NotificationEventPayload {
 	override val type: NotificationType = NotificationType.SCHEDULE_REMINDER_DDAY_ALL_DAY
 
-	override fun toVariables(): Map<String, String> = mapOf("schedule_title" to scheduleTitle)
+	override fun toVariables(): Map<String, String> = mapOf(
+		"schedule_title" to scheduleTitle,
+		"schedule_id" to scheduleId,
+	)
 }
 
 data class ScheduleReminderDDayTimedPayload(
 	val scheduleTitle: String,
 	val startTime: String,
+	val scheduleId: String,
 ) : NotificationEventPayload {
 	override val type: NotificationType = NotificationType.SCHEDULE_REMINDER_DDAY_TIMED
 
 	override fun toVariables(): Map<String, String> = mapOf(
 		"schedule_title" to scheduleTitle,
 		"start_time" to startTime,
+		"schedule_id" to scheduleId,
 	)
 }
 
 data class ScheduleConfirmedByFamilyPayload(
 	val memberName: String,
 	val scheduleTitle: String,
+	val scheduleId: String,
 ) : NotificationEventPayload {
 	override val type: NotificationType = NotificationType.SCHEDULE_CONFIRMED_BY_FAMILY
 
 	override fun toVariables(): Map<String, String> = mapOf(
 		"member_name" to memberName,
 		"schedule_title" to scheduleTitle,
+		"schedule_id" to scheduleId,
 	)
 }
 
 data class ScheduleConfirmationRequestedPayload(
 	val scheduleTitle: String,
+	val scheduleId: String,
 ) : NotificationEventPayload {
 	override val type: NotificationType = NotificationType.SCHEDULE_CONFIRMATION_REQUESTED
 
-	override fun toVariables(): Map<String, String> = mapOf("schedule_title" to scheduleTitle)
+	override fun toVariables(): Map<String, String> = mapOf(
+		"schedule_title" to scheduleTitle,
+		"schedule_id" to scheduleId,
+	)
 }
 
 data class ScheduleFamilyNotificationPayload(
 	val senderName: String,
 	val scheduleTitle: String,
 	val dDay: String,
+	val scheduleId: String,
 ) : NotificationEventPayload {
 	override val type: NotificationType = NotificationType.SCHEDULE_FAMILY_NOTIFICATION_REQUESTED
 
@@ -111,5 +136,6 @@ data class ScheduleFamilyNotificationPayload(
 		"sender_name" to senderName,
 		"schedule_title" to scheduleTitle,
 		"d_day" to dDay,
+		"schedule_id" to scheduleId,
 	)
 }

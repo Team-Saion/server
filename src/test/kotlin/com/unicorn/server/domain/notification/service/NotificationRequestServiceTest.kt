@@ -8,6 +8,7 @@ import com.unicorn.server.domain.notification.enums.DevicePlatform
 import com.unicorn.server.domain.notification.enums.NotificationType
 import com.unicorn.server.domain.notification.event.CircleJoinCompletedPayload
 import com.unicorn.server.domain.notification.event.ScheduleCreatedPayload
+import com.unicorn.server.domain.notification.event.ScheduleReminderDDayTimedPayload
 import com.unicorn.server.domain.notification.event.ScheduleReminderD7Payload
 import com.unicorn.server.domain.notification.port.`in`.NotificationPushTokenInPort
 import com.unicorn.server.domain.notification.port.`in`.NotificationSettingInPort
@@ -52,7 +53,7 @@ class NotificationRequestServiceTest {
 		val fixture = Fixture(tokens = listOf(pushToken(1), pushToken(2)))
 		val command = RequestNotificationCommand(
 			receiverMemberId = "member-1",
-			payload = ScheduleCreatedPayload("민수", "병원 방문"),
+			payload = ScheduleCreatedPayload("민수", "병원 방문", "schedule-1"),
 			eventId = "schedule-1",
 			circleId = "circle-1",
 			scheduleId = "schedule-1",
@@ -68,6 +69,29 @@ class NotificationRequestServiceTest {
 			.containsExactlyInAnyOrder("token-1", "token-2")
 		assertThat(fixture.notificationOutPort.notifications.keys)
 			.allMatch { it.startsWith("schedule_created:schedule-1:member-1:token:") }
+		assertThat(fixture.notificationOutPort.notifications.values)
+			.allSatisfy { notification ->
+				assertThat(notification.payload).containsEntry("schedule_id", "schedule-1")
+			}
+	}
+
+	@Test
+	@DisplayName("D-day 시간 지정 리마인더 푸시 payload에는 일정 ID가 포함된다")
+	fun request_dDayTimedReminder_includesScheduleIdInPushPayload() {
+		val fixture = Fixture()
+
+		fixture.service.request(
+			RequestNotificationCommand(
+				receiverMemberId = "member-1",
+				payload = ScheduleReminderDDayTimedPayload("병원 방문", "09:00", "schedule-1"),
+				eventId = "dday-timed:schedule-1",
+				circleId = "circle-1",
+				scheduleId = "schedule-1",
+			),
+		)
+
+		val notification = fixture.notificationOutPort.notifications.values.single()
+		assertThat(notification.payload).containsEntry("schedule_id", "schedule-1")
 	}
 
 	@Test
@@ -78,7 +102,7 @@ class NotificationRequestServiceTest {
 		fixture.service.request(
 			RequestNotificationCommand(
 				receiverMemberId = "member-1",
-				payload = ScheduleReminderD7Payload("병원 방문"),
+				payload = ScheduleReminderD7Payload("병원 방문", "schedule-1"),
 				eventId = "d7:schedule-1",
 				circleId = "circle-1",
 				scheduleId = "schedule-1",
