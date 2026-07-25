@@ -34,7 +34,7 @@ logging:
 app:
   notification:
     dispatch:
-      enabled: false
+      enabled: true
   jwt:
     secret: ${JWT_SECRET:dev-secret-key-for-local-development-only-min-32-chars}
     access-token-expiration: 2592000
