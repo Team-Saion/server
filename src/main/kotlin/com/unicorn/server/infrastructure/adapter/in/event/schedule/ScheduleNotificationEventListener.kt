@@ -27,7 +27,7 @@ import com.unicorn.server.domain.schedule.vo.ScheduleId
 import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Component
 import java.time.format.DateTimeFormatter
-l
+
 @Component
 class ScheduleNotificationEventListener(
 	private val circleMemberInPort: CircleMemberInPort,
