@@ -16,7 +16,7 @@ interface ScheduleOutPort {
 
 	fun findActiveByCircleId(
 		circleId: String,
-		today: LocalDate,
+		now: LocalDateTime,
 		cursor: SchedulePageCursor?,
 		size: Int,
 	): List<Schedule>
@@ -44,7 +44,7 @@ interface ScheduleOutPort {
 
 	fun findUpcomingByCircleId(
 		circleId: String,
-		today: LocalDate,
+		now: LocalDateTime,
 		limit: Int,
 	): List<Schedule>
 

@@ -253,11 +253,11 @@ class ScheduleCommandServiceTest {
 
 		override fun findActiveByCircleId(
 			circleId: String,
-			today: LocalDate,
+			now: LocalDateTime,
 			cursor: SchedulePageCursor?,
 			size: Int,
 		): List<Schedule> = store.values
-			.filter { it.circleId == circleId && !it.isDeleted && !it.endDate.isBefore(today) }
+			.filter { it.circleId == circleId && !it.isDeleted && !it.endDate.isBefore(now.toLocalDate()) }
 			.take(size)
 
 		override fun findActiveByStartDateAndCreatedBefore(
@@ -283,11 +283,11 @@ class ScheduleCommandServiceTest {
 
 		override fun findUpcomingByCircleId(
 			circleId: String,
-			today: LocalDate,
+			now: LocalDateTime,
 			limit: Int,
 		): List<Schedule> =
 			store.values
-				.filter { it.circleId == circleId && !it.isDeleted && !it.endDate.isBefore(today) }
+				.filter { it.circleId == circleId && !it.isDeleted && !it.endDate.isBefore(now.toLocalDate()) }
 				.take(limit)
 
 		override fun countActiveByCircleId(circleId: String): Long =
@@ -347,6 +347,9 @@ class ScheduleCommandServiceTest {
 		override fun existsById(circleId: String): Boolean = circleId in circles
 
 		override fun isMember(circleId: String, memberId: String): Boolean = circleId to memberId in members
+
+		override fun hasOtherActiveMember(circleId: String, excludedMemberId: String): Boolean =
+			members.any { (memberCircleId, memberId) -> memberCircleId == circleId && memberId != excludedMemberId }
 
 		override fun isInitiator(circleId: String, memberId: String): Boolean = circleId to memberId in initiators
 	}

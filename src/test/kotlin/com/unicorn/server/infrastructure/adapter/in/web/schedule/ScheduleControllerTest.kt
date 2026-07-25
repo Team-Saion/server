@@ -59,6 +59,9 @@ class ScheduleControllerTest(
 			override fun isMember(circleId: String, memberId: String): Boolean =
 				circleId == CIRCLE_ID && memberId in setOf(AUTHOR_ID, INITIATOR_ID, OTHER_MEMBER_ID)
 
+			override fun hasOtherActiveMember(circleId: String, excludedMemberId: String): Boolean =
+				circleId == CIRCLE_ID && setOf(AUTHOR_ID, INITIATOR_ID, OTHER_MEMBER_ID).any { it != excludedMemberId }
+
 			override fun isInitiator(circleId: String, memberId: String): Boolean =
 				circleId == CIRCLE_ID && memberId == INITIATOR_ID
 		}

@@ -25,6 +25,15 @@ class CircleAccessPersistenceAdapter(
 			?: false
 
 	@Transactional(readOnly = true)
+	override fun hasOtherActiveMember(circleId: String, excludedMemberId: String): Boolean =
+		circleMemberJpaRepository.existsByCircleIdAndStatusAndDelYnAndMemberIdNot(
+			circleId = circleId,
+			status = CircleMemberStatus.ACTIVE,
+			delYn = "N",
+			excludedMemberId = excludedMemberId,
+		)
+
+	@Transactional(readOnly = true)
 	override fun isInitiator(circleId: String, memberId: String): Boolean =
 		circleMemberJpaRepository.findByCircleIdAndMemberId(circleId, memberId)
 			?.let { it.role == CircleRole.INITIATOR && it.status == CircleMemberStatus.ACTIVE && it.delYn == "N" }

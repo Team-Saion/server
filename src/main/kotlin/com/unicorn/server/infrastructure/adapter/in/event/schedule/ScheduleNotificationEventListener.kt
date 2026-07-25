@@ -36,11 +36,11 @@ class ScheduleNotificationEventListener(
 	fun handle(event: ScheduleCreatedEvent) {
 		val members = circleMemberInPort.getCircleMembers(event.circleId)
 		val actorName = members.nicknameOf(event.creatorMemberId)
-		val payload = ScheduleCreatedPayload(actorName, event.scheduleTitle)
+		val payload = ScheduleCreatedPayload(actorName, event.scheduleTitle, event.scheduleId)
 
 		members
 			.asSequence()
-			.filter { it.active }
+			.filter { it.active && it.memberId != event.creatorMemberId }
 			.forEach { member ->
 				notificationPublishInPort.publish(
 					event.commandFor(member.memberId, payload),
@@ -54,6 +54,7 @@ class ScheduleNotificationEventListener(
 		val payload = ScheduleDeletedPayload(
 			actorName = members.nicknameOf(event.deletedByMemberId),
 			scheduleTitle = event.scheduleTitle,
+			scheduleId = event.scheduleId,
 		)
 
 		members.asSequence()
@@ -92,9 +93,6 @@ class ScheduleNotificationEventListener(
 
 	@EventListener
 	fun handle(event: ScheduleConfirmedEvent) {
-		if (event.scheduleCreatorMemberId == event.confirmerMemberId) {
-			return
-		}
 		val confirmerName = circleMemberInPort.getCircleMembers(event.circleId).nicknameOf(event.confirmerMemberId)
 		val payload = ScheduleConfirmedByFamilyPayload(confirmerName, event.scheduleTitle)
 		notificationPublishInPort.publish(
@@ -110,7 +108,7 @@ class ScheduleNotificationEventListener(
 
 	@EventListener
 	fun handle(event: ScheduleConfirmationRequestDueEvent) {
-		val payload = ScheduleConfirmationRequestedPayload(event.scheduleTitle)
+		val payload = ScheduleConfirmationRequestedPayload(event.scheduleTitle, event.scheduleId)
 		circleMemberInPort.getCircleMembers(event.circleId)
 			.asSequence()
 			.filter { it.active && it.memberId != event.scheduleCreatorMemberId }
@@ -135,6 +133,7 @@ class ScheduleNotificationEventListener(
 			senderName = members.nicknameOf(event.senderMemberId),
 			scheduleTitle = event.scheduleTitle,
 			dDay = event.dDay,
+			scheduleId = event.scheduleId,
 		)
 
 		members
@@ -158,12 +157,13 @@ class ScheduleNotificationEventListener(
 			?: error("Active circle member not found: memberId=$memberId")
 
 	private fun ScheduleReminderDueEvent.toPayload() = when (reminderType) {
-		ScheduleReminderType.D7 -> ScheduleReminderD7Payload(scheduleTitle)
-		ScheduleReminderType.D1 -> ScheduleReminderD1Payload(scheduleTitle)
-		ScheduleReminderType.DDAY_ALL_DAY -> ScheduleReminderDDayAllDayPayload(scheduleTitle)
+		ScheduleReminderType.D7 -> ScheduleReminderD7Payload(scheduleTitle, scheduleId)
+		ScheduleReminderType.D1 -> ScheduleReminderD1Payload(scheduleTitle, scheduleId)
+		ScheduleReminderType.DDAY_ALL_DAY -> ScheduleReminderDDayAllDayPayload(scheduleTitle, scheduleId)
 		ScheduleReminderType.DDAY_TIMED -> ScheduleReminderDDayTimedPayload(
 			scheduleTitle = scheduleTitle,
 			startTime = requireNotNull(startTime) { "Timed reminder requires start time" }.format(TIME_FORMATTER),
+			scheduleId = scheduleId,
 		)
 	}
 

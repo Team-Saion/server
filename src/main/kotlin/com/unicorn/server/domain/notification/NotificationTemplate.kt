@@ -19,9 +19,9 @@ class NotificationTemplate(
 		}
 		val variables = payload.toVariables()
 		val templateVariables = extractVariables(titleTemplate) + extractVariables(bodyTemplate)
-		require(templateVariables == variables.keys) {
+		require(variables.keys.containsAll(templateVariables)) {
 			"Notification template variables do not match payload: " +
-				"expected=${variables.keys.sorted()}, actual=${templateVariables.sorted()}"
+				"missing=${(templateVariables - variables.keys).sorted()}"
 		}
 
 		return variables + mapOf(

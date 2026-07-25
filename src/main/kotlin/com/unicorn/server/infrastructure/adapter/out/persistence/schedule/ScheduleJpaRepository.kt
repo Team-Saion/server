@@ -18,7 +18,10 @@ interface ScheduleJpaRepository : JpaRepository<ScheduleEntity, String> {
 			FROM schedule
 			WHERE circle_id = :circleId
 			  AND del_yn = 'N'
-			  AND end_date >= :today
+			  AND (
+			    end_date > :today
+			    OR (end_date = :today AND (end_time IS NULL OR end_time >= :nowTime))
+			  )
 			ORDER BY start_date ASC,
 			         start_time_sort ASC,
 			         schedule_id ASC
@@ -29,6 +32,7 @@ interface ScheduleJpaRepository : JpaRepository<ScheduleEntity, String> {
 	fun findFirstPage(
 		@Param("circleId") circleId: String,
 		@Param("today") today: LocalDate,
+		@Param("nowTime") nowTime: LocalTime,
 		@Param("size") size: Int,
 	): List<ScheduleEntity>
 
@@ -38,7 +42,10 @@ interface ScheduleJpaRepository : JpaRepository<ScheduleEntity, String> {
 			FROM schedule
 			WHERE circle_id = :circleId
 			  AND del_yn = 'N'
-			  AND end_date >= :today
+			  AND (
+			    end_date > :today
+			    OR (end_date = :today AND (end_time IS NULL OR end_time >= :nowTime))
+			  )
 			  AND (
 			    start_date > :cursorDate
 			    OR (start_date = :cursorDate AND start_time_sort > :cursorTime)
@@ -54,6 +61,7 @@ interface ScheduleJpaRepository : JpaRepository<ScheduleEntity, String> {
 	fun findAfterCursor(
 		@Param("circleId") circleId: String,
 		@Param("today") today: LocalDate,
+		@Param("nowTime") nowTime: LocalTime,
 		@Param("cursorDate") cursorDate: LocalDate,
 		@Param("cursorTime") cursorTime: LocalTime,
 		@Param("cursorId") cursorId: String,
@@ -124,14 +132,17 @@ interface ScheduleJpaRepository : JpaRepository<ScheduleEntity, String> {
 		@Param("createdBefore") createdBefore: LocalDateTime,
 	): List<ScheduleEntity>
 
-	// end_date >= today 조건으로 아직 종료되지 않은(예정 + 진행 중) 일정을 임박한 순서로 조회한다.
+	// 종료 시각이 지나지 않은(예정 + 진행 중) 일정을 임박한 순서로 조회한다.
 	@Query(
 		value = """
 			SELECT *
 			FROM schedule
 			WHERE circle_id = :circleId
 			  AND del_yn = 'N'
-			  AND end_date >= :today
+			  AND (
+			    end_date > :today
+			    OR (end_date = :today AND (end_time IS NULL OR end_time >= :nowTime))
+			  )
 			ORDER BY start_date ASC,
 			         start_time_sort ASC,
 			         schedule_id ASC
@@ -142,6 +153,7 @@ interface ScheduleJpaRepository : JpaRepository<ScheduleEntity, String> {
 	fun findUpcoming(
 		@Param("circleId") circleId: String,
 		@Param("today") today: LocalDate,
+		@Param("nowTime") nowTime: LocalTime,
 		@Param("limit") limit: Int,
 	): List<ScheduleEntity>
 

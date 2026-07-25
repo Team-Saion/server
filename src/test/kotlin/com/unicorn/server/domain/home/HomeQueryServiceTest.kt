@@ -18,7 +18,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
-import java.time.LocalDate
 import java.time.LocalDateTime
 
 @DisplayName("HomeQueryService 단위 테스트")
@@ -125,7 +124,7 @@ class HomeQueryServiceTest {
 		var listCalled = false
 		var countCalled = false
 
-		override fun findUpcomingSchedulesByCircleId(circleId: CircleId, today: LocalDate, limit: Int) = emptyList<com.unicorn.server.domain.schedule.port.dto.ScheduleSummaryResult>().also { listCalled = true }
+		override fun findUpcomingSchedulesByCircleId(circleId: CircleId, now: LocalDateTime, limit: Int) = emptyList<com.unicorn.server.domain.schedule.port.dto.ScheduleSummaryResult>().also { listCalled = true }
 		override fun countByCircleId(circleId: CircleId): Long = 0L.also { countCalled = true }
 	}
 }

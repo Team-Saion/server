@@ -35,6 +35,7 @@ class FamilyScheduleNotificationServiceTest {
 	@DisplayName("다가오는 일정에 가족에게 전하기를 요청하면 가족 일정 알림 이벤트를 발행한다")
 	fun request_withUpcomingSchedule_publishesFamilyScheduleNotificationEvent() {
 		circleAccessOutPort.seedMember(CIRCLE_ID, MEMBER_ID)
+		circleAccessOutPort.seedMember(CIRCLE_ID, OTHER_MEMBER_ID)
 		scheduleOutPort.seed(schedule(startDate = LocalDate.now(KST).plusDays(3)))
 
 		service.request(command())
@@ -49,15 +50,28 @@ class FamilyScheduleNotificationServiceTest {
 	}
 
 	@Test
-	@DisplayName("시작일이 지난 일정에 가족에게 전하기를 요청하면 사용할 수 없다는 예외가 발생한다")
-	fun request_withStartedSchedule_throwsNotAvailable() {
+	@DisplayName("진행 중인 일정에 가족에게 전하기를 요청하면 D-day 가족 일정 알림 이벤트를 발행한다")
+	fun request_withInProgressSchedule_publishesFamilyScheduleNotificationEvent() {
 		circleAccessOutPort.seedMember(CIRCLE_ID, MEMBER_ID)
-		scheduleOutPort.seed(schedule(startDate = LocalDate.now(KST).minusDays(1)))
+		circleAccessOutPort.seedMember(CIRCLE_ID, OTHER_MEMBER_ID)
+		scheduleOutPort.seed(schedule(startDate = LocalDate.now(KST).minusDays(1), endDate = LocalDate.now(KST)))
+
+		service.request(command())
+
+		val event = eventPublisher.events.filterIsInstance<FamilyScheduleNotificationRequestedEvent>().single()
+		assertThat(event.dDay).isEqualTo("D-day")
+	}
+
+	@Test
+	@DisplayName("다른 활성 구성원이 없는 써클에서 가족에게 전하기를 요청하면 수신자가 없다는 예외가 발생한다")
+	fun request_withNoOtherActiveMember_throwsRecipientNotFound() {
+		circleAccessOutPort.seedMember(CIRCLE_ID, MEMBER_ID)
 
 		assertThatThrownBy { service.request(command()) }
 			.isInstanceOf(BusinessException::class.java)
 			.extracting { (it as BusinessException).errorCode }
-			.isEqualTo(ScheduleErrorCode.FAMILY_SCHEDULE_NOTIFICATION_NOT_AVAILABLE)
+			.isEqualTo(ScheduleErrorCode.FAMILY_SCHEDULE_NOTIFICATION_RECIPIENT_NOT_FOUND)
+		assertThat(eventPublisher.events).isEmpty()
 	}
 
 	private fun command() = RequestFamilyScheduleNotificationCommand(
@@ -66,12 +80,12 @@ class FamilyScheduleNotificationServiceTest {
 		memberId = MEMBER_ID,
 	)
 
-	private fun schedule(startDate: LocalDate): Schedule = Schedule.reconstitute(
+	private fun schedule(startDate: LocalDate, endDate: LocalDate = startDate): Schedule = Schedule.reconstitute(
 		id = SCHEDULE_ID,
 		circleId = CIRCLE_ID,
 		title = "제주도 여행",
 		startDate = startDate,
-		endDate = startDate,
+		endDate = endDate,
 		startTime = null,
 		endTime = null,
 		needConfirm = false,
@@ -99,7 +113,7 @@ class FamilyScheduleNotificationServiceTest {
 
 		override fun findActiveByCircleId(
 			circleId: String,
-			today: LocalDate,
+			now: LocalDateTime,
 			cursor: SchedulePageCursor?,
 			size: Int,
 		): List<Schedule> = emptyList()
@@ -125,7 +139,7 @@ class FamilyScheduleNotificationServiceTest {
 			createdBefore: LocalDateTime,
 		): List<Schedule> = emptyList()
 
-		override fun findUpcomingByCircleId(circleId: String, today: LocalDate, limit: Int): List<Schedule> = emptyList()
+		override fun findUpcomingByCircleId(circleId: String, now: LocalDateTime, limit: Int): List<Schedule> = emptyList()
 
 		override fun countActiveByCircleId(circleId: String): Long = 0L
 	}
@@ -141,6 +155,9 @@ class FamilyScheduleNotificationServiceTest {
 
 		override fun isMember(circleId: String, memberId: String): Boolean = circleId to memberId in members
 
+		override fun hasOtherActiveMember(circleId: String, excludedMemberId: String): Boolean =
+			members.any { (memberCircleId, memberId) -> memberCircleId == circleId && memberId != excludedMemberId }
+
 		override fun isInitiator(circleId: String, memberId: String): Boolean = false
 	}
 
@@ -155,6 +172,7 @@ class FamilyScheduleNotificationServiceTest {
 	companion object {
 		private const val CIRCLE_ID = "CC202506010000000001"
 		private const val MEMBER_ID = "member-1"
+		private const val OTHER_MEMBER_ID = "member-2"
 		private val SCHEDULE_ID = ScheduleId.of("SC202407070000000001")
 		private val KST: ZoneId = ZoneId.of("Asia/Seoul")
 	}
