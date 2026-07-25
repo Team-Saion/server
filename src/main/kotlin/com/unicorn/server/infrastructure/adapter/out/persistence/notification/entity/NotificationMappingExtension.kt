@@ -7,7 +7,6 @@ import com.unicorn.server.domain.notification.Notification
 import com.unicorn.server.domain.notification.NotificationInboxItem
 import com.unicorn.server.domain.notification.NotificationRoute
 import com.unicorn.server.domain.notification.NotificationSetting
-import com.unicorn.server.domain.notification.NotificationTemplate
 import com.unicorn.server.domain.notification.vo.DevicePushTokenId
 import com.unicorn.server.domain.notification.vo.NotificationId
 import com.unicorn.server.domain.notification.vo.NotificationInboxItemId
@@ -16,7 +15,7 @@ fun Notification.toEntity(objectMapper: ObjectMapper): NotificationEntity = Noti
 	id = this@toEntity.id?.value
 	channel = this@toEntity.channel
 	receiver = this@toEntity.receiver
-	eventType = this@toEntity.eventType
+	type = this@toEntity.type
 	payload = objectMapper.writeValueAsString(this@toEntity.payload)
 	status = this@toEntity.status
 	attemptCount = this@toEntity.attemptCount
@@ -36,7 +35,7 @@ fun NotificationEntity.toDomain(
 	id = NotificationId.of(requireNotNull(id) { "id must not be null" }),
 	channel = channel,
 	receiver = receiver,
-	eventType = eventType,
+	type = type,
 	payload = objectMapper.readValue(payload, payloadTypeReference),
 	dedupKey = dedupKey,
 	status = status,
@@ -97,12 +96,6 @@ fun NotificationSettingEntity.toDomain(): NotificationSetting = NotificationSett
 	familyScheduleCheckEnabled = familyScheduleCheckEnabled,
 	createdAt = requireNotNull(createdAt) { "createdAt must not be null" },
 	updatedAt = requireNotNull(updatedAt) { "updatedAt must not be null" },
-)
-
-fun NotificationTemplateEntity.toDomain(): NotificationTemplate = NotificationTemplate(
-	eventType = eventType,
-	titleTemplate = titleTemplate,
-	bodyTemplate = bodyTemplate,
 )
 
 fun DevicePushToken.toEntity(): DevicePushTokenEntity = DevicePushTokenEntity().apply {

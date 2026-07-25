@@ -21,6 +21,10 @@ class NotificationInboxPersistenceAdapter(
 	}
 
 	@Transactional(readOnly = true)
+	override fun findByDedupKey(dedupKey: String): NotificationInboxItem? =
+		notificationInboxJpaRepository.findByDedupKey(dedupKey)?.toDomain()
+
+	@Transactional(readOnly = true)
 	override fun findPageByReceiver(memberId: String, cursor: Long?, limit: Int): List<NotificationInboxItem> {
 		val pageable = PageRequest.of(0, limit)
 		val entities = cursor?.let { cursorId ->
