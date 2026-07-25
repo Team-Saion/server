@@ -12,6 +12,7 @@ import com.unicorn.server.domain.schedule.event.FamilyScheduleNotificationReques
 import com.unicorn.server.domain.schedule.event.ScheduleConfirmationRequestDueEvent
 import com.unicorn.server.domain.schedule.event.ScheduleConfirmedEvent
 import com.unicorn.server.domain.schedule.event.ScheduleCreatedEvent
+import com.unicorn.server.domain.schedule.event.ScheduleDeletedEvent
 import com.unicorn.server.domain.schedule.event.ScheduleReminderDueEvent
 import com.unicorn.server.domain.schedule.port.`in`.ScheduleConfirmationStatusInPort
 import com.unicorn.server.domain.schedule.vo.ScheduleId
@@ -41,6 +42,7 @@ class ScheduleNotificationEventListenerTest {
 		assertThat(recorder.commands).allSatisfy { command ->
 			assertThat(command.payload.type).isEqualTo(NotificationType.SCHEDULE_CREATED)
 			assertThat(command.scheduleId).isEqualTo("SC1")
+			assertThat(command.payload.toVariables()).containsEntry("schedule_id", "SC1")
 		}
 	}
 
@@ -59,6 +61,22 @@ class ScheduleNotificationEventListenerTest {
 		assertThat(command.receiverMemberId).isEqualTo("enabled")
 		assertThat(command.payload.type).isEqualTo(NotificationType.SCHEDULE_REMINDER_D7)
 		assertThat(command.eventId).isEqualTo("d7:SC1")
+		assertThat(command.payload.toVariables()).containsEntry("schedule_id", "SC1")
+	}
+
+	@Test
+	@DisplayName("D-day 리마인더 알림 payload에는 일정 ID를 포함한다")
+	fun handle_dDayReminder_includesScheduleIdInPayload() {
+		val recorder = RecordingNotificationRequestInPort()
+		val listener = listener(listOf(member("receiver", "수신")), recorder)
+
+		listener.handle(ScheduleReminderDueEvent(ScheduleReminderType.DDAY_ALL_DAY, "SC1", "circle-1", "여행", null))
+		listener.handle(ScheduleReminderDueEvent(ScheduleReminderType.DDAY_TIMED, "SC2", "circle-1", "회의", java.time.LocalTime.of(9, 0)))
+
+		assertThat(recorder.commands.map { it.payload.toVariables() })
+			.allSatisfy { variables -> assertThat(variables).containsKey("schedule_id") }
+		assertThat(recorder.commands.map { it.payload.toVariables().getValue("schedule_id") })
+			.containsExactly("SC1", "SC2")
 	}
 
 	@Test
@@ -77,6 +95,7 @@ class ScheduleNotificationEventListenerTest {
 		assertThat(recorder.commands).allSatisfy { command ->
 			assertThat(command.payload.type).isEqualTo(NotificationType.SCHEDULE_CONFIRMED_BY_FAMILY)
 			assertThat(command.eventId).isEqualTo("SC1:confirmer")
+			assertThat(command.payload.toVariables()).containsEntry("schedule_id", "SC1")
 		}
 	}
 
@@ -94,6 +113,7 @@ class ScheduleNotificationEventListenerTest {
 
 		assertThat(recorder.commands).extracting<String> { it.receiverMemberId }
 			.containsExactly("unconfirmed")
+		assertThat(recorder.commands.single().payload.toVariables()).containsEntry("schedule_id", "SC1")
 	}
 
 	@Test
@@ -120,6 +140,21 @@ class ScheduleNotificationEventListenerTest {
 		assertThat(command.receiverMemberId).isEqualTo("receiver")
 		assertThat(command.payload.type).isEqualTo(NotificationType.SCHEDULE_FAMILY_NOTIFICATION_REQUESTED)
 		assertThat(command.eventId).isEqualTo("request-1")
+		assertThat(command.payload.toVariables()).containsEntry("schedule_id", "SC1")
+	}
+
+	@Test
+	@DisplayName("일정 삭제 알림 payload에는 일정 ID를 포함한다")
+	fun handle_scheduleDeleted_includesScheduleIdInPayload() {
+		val recorder = RecordingNotificationRequestInPort()
+		val listener = listener(listOf(member("deleter", "삭제자"), member("receiver", "수신")), recorder)
+
+		listener.handle(ScheduleDeletedEvent("SC1", "circle-1", "deleter", "여행"))
+
+		assertThat(recorder.commands).allSatisfy { command ->
+			assertThat(command.payload.type).isEqualTo(NotificationType.SCHEDULE_DELETED)
+			assertThat(command.payload.toVariables()).containsEntry("schedule_id", "SC1")
+		}
 	}
 
 	private fun listener(

@@ -39,6 +39,7 @@ import org.springframework.web.bind.annotation.RequestParam
 		{
 		  "actor_name": "민수",
 		  "schedule_title": "병원 방문",
+		  "schedule_id": "SC202408010000000001",
 		  "eventType": "SCHEDULE_CREATED"
 		}
 		```
@@ -52,6 +53,7 @@ import org.springframework.web.bind.annotation.RequestParam
 		{
 		  "actor_name": "민수",
 		  "schedule_title": "병원 방문",
+		  "schedule_id": "SC202408010000000001",
 		  "eventType": "SCHEDULE_DELETED"
 		}
 		```
@@ -60,6 +62,7 @@ import org.springframework.web.bind.annotation.RequestParam
 		```json
 		{
 		  "schedule_title": "병원 방문",
+		  "schedule_id": "SC202408010000000001",
 		  "eventType": "SCHEDULE_REMINDER_D7"
 		}
 		```
@@ -68,6 +71,7 @@ import org.springframework.web.bind.annotation.RequestParam
 		```json
 		{
 		  "schedule_title": "병원 방문",
+		  "schedule_id": "SC202408010000000001",
 		  "eventType": "SCHEDULE_REMINDER_D1"
 		}
 		```
@@ -76,6 +80,7 @@ import org.springframework.web.bind.annotation.RequestParam
 		```json
 		{
 		  "schedule_title": "병원 방문",
+		  "schedule_id": "SC202408010000000001",
 		  "eventType": "SCHEDULE_REMINDER_DDAY_ALL_DAY"
 		}
 		```
@@ -85,6 +90,7 @@ import org.springframework.web.bind.annotation.RequestParam
 		{
 		  "schedule_title": "병원 방문",
 		  "start_time": "14:00",
+		  "schedule_id": "SC202408010000000001",
 		  "eventType": "SCHEDULE_REMINDER_DDAY_TIMED"
 		}
 		```
@@ -94,6 +100,7 @@ import org.springframework.web.bind.annotation.RequestParam
 		{
 		  "member_name": "영희",
 		  "schedule_title": "병원 방문",
+		  "schedule_id": "SC202408010000000001",
 		  "eventType": "SCHEDULE_CONFIRMED_BY_FAMILY"
 		}
 		```
@@ -102,6 +109,7 @@ import org.springframework.web.bind.annotation.RequestParam
 		```json
 		{
 		  "schedule_title": "병원 방문",
+		  "schedule_id": "SC202408010000000001",
 		  "eventType": "SCHEDULE_CONFIRMATION_REQUESTED"
 		}
 		```
@@ -112,6 +120,7 @@ import org.springframework.web.bind.annotation.RequestParam
 		  "sender_name": "민수",
 		  "schedule_title": "병원 방문",
 		  "d_day": "D-3",
+		  "schedule_id": "SC202408010000000001",
 		  "eventType": "SCHEDULE_FAMILY_NOTIFICATION_REQUESTED"
 		}
 		```
