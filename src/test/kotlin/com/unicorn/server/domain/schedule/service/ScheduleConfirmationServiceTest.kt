@@ -218,7 +218,7 @@ class ScheduleConfirmationServiceTest {
 
 		override fun findActiveByCircleId(
 			circleId: String,
-			today: LocalDate,
+			now: java.time.LocalDateTime,
 			cursor: SchedulePageCursor?,
 			size: Int,
 		): List<Schedule> = emptyList()
@@ -246,7 +246,7 @@ class ScheduleConfirmationServiceTest {
 
 		override fun findUpcomingByCircleId(
 			circleId: String,
-			today: LocalDate,
+			now: java.time.LocalDateTime,
 			limit: Int,
 		): List<Schedule> = emptyList()
 

@@ -46,7 +46,7 @@ class ScheduleQueryService(
 		}
 		val pageSize = size
 		val pageCursor = cursor?.takeIf { it.isNotBlank() }?.let { decodeCursor(it) }
-		val results = scheduleOutPort.findActiveByCircleId(circleId, today(), pageCursor, pageSize + 1)
+		val results = scheduleOutPort.findActiveByCircleId(circleId, nowDateTime(), pageCursor, pageSize + 1)
 		val hasNext = results.size > pageSize
 		val schedules = results.take(pageSize)
 		val nextCursor = if (hasNext && schedules.isNotEmpty()) {
@@ -104,10 +104,10 @@ class ScheduleQueryService(
 
 	override fun findUpcomingSchedulesByCircleId(
 		circleId: CircleId,
-		today: LocalDate,
+		now: LocalDateTime,
 		limit: Int,
 	): List<ScheduleSummaryResult> =
-		scheduleOutPort.findUpcomingByCircleId(circleId.value, today, limit)
+		scheduleOutPort.findUpcomingByCircleId(circleId.value, now, limit)
 			.map { it.toSummaryResult() }
 
 	override fun countByCircleId(circleId: CircleId): Long =

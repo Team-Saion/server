@@ -185,12 +185,12 @@ class ScheduleQueryServiceTest {
 
 		override fun findActiveByCircleId(
 			circleId: String,
-			today: LocalDate,
+			now: LocalDateTime,
 			cursor: SchedulePageCursor?,
 			size: Int,
 		): List<Schedule> =
 			store.values
-				.filter { it.circleId == circleId && !it.isDeleted && !it.endDate.isBefore(today) }
+				.filter { it.circleId == circleId && !it.isDeleted && !it.hasEndedAt(now) }
 				.sortedWith(compareBy<Schedule> { it.startDate }.thenBy { it.startTime ?: LocalTime.MIDNIGHT }.thenBy { it.id.value })
 				.dropWhile { cursor != null && !isAfterCursor(it, cursor) }
 				.take(size)
@@ -218,11 +218,11 @@ class ScheduleQueryServiceTest {
 
 		override fun findUpcomingByCircleId(
 			circleId: String,
-			today: LocalDate,
+			now: LocalDateTime,
 			limit: Int,
 		): List<Schedule> =
 			store.values
-				.filter { it.circleId == circleId && !it.isDeleted && !it.endDate.isBefore(today) }
+				.filter { it.circleId == circleId && !it.isDeleted && !it.hasEndedAt(now) }
 				.sortedWith(compareBy<Schedule> { it.startDate }.thenBy { it.startTime ?: LocalTime.MIDNIGHT }.thenBy { it.id.value })
 				.take(limit)
 
@@ -236,6 +236,9 @@ class ScheduleQueryServiceTest {
 			if (timeCompare != 0) return timeCompare > 0
 			return schedule.id.value > cursor.scheduleId.value
 		}
+
+		private fun Schedule.hasEndedAt(now: LocalDateTime): Boolean =
+			LocalDateTime.of(endDate, endTime ?: LocalTime.of(23, 59, 59)).isBefore(now)
 	}
 
 	private class FakeScheduleConfirmationOutPort : ScheduleConfirmationOutPort {
