@@ -108,6 +108,9 @@ class NotificationInboxServiceTest {
 			return saved
 		}
 
+		override fun findByDedupKey(dedupKey: String): NotificationInboxItem? =
+			items.values.firstOrNull { it.dedupKey == dedupKey }
+
 		override fun findPageByReceiver(memberId: String, cursor: Long?, limit: Int): List<NotificationInboxItem> =
 			items.values
 				.filter { it.receiverMemberId == memberId }

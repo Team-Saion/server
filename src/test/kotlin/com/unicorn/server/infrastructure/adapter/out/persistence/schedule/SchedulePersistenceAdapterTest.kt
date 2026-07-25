@@ -91,11 +91,33 @@ class SchedulePersistenceAdapterTest(
 		)
 
 		val today = LocalDate.of(2024, 8, 1)
-		val firstPage = schedulePersistenceAdapter.findActiveByCircleId("CC000000000000000104", today, null, 2)
-		val secondPage = schedulePersistenceAdapter.findActiveByCircleId("CC000000000000000104", today, SchedulePageCursor.from(second), 2)
+		val firstPage = schedulePersistenceAdapter.findActiveByCircleId("CC000000000000000104", today.atStartOfDay(), null, 2)
+		val secondPage = schedulePersistenceAdapter.findActiveByCircleId("CC000000000000000104", today.atStartOfDay(), SchedulePageCursor.from(second), 2)
 
 		assertThat(firstPage.map { it.id }).containsExactly(first.id, second.id)
 		assertThat(secondPage.map { it.id }).containsExactly(third.id)
+	}
+
+	@Test
+	@DisplayName("오늘 종료 시간이 지난 일정은 목록 조회에서 제외한다")
+	fun findActiveByCircleId_excludesScheduleEndedToday() {
+		val circleId = "CC000000000000000105"
+		val ended = schedulePersistenceAdapter.save(
+			schedule(circleId = circleId, title = "종료됨", startDate = LocalDate.of(2024, 8, 1), startTime = LocalTime.of(9, 0)),
+		)
+		val ongoing = schedulePersistenceAdapter.save(
+			schedule(circleId = circleId, title = "진행 중", startDate = LocalDate.of(2024, 8, 1), startTime = LocalTime.of(15, 0)),
+		)
+
+		val result = schedulePersistenceAdapter.findActiveByCircleId(
+			circleId,
+			LocalDateTime.of(2024, 8, 1, 12, 0),
+			null,
+			10,
+		)
+
+		assertThat(result.map { it.id }).containsExactly(ongoing.id)
+		assertThat(result.map { it.id }).doesNotContain(ended.id)
 	}
 
 	private fun schedule(

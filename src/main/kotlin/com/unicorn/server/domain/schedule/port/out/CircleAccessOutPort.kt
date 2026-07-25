@@ -5,5 +5,7 @@ interface CircleAccessOutPort {
 
 	fun isMember(circleId: String, memberId: String): Boolean
 
+	fun hasOtherActiveMember(circleId: String, excludedMemberId: String): Boolean
+
 	fun isInitiator(circleId: String, memberId: String): Boolean
 }

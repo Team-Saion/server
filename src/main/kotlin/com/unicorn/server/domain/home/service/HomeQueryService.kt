@@ -13,7 +13,8 @@ import com.unicorn.server.domain.member.port.`in`.MemberProfileInPort
 import com.unicorn.server.domain.schedule.port.`in`.ScheduleForCircleInPort
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.ZoneId
 
 @Service
 @Transactional(readOnly = true)
@@ -30,10 +31,9 @@ class HomeQueryService(
         }
         val visibleMembers = getVisibleMembers(circleId, requesterId)
 
-        val today = LocalDate.now()
-        val circleIdVo = CircleId.of(circleId)
+		val circleIdVo = CircleId.of(circleId)
         // 메인(가장 임박한 1건) + 나머지 최대 3건을 한 번의 조회로 가져와 분리한다.
-        val upcomingSchedules = scheduleQueryInPort.findUpcomingSchedulesByCircleId(circleIdVo, today, MAIN_AND_UPCOMING_LIMIT)
+		val upcomingSchedules = scheduleQueryInPort.findUpcomingSchedulesByCircleId(circleIdVo, LocalDateTime.now(KST), MAIN_AND_UPCOMING_LIMIT)
         return HomeView(
             circle = HomeCircleDto(circle.id, circle.name, circle.ownerId),
             members = visibleMembers,
@@ -68,7 +68,8 @@ class HomeQueryService(
                 )
             }
 
-    companion object {
+	companion object {
+		private val KST: ZoneId = ZoneId.of("Asia/Seoul")
         // 메인 일정 1건 + 홈에 노출할 나머지 일정 3건
         private const val MAIN_AND_UPCOMING_LIMIT = 4
     }

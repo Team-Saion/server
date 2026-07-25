@@ -5,6 +5,7 @@ import java.time.LocalDateTime
 
 interface NotificationInboxOutPort {
 	fun save(item: NotificationInboxItem): NotificationInboxItem
+	fun findByDedupKey(dedupKey: String): NotificationInboxItem?
 
 	fun findPageByReceiver(memberId: String, cursor: Long?, limit: Int): List<NotificationInboxItem>
 

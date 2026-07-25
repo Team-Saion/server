@@ -1,20 +1,17 @@
 package com.unicorn.server.infrastructure.adapter.`in`.event.invitation
 
-import com.unicorn.server.common.port.out.event.EventOutPort
 import com.unicorn.server.domain.circle.port.`in`.CircleMemberInPort
 import com.unicorn.server.domain.invitation.event.InvitationRedeemedEvent
-import com.unicorn.server.domain.notification.enums.NotificationChannel
 import com.unicorn.server.domain.notification.event.CircleJoinCompletedPayload
-import com.unicorn.server.domain.notification.event.NotificationRequestedEvent
-import com.unicorn.server.domain.notification.port.`in`.NotificationPushTokenInPort
+import com.unicorn.server.domain.notification.port.`in`.NotificationRequestInPort
+import com.unicorn.server.domain.notification.port.dto.RequestNotificationCommand
 import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Component
 
 @Component
 class InvitationNotificationEventListener(
 	private val circleMemberInPort: CircleMemberInPort,
-	private val notificationPushTokenInPort: NotificationPushTokenInPort,
-	private val eventPublisher: EventOutPort,
+	private val notificationRequestInPort: NotificationRequestInPort,
 ) {
 	@EventListener
 	fun handle(event: InvitationRedeemedEvent) {
@@ -26,14 +23,13 @@ class InvitationNotificationEventListener(
 		circleMemberInPort.getCircleMembers(event.targetId)
 			.asSequence()
 			.filter { it.active && it.memberId != event.redeemerMemberId }
-			.flatMap { notificationPushTokenInPort.getActiveReceivable(it.memberId).asSequence() }
-			.forEach { pushToken ->
-				eventPublisher.publish(
-					NotificationRequestedEvent(
-						channel = NotificationChannel.PUSH,
-						receiver = pushToken.token,
+			.forEach { member ->
+				notificationRequestInPort.request(
+					RequestNotificationCommand(
+						receiverMemberId = member.memberId,
 						payload = payload,
-						dedupKey = "circle-join-completed:${event.invitationId}:${requireNotNull(pushToken.id).value}",
+						eventId = event.invitationId,
+						circleId = event.targetId,
 					),
 				)
 			}

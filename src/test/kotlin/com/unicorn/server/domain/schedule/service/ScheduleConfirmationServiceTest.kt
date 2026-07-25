@@ -218,7 +218,7 @@ class ScheduleConfirmationServiceTest {
 
 		override fun findActiveByCircleId(
 			circleId: String,
-			today: LocalDate,
+			now: java.time.LocalDateTime,
 			cursor: SchedulePageCursor?,
 			size: Int,
 		): List<Schedule> = emptyList()
@@ -246,7 +246,7 @@ class ScheduleConfirmationServiceTest {
 
 		override fun findUpcomingByCircleId(
 			circleId: String,
-			today: LocalDate,
+			now: java.time.LocalDateTime,
 			limit: Int,
 		): List<Schedule> = emptyList()
 
@@ -297,6 +297,9 @@ class ScheduleConfirmationServiceTest {
 		override fun existsById(circleId: String): Boolean = true
 
 		override fun isMember(circleId: String, memberId: String): Boolean = circleId to memberId in members
+
+		override fun hasOtherActiveMember(circleId: String, excludedMemberId: String): Boolean =
+			members.any { (memberCircleId, memberId) -> memberCircleId == circleId && memberId != excludedMemberId }
 
 		override fun isInitiator(circleId: String, memberId: String): Boolean = false
 	}

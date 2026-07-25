@@ -15,7 +15,108 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestParam
 
-@Tag(name = "Notification API", description = "알림 보관함 조회 및 읽음 처리 API")
+@Tag(
+	name = "Notification API",
+	description = """
+		알림 보관함 조회 및 읽음 처리 API
+
+		## FCM 푸시 payload 규격
+
+		FCM SDK의 `notification`에는 `title`, `body`가 전달되고, `data`에는 아래 JSON이 전달됩니다.
+		`data`의 key와 value는 모두 문자열이며, 클라이언트는 `eventType`으로 알림 유형을 구분합니다.
+
+		### 써클 참여 완료
+		```json
+		{
+		  "member_name": "민수",
+		  "circle_name": "우리 가족",
+		  "eventType": "CIRCLE_JOIN_COMPLETED"
+		}
+		```
+
+		### 일정 생성
+		```json
+		{
+		  "actor_name": "민수",
+		  "schedule_title": "병원 방문",
+		  "eventType": "SCHEDULE_CREATED"
+		}
+		```
+
+		### 일정 삭제
+
+		현재 `SCHEDULE_DELETED`는 알림 보관함에만 저장되며 FCM 푸시는 발송하지 않습니다.
+		동일한 메시지 조합 규격을 사용할 경우의 `data` 형식은 다음과 같습니다.
+
+		```json
+		{
+		  "actor_name": "민수",
+		  "schedule_title": "병원 방문",
+		  "eventType": "SCHEDULE_DELETED"
+		}
+		```
+
+		### 일정 7일 전 알림
+		```json
+		{
+		  "schedule_title": "병원 방문",
+		  "eventType": "SCHEDULE_REMINDER_D7"
+		}
+		```
+
+		### 일정 1일 전 알림
+		```json
+		{
+		  "schedule_title": "병원 방문",
+		  "eventType": "SCHEDULE_REMINDER_D1"
+		}
+		```
+
+		### 당일 종일 일정 알림
+		```json
+		{
+		  "schedule_title": "병원 방문",
+		  "eventType": "SCHEDULE_REMINDER_DDAY_ALL_DAY"
+		}
+		```
+
+		### 당일 시간 지정 일정 알림
+		```json
+		{
+		  "schedule_title": "병원 방문",
+		  "start_time": "14:00",
+		  "eventType": "SCHEDULE_REMINDER_DDAY_TIMED"
+		}
+		```
+
+		### 가족의 일정 확인 완료
+		```json
+		{
+		  "member_name": "영희",
+		  "schedule_title": "병원 방문",
+		  "eventType": "SCHEDULE_CONFIRMED_BY_FAMILY"
+		}
+		```
+
+		### 일정 확인 요청
+		```json
+		{
+		  "schedule_title": "병원 방문",
+		  "eventType": "SCHEDULE_CONFIRMATION_REQUESTED"
+		}
+		```
+
+		### 가족에게 전하기
+		```json
+		{
+		  "sender_name": "민수",
+		  "schedule_title": "병원 방문",
+		  "d_day": "D-3",
+		  "eventType": "SCHEDULE_FAMILY_NOTIFICATION_REQUESTED"
+		}
+		```
+	""",
+)
 interface NotificationApiDoc {
 
 	@Operation(

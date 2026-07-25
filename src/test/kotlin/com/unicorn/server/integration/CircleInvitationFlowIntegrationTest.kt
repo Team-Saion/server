@@ -17,9 +17,16 @@ import com.unicorn.server.domain.invitation.port.`in`.InvitationIssueInPort
 import com.unicorn.server.domain.member.Member
 import com.unicorn.server.domain.member.enums.Role
 import com.unicorn.server.domain.member.port.out.MemberOutPort
+import com.unicorn.server.domain.notification.enums.DevicePlatform
+import com.unicorn.server.domain.notification.enums.NotificationStatus
+import com.unicorn.server.domain.notification.enums.NotificationType
+import com.unicorn.server.domain.notification.port.`in`.NotificationPushTokenInPort
+import com.unicorn.server.domain.notification.port.dto.RegisterPushTokenCommand
 import com.unicorn.server.infrastructure.adapter.out.persistence.invitation.InvitationClickLogJpaRepository
 import com.unicorn.server.infrastructure.adapter.out.persistence.invitation.InvitationDispatchLogJpaRepository
 import com.unicorn.server.infrastructure.adapter.out.persistence.invitation.InvitationRedemptionLogJpaRepository
+import com.unicorn.server.infrastructure.adapter.out.persistence.notification.NotificationInboxJpaRepository
+import com.unicorn.server.infrastructure.adapter.out.persistence.notification.NotificationJpaRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.DisplayName
@@ -42,6 +49,43 @@ class CircleInvitationFlowIntegrationTest : BaseTest() {
 	@Autowired private lateinit var invitationDispatchLogJpaRepository: InvitationDispatchLogJpaRepository
 	@Autowired private lateinit var invitationClickLogJpaRepository: InvitationClickLogJpaRepository
 	@Autowired private lateinit var invitationRedemptionLogJpaRepository: InvitationRedemptionLogJpaRepository
+	@Autowired private lateinit var notificationPushTokenInPort: NotificationPushTokenInPort
+	@Autowired private lateinit var notificationJpaRepository: NotificationJpaRepository
+	@Autowired private lateinit var notificationInboxJpaRepository: NotificationInboxJpaRepository
+
+	@Test
+	@DisplayName("써클 초대 수락 시 기존 멤버의 보관함과 푸시 발송 큐에 알림이 저장된다")
+	fun acceptCircleInvitation_persistsInboxAndPushNotification() {
+		val owner = memberOutPort.save(member("NotificationOwner", "notifyOwn"))
+		val invitee = memberOutPort.save(member("NotificationInvitee", "notifyInv"))
+		val pushToken = notificationPushTokenInPort.register(
+			owner.id.toString(),
+			RegisterPushTokenCommand(
+				installationId = "circle-join-integration-installation",
+				token = "circle-join-integration-token",
+				platform = DevicePlatform.ANDROID,
+			),
+		)
+		val circle = circleInPort.create(owner.id.toString(), CreateCircleCommand("알림통합테스트"))
+		val issued = issueInvitationInPort.issue(
+			owner.id.toString(),
+			IssueInvitationCommand(circle.id),
+		)
+
+		acceptCircleInvitationInPort.accept(issued.token, invitee.id.toString())
+
+		val receiverDedupKey = "circle_join_completed:${issued.invitationId}:${owner.id}"
+		val pushDedupKey = "$receiverDedupKey:token:${requireNotNull(pushToken.id).value}"
+		val inboxItem = notificationInboxJpaRepository.findByDedupKey(receiverDedupKey)
+		val pushNotification = notificationJpaRepository.findByDedupKey(pushDedupKey)
+		assertThat(inboxItem).isNotNull
+		assertThat(inboxItem?.receiverMemberId).isEqualTo(owner.id.toString())
+		assertThat(inboxItem?.type).isEqualTo(NotificationType.CIRCLE_JOIN_COMPLETED)
+		assertThat(pushNotification).isNotNull
+		assertThat(pushNotification?.receiver).isEqualTo("circle-join-integration-token")
+		assertThat(pushNotification?.type).isEqualTo(NotificationType.CIRCLE_JOIN_COMPLETED)
+		assertThat(pushNotification?.status).isEqualTo(NotificationStatus.READY)
+	}
 
 	@Test
 	@DisplayName("초대 발급 후 두 명이 같은 링크로 순차 수락할 수 있고 로그가 모두 저장된다")
