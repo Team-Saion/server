@@ -37,7 +37,7 @@ class HomeQueryService(
         return HomeView(
             circle = HomeCircleDto(circle.id, circle.name, circle.ownerId),
             members = visibleMembers,
-            canInvite = visibleMembers.size == 1,
+            canInvite = visibleMembers.size <= 8,
             mainSchedule = upcomingSchedules.firstOrNull(),
             schedules = upcomingSchedules.drop(1),
             totalScheduleCount = scheduleQueryInPort.countByCircleId(circleIdVo),

@@ -7,8 +7,8 @@ import com.unicorn.server.domain.circle.port.dto.JoinCircleResult
 import com.unicorn.server.domain.invitation.enums.InvitationType
 import com.unicorn.server.domain.invitation.event.InvitationRedeemedEvent
 import com.unicorn.server.domain.notification.enums.NotificationType
-import com.unicorn.server.domain.notification.port.`in`.NotificationRequestInPort
-import com.unicorn.server.domain.notification.port.dto.RequestNotificationCommand
+import com.unicorn.server.domain.notification.port.`in`.NotificationPublishInPort
+import com.unicorn.server.domain.notification.port.dto.PublishNotificationCommand
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -18,7 +18,7 @@ class InvitationNotificationEventListenerTest {
 	@Test
 	@DisplayName("초대 수락 완료 시 참여자를 제외한 활성 써클 멤버에게 알림을 요청한다")
 	fun handle_invitationRedeemed_requestsNotificationForOtherActiveCircleMembers() {
-		val notificationRequestInPort = RecordingNotificationRequestInPort()
+		val notificationPublishInPort = RecordingNotificationPublishInPort()
 		val listener = InvitationNotificationEventListener(
 			FakeCircleMemberInPort(
 				listOf(
@@ -28,7 +28,7 @@ class InvitationNotificationEventListenerTest {
 					member("inactive", active = false),
 				),
 			),
-			notificationRequestInPort,
+			notificationPublishInPort,
 		)
 
 		listener.handle(
@@ -43,10 +43,10 @@ class InvitationNotificationEventListenerTest {
 			),
 		)
 
-		assertThat(notificationRequestInPort.commands)
+		assertThat(notificationPublishInPort.commands)
 			.extracting<String> { it.receiverMemberId }
 			.containsExactlyInAnyOrder("owner", "family")
-		assertThat(notificationRequestInPort.commands).allSatisfy { command ->
+		assertThat(notificationPublishInPort.commands).allSatisfy { command ->
 			assertThat(command.payload.type).isEqualTo(NotificationType.CIRCLE_JOIN_COMPLETED)
 			assertThat(command.eventId).isEqualTo("invitation-1")
 			assertThat(command.circleId).isEqualTo("circle-1")
@@ -56,9 +56,9 @@ class InvitationNotificationEventListenerTest {
 	private fun member(memberId: String, active: Boolean = true) =
 		CircleMemberDto(memberId, memberId, "MEMBER", active)
 
-	private class RecordingNotificationRequestInPort : NotificationRequestInPort {
-		val commands = mutableListOf<RequestNotificationCommand>()
-		override fun request(command: RequestNotificationCommand) {
+	private class RecordingNotificationPublishInPort : NotificationPublishInPort {
+		val commands = mutableListOf<PublishNotificationCommand>()
+		override fun publish(command: PublishNotificationCommand) {
 			commands += command
 		}
 	}
