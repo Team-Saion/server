@@ -618,6 +618,42 @@ This rule applies to:
 
 It does **not** apply to adapters under `infrastructure/adapter/out`, configuration classes, or properties classes — those are explicitly infrastructure and may use vendor names freely.
 
+### Port Name Format
+
+Port interface names follow: `<Domain>[<Purpose>]<In|Out>Port`
+
+- `<Domain>`: the aggregate/bounded-context noun the port belongs to (e.g. `Member`, `Schedule`).
+- `<Purpose>` (optional): a noun narrowing the port's responsibility, used only when a domain needs more than one port in the same direction (e.g. `Info`, `Persist`). Omit it when a single `In`/`Out` port per domain is enough.
+- `<In|Out>`: driving (`In`) or driven (`Out`) port.
+- `Port`: fixed suffix.
+
+Do not prefix a port name with a verb for a single use case (`Get`, `Create`, `Register`, `Save`, ...). A port is a contract for the domain, not one action — the verbs belong to the methods inside the interface, not the interface name.
+
+| Wrong | Correct |
+|---|---|
+| `GetMemberInPort` | `MemberInPort` |
+| `GetMemberInfoInPort` | `MemberInfoInPort` |
+| `SaveScheduleOutPort` | `ScheduleOutPort` |
+| `PersistScheduleOutPort` | `SchedulePersistOutPort` |
+
+```kotlin
+// domain/member/port/in/MemberInPort.kt ✅
+interface MemberInPort {
+    fun getMember(memberId: MemberId): Member
+    fun registerMember(request: CreateMemberRequest): Member
+}
+
+// domain/schedule/port/out/ScheduleOutPort.kt ✅
+interface ScheduleOutPort {
+    fun findById(scheduleId: ScheduleId): Schedule?
+}
+
+// domain/schedule/port/out/SchedulePersistOutPort.kt ✅ (separate purpose from ScheduleOutPort)
+interface SchedulePersistOutPort {
+    fun save(schedule: Schedule): Schedule
+}
+```
+
 ## Spring Configuration Management
 
 Choose between `@Value`, `@ConfigurationProperties`, and `@Configuration` based on the scope and purpose of the configuration.
