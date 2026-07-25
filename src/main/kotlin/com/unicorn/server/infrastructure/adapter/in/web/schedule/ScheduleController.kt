@@ -1,15 +1,10 @@
 package com.unicorn.server.infrastructure.adapter.`in`.web.schedule
 
 import com.unicorn.server.domain.schedule.enums.ConfirmationType
-import com.unicorn.server.domain.schedule.port.`in`.ScheduleConfirmationCancelInPort
-import com.unicorn.server.domain.schedule.port.`in`.ScheduleCreateInPort
-import com.unicorn.server.domain.schedule.port.`in`.ScheduleDeleteInPort
-import com.unicorn.server.domain.schedule.port.`in`.ScheduleDetailInPort
-import com.unicorn.server.domain.schedule.port.`in`.ScheduleListInPort
-import com.unicorn.server.domain.schedule.port.`in`.ScheduleConfirmationRegisterInPort
-
+import com.unicorn.server.domain.schedule.port.`in`.ScheduleCommandInPort
+import com.unicorn.server.domain.schedule.port.`in`.ScheduleQueryInPort
+import com.unicorn.server.domain.schedule.port.`in`.ScheduleConfirmationInPort
 import com.unicorn.server.domain.schedule.port.`in`.ScheduleFamilyNotificationRequestInPort
-import com.unicorn.server.domain.schedule.port.`in`.ScheduleUpdateInPort
 import com.unicorn.server.domain.schedule.port.dto.CreateScheduleCommand
 import com.unicorn.server.domain.schedule.port.dto.RegisterConfirmationCommand
 import com.unicorn.server.domain.schedule.port.dto.RequestFamilyScheduleNotificationCommand
@@ -39,13 +34,9 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/v1/circles/{circleId}/schedules")
 class ScheduleController(
-	private val createScheduleInPort: ScheduleCreateInPort,
-	private val updateScheduleInPort: ScheduleUpdateInPort,
-	private val deleteScheduleInPort: ScheduleDeleteInPort,
-	private val getScheduleListInPort: ScheduleListInPort,
-	private val getScheduleDetailInPort: ScheduleDetailInPort,
-	private val registerConfirmationInPort: ScheduleConfirmationRegisterInPort,
-	private val cancelConfirmationInPort: ScheduleConfirmationCancelInPort,
+	private val scheduleCommandInPort: ScheduleCommandInPort,
+	private val scheduleQueryInPort: ScheduleQueryInPort,
+	private val scheduleConfirmationInPort: ScheduleConfirmationInPort,
 	private val requestFamilyScheduleNotificationInPort: ScheduleFamilyNotificationRequestInPort,
 ) : ScheduleApiDoc {
 
@@ -55,7 +46,7 @@ class ScheduleController(
 		@PathVariable circleId: String,
 		@RequestBody @Valid request: CreateScheduleRequest,
 	): ApiResponse<ScheduleIdResponse> {
-		val scheduleId = createScheduleInPort.create(
+		val scheduleId = scheduleCommandInPort.create(
 			CreateScheduleCommand(
 				memberId = memberId,
 				circleId = circleId,
@@ -78,7 +69,7 @@ class ScheduleController(
 		@PathVariable scheduleId: String,
 		@RequestBody @Valid request: UpdateScheduleRequest,
 	): ApiResponse<Unit> {
-		updateScheduleInPort.update(
+		scheduleCommandInPort.update(
 			UpdateScheduleCommand(
 				scheduleId = ScheduleId.of(scheduleId),
 				circleId = circleId,
@@ -104,7 +95,7 @@ class ScheduleController(
 		@PathVariable circleId: String,
 		@PathVariable scheduleId: String,
 	): ApiResponse<Unit> {
-		deleteScheduleInPort.delete(ScheduleId.of(scheduleId), circleId, memberId)
+		scheduleCommandInPort.delete(ScheduleId.of(scheduleId), circleId, memberId)
 		return ApiResponse.success()
 	}
 
@@ -115,7 +106,7 @@ class ScheduleController(
 		@RequestParam cursor: String?,
 		@RequestParam(defaultValue = "20") size: Int,
 	): ApiResponse<ScheduleListResponse> {
-		val result = getScheduleListInPort.getList(circleId, memberId, cursor, size)
+		val result = scheduleQueryInPort.getList(circleId, memberId, cursor, size)
 		return ApiResponse.success(ScheduleListResponse.from(result))
 	}
 
@@ -125,7 +116,7 @@ class ScheduleController(
 		@PathVariable circleId: String,
 		@PathVariable scheduleId: String,
 	): ApiResponse<ScheduleDetailResponse> {
-		val result = getScheduleDetailInPort.getDetail(ScheduleId.of(scheduleId), circleId, memberId)
+		val result = scheduleQueryInPort.getDetail(ScheduleId.of(scheduleId), circleId, memberId)
 		return ApiResponse.success(ScheduleDetailResponse.from(result))
 	}
 
@@ -136,7 +127,7 @@ class ScheduleController(
 		@PathVariable scheduleId: String,
 		@RequestBody @Valid request: RegisterConfirmationRequest,
 	): ApiResponse<RegisterConfirmationResponse> {
-		val type = registerConfirmationInPort.register(
+		val type = scheduleConfirmationInPort.register(
 			RegisterConfirmationCommand(
 				scheduleId = ScheduleId.of(scheduleId),
 				circleId = circleId,
@@ -154,7 +145,7 @@ class ScheduleController(
 		@PathVariable scheduleId: String,
 		@PathVariable confirmationId: Long,
 	): ApiResponse<Unit> {
-		cancelConfirmationInPort.cancel(confirmationId, ScheduleId.of(scheduleId), circleId, memberId)
+		scheduleConfirmationInPort.cancel(confirmationId, ScheduleId.of(scheduleId), circleId, memberId)
 		return ApiResponse.success()
 	}
 

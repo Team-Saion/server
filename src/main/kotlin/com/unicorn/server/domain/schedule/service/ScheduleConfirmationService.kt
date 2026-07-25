@@ -6,7 +6,7 @@ import com.unicorn.server.domain.schedule.ScheduleConfirmation
 import com.unicorn.server.domain.schedule.enums.ConfirmationType
 import com.unicorn.server.domain.schedule.event.ScheduleConfirmedEvent
 import com.unicorn.server.domain.schedule.exception.ScheduleErrorCode
-import com.unicorn.server.domain.schedule.port.`in`.ScheduleConfirmationRegisterInPort
+import com.unicorn.server.domain.schedule.port.`in`.ScheduleConfirmationInPort
 import com.unicorn.server.domain.schedule.port.`in`.ScheduleConfirmationStatusInPort
 import com.unicorn.server.domain.schedule.port.dto.RegisterConfirmationCommand
 import com.unicorn.server.domain.schedule.port.out.CircleAccessOutPort
@@ -23,7 +23,7 @@ class ScheduleConfirmationService(
 	private val scheduleConfirmationOutPort: ScheduleConfirmationOutPort,
 	private val circleAccessOutPort: CircleAccessOutPort,
 	private val eventPublisher: EventOutPort,
-) : ScheduleConfirmationRegisterInPort, ScheduleConfirmationStatusInPort {
+) : ScheduleConfirmationInPort, ScheduleConfirmationStatusInPort {
 
 	override fun register(command: RegisterConfirmationCommand): ConfirmationType {
 		if (!command.confirmationType.available) {
@@ -72,4 +72,21 @@ class ScheduleConfirmationService(
 	override fun hasConfirmed(scheduleId: ScheduleId, memberId: String): Boolean =
 		scheduleConfirmationOutPort.findByScheduleIdAndMemberId(scheduleId, memberId)
 			?.confirmationType == ConfirmationType.CONFIRMED
+
+	override fun cancel(confirmationId: Long, scheduleId: ScheduleId, circleId: String, memberId: String) {
+		if (!circleAccessOutPort.isMember(circleId, memberId)) {
+			throw BusinessException(ScheduleErrorCode.CIRCLE_ACCESS_DENIED)
+		}
+
+		scheduleOutPort.findActiveByIdAndCircleId(scheduleId, circleId)
+			?: throw BusinessException(ScheduleErrorCode.SCHEDULE_NOT_FOUND)
+
+		val confirmation = scheduleConfirmationOutPort.findById(confirmationId)
+			?: throw BusinessException(ScheduleErrorCode.CONFIRMATION_NOT_FOUND)
+		if (confirmation.scheduleId != scheduleId || confirmation.memberId != memberId) {
+			throw BusinessException(ScheduleErrorCode.CONFIRMATION_ACCESS_DENIED)
+		}
+
+		scheduleConfirmationOutPort.deleteById(confirmationId)
+	}
 }
