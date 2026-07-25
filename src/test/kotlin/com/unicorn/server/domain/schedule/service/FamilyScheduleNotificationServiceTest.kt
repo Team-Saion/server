@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.ZoneId
 
 @DisplayName("FamilyScheduleNotificationService 단위 테스트")
 class FamilyScheduleNotificationServiceTest {
@@ -34,7 +35,7 @@ class FamilyScheduleNotificationServiceTest {
 	@DisplayName("다가오는 일정에 가족에게 전하기를 요청하면 가족 일정 알림 이벤트를 발행한다")
 	fun request_withUpcomingSchedule_publishesFamilyScheduleNotificationEvent() {
 		circleAccessOutPort.seedMember(CIRCLE_ID, MEMBER_ID)
-		scheduleOutPort.seed(schedule(startDate = LocalDate.now().plusDays(3)))
+		scheduleOutPort.seed(schedule(startDate = LocalDate.now(KST).plusDays(3)))
 
 		service.request(command())
 
@@ -51,7 +52,7 @@ class FamilyScheduleNotificationServiceTest {
 	@DisplayName("시작일이 지난 일정에 가족에게 전하기를 요청하면 사용할 수 없다는 예외가 발생한다")
 	fun request_withStartedSchedule_throwsNotAvailable() {
 		circleAccessOutPort.seedMember(CIRCLE_ID, MEMBER_ID)
-		scheduleOutPort.seed(schedule(startDate = LocalDate.now().minusDays(1)))
+		scheduleOutPort.seed(schedule(startDate = LocalDate.now(KST).minusDays(1)))
 
 		assertThatThrownBy { service.request(command()) }
 			.isInstanceOf(BusinessException::class.java)
@@ -155,5 +156,6 @@ class FamilyScheduleNotificationServiceTest {
 		private const val CIRCLE_ID = "CC202506010000000001"
 		private const val MEMBER_ID = "member-1"
 		private val SCHEDULE_ID = ScheduleId.of("SC202407070000000001")
+		private val KST: ZoneId = ZoneId.of("Asia/Seoul")
 	}
 }
