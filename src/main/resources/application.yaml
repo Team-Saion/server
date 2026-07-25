@@ -15,7 +15,6 @@ app:
       max-attempts: 3
       base-retry-delay-minutes: 5
     fcm:
-      enabled: false
       project-id: ${FCM_PROJECT_ID:}
       credentials-path: ${FCM_CREDENTIALS_PATH:}
   kakao:

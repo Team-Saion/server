@@ -34,6 +34,8 @@ app:
   notification:
     dispatch:
       enabled: true
+    fcm:
+      enabled: true
   jwt:
     secret: ${JWT_SECRET}
     access-token-expiration: 3600
