@@ -22,8 +22,8 @@ import org.junit.jupiter.api.Test
 @DisplayName("ScheduleNotificationEventListener 단위 테스트")
 class ScheduleNotificationEventListenerTest {
 	@Test
-	@DisplayName("일정 생성 시 작성자를 포함한 활성 구성원에게 알림을 요청한다")
-	fun handle_scheduleCreated_requestsNotificationForEveryActiveMember() {
+	@DisplayName("일정 생성 시 작성자를 제외한 활성 구성원에게 알림을 요청한다")
+	fun handle_scheduleCreated_excludesCreatorFromNotificationRequests() {
 		val recorder = RecordingNotificationRequestInPort()
 		val listener = listener(
 			members = listOf(
@@ -37,7 +37,7 @@ class ScheduleNotificationEventListenerTest {
 		listener.handle(ScheduleCreatedEvent("SC1", "circle-1", "creator", "제주도 여행"))
 
 		assertThat(recorder.commands).extracting<String> { it.receiverMemberId }
-			.containsExactlyInAnyOrder("creator", "family")
+			.containsExactly("family")
 		assertThat(recorder.commands).allSatisfy { command ->
 			assertThat(command.payload.type).isEqualTo(NotificationType.SCHEDULE_CREATED)
 			assertThat(command.scheduleId).isEqualTo("SC1")
@@ -62,20 +62,22 @@ class ScheduleNotificationEventListenerTest {
 	}
 
 	@Test
-	@DisplayName("가족 확인 완료 시 작성자 본인이 아닌 경우 작성자에게 알림을 요청한다")
-	fun handle_scheduleConfirmed_requestsNotificationForCreator() {
+	@DisplayName("가족 확인 완료 시 확인자를 제외한 활성 구성원에게 알림을 요청한다")
+	fun handle_scheduleConfirmed_requestsNotificationForOtherActiveMembers() {
 		val recorder = RecordingNotificationRequestInPort()
 		val listener = listener(
-			listOf(member("creator", "작성자"), member("confirmer", "가족")),
+			listOf(member("creator", "작성자"), member("confirmer", "가족"), member("other", "다른 가족")),
 			recorder,
 		)
 
 		listener.handle(ScheduleConfirmedEvent("SC1", "circle-1", "creator", "confirmer", "여행"))
 
-		val command = recorder.commands.single()
-		assertThat(command.receiverMemberId).isEqualTo("creator")
-		assertThat(command.payload.type).isEqualTo(NotificationType.SCHEDULE_CONFIRMED_BY_FAMILY)
-		assertThat(command.eventId).isEqualTo("SC1:confirmer")
+		assertThat(recorder.commands).extracting<String> { it.receiverMemberId }
+			.containsExactlyInAnyOrder("creator", "other")
+		assertThat(recorder.commands).allSatisfy { command ->
+			assertThat(command.payload.type).isEqualTo(NotificationType.SCHEDULE_CONFIRMED_BY_FAMILY)
+			assertThat(command.eventId).isEqualTo("SC1:confirmer")
+		}
 	}
 
 	@Test

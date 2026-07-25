@@ -63,11 +63,11 @@ class ScheduleConfirmationRequestServiceTest {
 			schedules.firstOrNull { it.id == scheduleId && it.circleId == circleId && !it.isDeleted }
 		override fun findActiveByCircleId(
 			circleId: String,
-			today: LocalDate,
+			now: LocalDateTime,
 			cursor: SchedulePageCursor?,
 			size: Int,
 		): List<Schedule> = error("not used")
-		override fun findUpcomingByCircleId(circleId: String, today: LocalDate, limit: Int): List<Schedule> = error("not used")
+		override fun findUpcomingByCircleId(circleId: String, now: LocalDateTime, limit: Int): List<Schedule> = error("not used")
 		override fun countActiveByCircleId(circleId: String): Long = error("not used")
 		override fun findActiveByStartDateAndCreatedBefore(startDate: LocalDate, createdBefore: LocalDateTime): List<Schedule> = error("not used")
 		override fun findActiveAllDayByStartDateAndCreatedBefore(startDate: LocalDate, createdBefore: LocalDateTime): List<Schedule> = error("not used")

@@ -330,11 +330,13 @@ interface ScheduleApiDoc {
 			**수신 대상**: 요청자를 제외한 활성 구성원입니다. 확인 여부와 무관하게 발송합니다.
 			**알림 설정**: 가족 일정 확인 알림을 ON으로 설정한 구성원에게만 푸시 요청을 생성합니다.
 			**발송 횟수**: 제한 없이 요청할 수 있습니다.
+			**제한**: 활성화된 써클 구성원이 두 명 이상이어야 합니다.
 		""",
 	)
 	@ApiErrorCodeExamples(
 		ApiErrorCodeExample(codeType = CommonErrorCode::class, code = "UNAUTHORIZED"),
 		ApiErrorCodeExample(codeType = ScheduleErrorCode::class, code = "FAMILY_SCHEDULE_NOTIFICATION_NOT_AVAILABLE"),
+		ApiErrorCodeExample(codeType = ScheduleErrorCode::class, code = "FAMILY_SCHEDULE_NOTIFICATION_RECIPIENT_NOT_FOUND"),
 		ApiErrorCodeExample(codeType = ScheduleErrorCode::class, code = "CIRCLE_ACCESS_DENIED"),
 		ApiErrorCodeExample(codeType = ScheduleErrorCode::class, code = "SCHEDULE_NOT_FOUND"),
 	)

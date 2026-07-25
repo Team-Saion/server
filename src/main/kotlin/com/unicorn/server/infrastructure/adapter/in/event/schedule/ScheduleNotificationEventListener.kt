@@ -40,7 +40,7 @@ class ScheduleNotificationEventListener(
 
 		members
 			.asSequence()
-			.filter { it.active }
+			.filter { it.active && it.memberId != event.creatorMemberId }
 			.forEach { member ->
 				notificationRequestInPort.request(
 					event.commandFor(member.memberId, payload),
@@ -92,20 +92,22 @@ class ScheduleNotificationEventListener(
 
 	@EventListener
 	fun handle(event: ScheduleConfirmedEvent) {
-		if (event.scheduleCreatorMemberId == event.confirmerMemberId) {
-			return
-		}
 		val confirmerName = circleMemberInPort.getCircleMembers(event.circleId).nicknameOf(event.confirmerMemberId)
 		val payload = ScheduleConfirmedByFamilyPayload(confirmerName, event.scheduleTitle)
-		notificationRequestInPort.request(
-			RequestNotificationCommand(
-				receiverMemberId = event.scheduleCreatorMemberId,
-				payload = payload,
-				eventId = "${event.scheduleId}:${event.confirmerMemberId}",
-				circleId = event.circleId,
-				scheduleId = event.scheduleId,
-			),
-		)
+		circleMemberInPort.getCircleMembers(event.circleId)
+			.asSequence()
+			.filter { it.active && it.memberId != event.confirmerMemberId }
+			.forEach { member ->
+				notificationRequestInPort.request(
+					RequestNotificationCommand(
+						receiverMemberId = member.memberId,
+						payload = payload,
+						eventId = "${event.scheduleId}:${event.confirmerMemberId}",
+						circleId = event.circleId,
+						scheduleId = event.scheduleId,
+					),
+				)
+			}
 	}
 
 	@EventListener
