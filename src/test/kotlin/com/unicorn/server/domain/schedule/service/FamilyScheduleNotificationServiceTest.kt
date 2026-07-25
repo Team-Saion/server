@@ -34,6 +34,7 @@ class FamilyScheduleNotificationServiceTest {
 	@DisplayName("다가오는 일정에 가족에게 전하기를 요청하면 가족 일정 알림 이벤트를 발행한다")
 	fun request_withUpcomingSchedule_publishesFamilyScheduleNotificationEvent() {
 		circleAccessOutPort.seedMember(CIRCLE_ID, MEMBER_ID)
+		circleAccessOutPort.seedMember(CIRCLE_ID, OTHER_MEMBER_ID)
 		scheduleOutPort.seed(schedule(startDate = LocalDate.now().plusDays(3)))
 
 		service.request(command())
@@ -51,12 +52,25 @@ class FamilyScheduleNotificationServiceTest {
 	@DisplayName("시작일이 지난 일정에 가족에게 전하기를 요청하면 사용할 수 없다는 예외가 발생한다")
 	fun request_withStartedSchedule_throwsNotAvailable() {
 		circleAccessOutPort.seedMember(CIRCLE_ID, MEMBER_ID)
+		circleAccessOutPort.seedMember(CIRCLE_ID, OTHER_MEMBER_ID)
 		scheduleOutPort.seed(schedule(startDate = LocalDate.now().minusDays(1)))
 
 		assertThatThrownBy { service.request(command()) }
 			.isInstanceOf(BusinessException::class.java)
 			.extracting { (it as BusinessException).errorCode }
 			.isEqualTo(ScheduleErrorCode.FAMILY_SCHEDULE_NOTIFICATION_NOT_AVAILABLE)
+	}
+
+	@Test
+	@DisplayName("다른 활성 구성원이 없는 써클에서 가족에게 전하기를 요청하면 수신자가 없다는 예외가 발생한다")
+	fun request_withNoOtherActiveMember_throwsRecipientNotFound() {
+		circleAccessOutPort.seedMember(CIRCLE_ID, MEMBER_ID)
+
+		assertThatThrownBy { service.request(command()) }
+			.isInstanceOf(BusinessException::class.java)
+			.extracting { (it as BusinessException).errorCode }
+			.isEqualTo(ScheduleErrorCode.FAMILY_SCHEDULE_NOTIFICATION_RECIPIENT_NOT_FOUND)
+		assertThat(eventPublisher.events).isEmpty()
 	}
 
 	private fun command() = RequestFamilyScheduleNotificationCommand(
@@ -140,6 +154,9 @@ class FamilyScheduleNotificationServiceTest {
 
 		override fun isMember(circleId: String, memberId: String): Boolean = circleId to memberId in members
 
+		override fun hasOtherActiveMember(circleId: String, excludedMemberId: String): Boolean =
+			members.any { (memberCircleId, memberId) -> memberCircleId == circleId && memberId != excludedMemberId }
+
 		override fun isInitiator(circleId: String, memberId: String): Boolean = false
 	}
 
@@ -154,6 +171,7 @@ class FamilyScheduleNotificationServiceTest {
 	companion object {
 		private const val CIRCLE_ID = "CC202506010000000001"
 		private const val MEMBER_ID = "member-1"
+		private const val OTHER_MEMBER_ID = "member-2"
 		private val SCHEDULE_ID = ScheduleId.of("SC202407070000000001")
 	}
 }

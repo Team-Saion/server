@@ -30,5 +30,11 @@ interface CircleMemberJpaRepository : JpaRepository<CircleMemberEntity, String> 
 		status: CircleMemberStatus,
 		delYn: String,
 	): Boolean
+	fun existsByCircleIdAndStatusAndDelYnAndMemberIdNot(
+		circleId: String,
+		status: CircleMemberStatus,
+		delYn: String,
+		excludedMemberId: String,
+	): Boolean
 	fun countByCircleIdAndStatusAndDelYn(circleId: String, status: CircleMemberStatus, delYn: String): Long
 }

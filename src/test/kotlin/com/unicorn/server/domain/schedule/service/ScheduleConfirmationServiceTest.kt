@@ -298,6 +298,9 @@ class ScheduleConfirmationServiceTest {
 
 		override fun isMember(circleId: String, memberId: String): Boolean = circleId to memberId in members
 
+		override fun hasOtherActiveMember(circleId: String, excludedMemberId: String): Boolean =
+			members.any { (memberCircleId, memberId) -> memberCircleId == circleId && memberId != excludedMemberId }
+
 		override fun isInitiator(circleId: String, memberId: String): Boolean = false
 	}
 

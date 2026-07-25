@@ -26,6 +26,9 @@ class FamilyScheduleNotificationService(
 		if (!circleAccessOutPort.isMember(command.circleId, command.memberId)) {
 			throw BusinessException(ScheduleErrorCode.CIRCLE_ACCESS_DENIED)
 		}
+		if (!circleAccessOutPort.hasOtherActiveMember(command.circleId, command.memberId)) {
+			throw BusinessException(ScheduleErrorCode.FAMILY_SCHEDULE_NOTIFICATION_RECIPIENT_NOT_FOUND)
+		}
 
 		val schedule = scheduleOutPort.findActiveByIdAndCircleId(command.scheduleId, command.circleId)
 			?: throw BusinessException(ScheduleErrorCode.SCHEDULE_NOT_FOUND)
