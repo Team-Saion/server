@@ -12,7 +12,7 @@ class NotificationDispatchScheduler(
 	private val notificationDispatchInPort: NotificationDispatchInPort,
 	private val notificationProperties: NotificationProperties,
 ) {
-	@Scheduled(fixedDelayString = "#{@notificationProperties.dispatch.intervalMs}")
+	@Scheduled(fixedDelayString = "\${app.notification.dispatch.interval-ms}")
 	fun dispatch() {
 		notificationDispatchInPort.dispatch(notificationProperties.dispatch.batchSize)
 	}
