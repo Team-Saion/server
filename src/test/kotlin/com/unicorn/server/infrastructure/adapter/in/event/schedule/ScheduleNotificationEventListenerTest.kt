@@ -5,8 +5,8 @@ import com.unicorn.server.domain.circle.port.dto.CircleMemberDto
 import com.unicorn.server.domain.circle.port.dto.CircleSummary
 import com.unicorn.server.domain.circle.port.dto.JoinCircleResult
 import com.unicorn.server.domain.notification.enums.NotificationType
-import com.unicorn.server.domain.notification.port.`in`.NotificationRequestInPort
-import com.unicorn.server.domain.notification.port.dto.RequestNotificationCommand
+import com.unicorn.server.domain.notification.port.`in`.NotificationPublishInPort
+import com.unicorn.server.domain.notification.port.dto.PublishNotificationCommand
 import com.unicorn.server.domain.schedule.enums.ScheduleReminderType
 import com.unicorn.server.domain.schedule.event.FamilyScheduleNotificationRequestedEvent
 import com.unicorn.server.domain.schedule.event.ScheduleConfirmationRequestDueEvent
@@ -24,7 +24,7 @@ class ScheduleNotificationEventListenerTest {
 	@Test
 	@DisplayName("일정 생성 시 작성자를 포함한 활성 구성원에게 알림을 요청한다")
 	fun handle_scheduleCreated_requestsNotificationForEveryActiveMember() {
-		val recorder = RecordingNotificationRequestInPort()
+		val recorder = RecordingNotificationPublishInPort()
 		val listener = listener(
 			members = listOf(
 				member("creator", "유니콘"),
@@ -47,7 +47,7 @@ class ScheduleNotificationEventListenerTest {
 	@Test
 	@DisplayName("리마인드는 활성 구성원 모두를 중앙 알림 정책으로 전달한다")
 	fun handle_reminder_requestsNotificationForActiveMembers() {
-		val recorder = RecordingNotificationRequestInPort()
+		val recorder = RecordingNotificationPublishInPort()
 		val listener = listener(
 			listOf(member("enabled", "수신"), member("inactive", "비활성", active = false)),
 			recorder,
@@ -64,7 +64,7 @@ class ScheduleNotificationEventListenerTest {
 	@Test
 	@DisplayName("가족 확인 완료 시 작성자 본인이 아닌 경우 작성자에게 알림을 요청한다")
 	fun handle_scheduleConfirmed_requestsNotificationForCreator() {
-		val recorder = RecordingNotificationRequestInPort()
+		val recorder = RecordingNotificationPublishInPort()
 		val listener = listener(
 			listOf(member("creator", "작성자"), member("confirmer", "가족")),
 			recorder,
@@ -81,7 +81,7 @@ class ScheduleNotificationEventListenerTest {
 	@Test
 	@DisplayName("확인 요청은 작성자와 이미 확인한 구성원을 제외한다")
 	fun handle_confirmationRequest_excludesCreatorAndConfirmedMembers() {
-		val recorder = RecordingNotificationRequestInPort()
+		val recorder = RecordingNotificationPublishInPort()
 		val listener = listener(
 			listOf(member("creator", "작성자"), member("unconfirmed", "미확인"), member("confirmed", "확인")),
 			recorder,
@@ -97,7 +97,7 @@ class ScheduleNotificationEventListenerTest {
 	@Test
 	@DisplayName("가족에게 전하기는 발신자를 제외한 활성 구성원에게 알림을 요청한다")
 	fun handle_familyNotification_excludesSender() {
-		val recorder = RecordingNotificationRequestInPort()
+		val recorder = RecordingNotificationPublishInPort()
 		val listener = listener(
 			listOf(member("sender", "보낸사람"), member("receiver", "받는사람")),
 			recorder,
@@ -122,7 +122,7 @@ class ScheduleNotificationEventListenerTest {
 
 	private fun listener(
 		members: List<CircleMemberDto>,
-		recorder: RecordingNotificationRequestInPort,
+		recorder: RecordingNotificationPublishInPort,
 		confirmedMembers: Set<String> = emptySet(),
 	) = ScheduleNotificationEventListener(
 		FakeCircleMemberInPort(members),
@@ -133,9 +133,9 @@ class ScheduleNotificationEventListenerTest {
 	private fun member(memberId: String, nickname: String, active: Boolean = true) =
 		CircleMemberDto(memberId, nickname, "MEMBER", active)
 
-	private class RecordingNotificationRequestInPort : NotificationRequestInPort {
-		val commands = mutableListOf<RequestNotificationCommand>()
-		override fun request(command: RequestNotificationCommand) {
+	private class RecordingNotificationPublishInPort : NotificationPublishInPort {
+		val commands = mutableListOf<PublishNotificationCommand>()
+		override fun publish(command: PublishNotificationCommand) {
 			commands += command
 		}
 	}

@@ -5,10 +5,10 @@ import com.unicorn.server.domain.notification.NotificationInboxItem
 import com.unicorn.server.domain.notification.NotificationRoute
 import com.unicorn.server.domain.notification.NotificationTemplate
 import com.unicorn.server.domain.notification.enums.NotificationChannel
-import com.unicorn.server.domain.notification.port.`in`.NotificationRequestInPort
+import com.unicorn.server.domain.notification.port.`in`.NotificationPublishInPort
 import com.unicorn.server.domain.notification.port.`in`.NotificationPushTokenInPort
 import com.unicorn.server.domain.notification.port.`in`.NotificationSettingInPort
-import com.unicorn.server.domain.notification.port.dto.RequestNotificationCommand
+import com.unicorn.server.domain.notification.port.dto.PublishNotificationCommand
 import com.unicorn.server.domain.notification.port.out.NotificationInboxOutPort
 import com.unicorn.server.domain.notification.port.out.NotificationOutPort
 import org.springframework.stereotype.Service
@@ -16,15 +16,15 @@ import org.springframework.transaction.annotation.Transactional
 
 @Service
 @Transactional(readOnly = true)
-class NotificationRequestService(
+class NotificationPublishService(
     private val notificationOutPort: NotificationOutPort,
     private val notificationInboxOutPort: NotificationInboxOutPort,
     private val notificationPushTokenInPort: NotificationPushTokenInPort,
     private val notificationSettingInPort: NotificationSettingInPort,
-) : NotificationRequestInPort {
+) : NotificationPublishInPort {
 
     @Transactional
-    override fun request(command: RequestNotificationCommand) {
+    override fun publish(command: PublishNotificationCommand) {
         require(command.receiverMemberId.isNotBlank()) { "Receiver member id cannot be blank" }
         require(command.eventId.isNotBlank()) { "Event id cannot be blank" }
 
@@ -72,7 +72,7 @@ class NotificationRequestService(
             }
     }
 
-    private fun isPushEnabled(command: RequestNotificationCommand): Boolean {
+    private fun isPushEnabled(command: PublishNotificationCommand): Boolean {
         val settingType = command.payload.type.settingType ?: return true
         return notificationSettingInPort.getSetting(command.receiverMemberId).isEnabled(settingType)
     }

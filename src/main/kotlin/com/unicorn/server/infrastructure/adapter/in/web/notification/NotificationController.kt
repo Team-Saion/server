@@ -1,6 +1,6 @@
 package com.unicorn.server.infrastructure.adapter.`in`.web.notification
 
-import com.unicorn.server.domain.notification.port.`in`.NotificationInboxInPort
+import com.unicorn.server.domain.notification.port.`in`.NotificationInPort
 import com.unicorn.server.infrastructure.adapter.`in`.web.common.dto.ApiResponse
 import com.unicorn.server.infrastructure.adapter.`in`.web.notification.dto.NotificationInboxItemResponse
 import com.unicorn.server.infrastructure.adapter.`in`.web.notification.dto.NotificationInboxPageResponse
@@ -15,25 +15,25 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/v1/notifications")
 class NotificationController(
-	private val notificationInboxInPort: NotificationInboxInPort,
+	private val notificationInPort: NotificationInPort,
 ) : NotificationApiDoc {
 
 	@GetMapping
-	override fun getInbox(
+	override fun getNotifications(
 		@AuthenticationPrincipal memberId: String,
 		@RequestParam(required = false) cursor: Long?,
 		@RequestParam(defaultValue = "20") size: Int,
 	): ApiResponse<NotificationInboxPageResponse> {
-		val page = notificationInboxInPort.getInbox(memberId, cursor, size)
+		val page = notificationInPort.getNotifications(memberId, cursor, size)
 		return ApiResponse.success(NotificationInboxPageResponse.from(page))
 	}
 
 	@PatchMapping("/{notificationId}/read")
-	override fun markRead(
+	override fun markNotificationAsRead(
 		@AuthenticationPrincipal memberId: String,
 		@PathVariable notificationId: Long,
 	): ApiResponse<NotificationInboxItemResponse> {
-		val item = notificationInboxInPort.markRead(memberId, notificationId)
+		val item = notificationInPort.markNotificationAsRead(memberId, notificationId)
 		return ApiResponse.success(NotificationInboxItemResponse.from(item))
 	}
 }

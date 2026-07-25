@@ -12,7 +12,7 @@ import com.unicorn.server.domain.notification.event.ScheduleReminderD7Payload
 import com.unicorn.server.domain.notification.port.`in`.NotificationPushTokenInPort
 import com.unicorn.server.domain.notification.port.`in`.NotificationSettingInPort
 import com.unicorn.server.domain.notification.port.dto.RegisterPushTokenCommand
-import com.unicorn.server.domain.notification.port.dto.RequestNotificationCommand
+import com.unicorn.server.domain.notification.port.dto.PublishNotificationCommand
 import com.unicorn.server.domain.notification.port.dto.UpdateNotificationSettingCommand
 import com.unicorn.server.domain.notification.port.out.NotificationInboxOutPort
 import com.unicorn.server.domain.notification.port.out.NotificationOutPort
@@ -22,15 +22,15 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 
-@DisplayName("NotificationRequestService 단위 테스트")
-class NotificationRequestServiceTest {
+@DisplayName("NotificationPublishService 단위 테스트")
+class NotificationPublishServiceTest {
 	@Test
 	@DisplayName("써클 참여 알림은 보관함과 활성 토큰별 푸시 발송 작업을 생성한다")
-	fun request_circleJoin_createsInboxAndPush() {
+	fun publish_circleJoin_createsInboxAndPush() {
 		val fixture = Fixture()
 
-		fixture.service.request(
-			RequestNotificationCommand(
+		fixture.service.publish(
+			PublishNotificationCommand(
 				receiverMemberId = "member-1",
 				payload = CircleJoinCompletedPayload("민수", "우리 가족"),
 				eventId = "invitation-1",
@@ -48,9 +48,9 @@ class NotificationRequestServiceTest {
 
 	@Test
 	@DisplayName("일정 생성 알림은 보관함 하나와 활성 토큰별 푸시 작업을 생성한다")
-	fun request_scheduleCreated_createsOneInboxAndPushPerToken() {
+	fun publish_scheduleCreated_createsOneInboxAndPushPerToken() {
 		val fixture = Fixture(tokens = listOf(pushToken(1), pushToken(2)))
-		val command = RequestNotificationCommand(
+		val command = PublishNotificationCommand(
 			receiverMemberId = "member-1",
 			payload = ScheduleCreatedPayload("민수", "병원 방문"),
 			eventId = "schedule-1",
@@ -58,8 +58,8 @@ class NotificationRequestServiceTest {
 			scheduleId = "schedule-1",
 		)
 
-		fixture.service.request(command)
-		fixture.service.request(command)
+		fixture.service.publish(command)
+		fixture.service.publish(command)
 
 		assertThat(fixture.inboxOutPort.items).hasSize(1)
 		assertThat(fixture.notificationOutPort.notifications).hasSize(2)
@@ -72,11 +72,11 @@ class NotificationRequestServiceTest {
 
 	@Test
 	@DisplayName("푸시 설정이 꺼져 있어도 보관함은 생성하고 푸시 작업은 생성하지 않는다")
-	fun request_pushSettingDisabled_createsInboxWithoutPush() {
+	fun publish_pushSettingDisabled_createsInboxWithoutPush() {
 		val fixture = Fixture(pushEnabled = false)
 
-		fixture.service.request(
-			RequestNotificationCommand(
+		fixture.service.publish(
+			PublishNotificationCommand(
 				receiverMemberId = "member-1",
 				payload = ScheduleReminderD7Payload("병원 방문"),
 				eventId = "d7:schedule-1",
@@ -95,7 +95,7 @@ class NotificationRequestServiceTest {
 	) {
 		val notificationOutPort = FakeNotificationOutPort()
 		val inboxOutPort = FakeNotificationInboxOutPort()
-		val service = NotificationRequestService(
+		val service = NotificationPublishService(
 			notificationOutPort = notificationOutPort,
 			notificationInboxOutPort = inboxOutPort,
 			notificationPushTokenInPort = FakeNotificationPushTokenInPort(tokens),
