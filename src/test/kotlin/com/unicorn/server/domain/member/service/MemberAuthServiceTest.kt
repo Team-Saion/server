@@ -13,8 +13,8 @@ import com.unicorn.server.domain.member.port.dto.SocialLoginCommand
 import com.unicorn.server.domain.member.port.dto.TokenPair
 import com.unicorn.server.domain.member.port.out.MemberOutPort
 import com.unicorn.server.domain.member.port.out.SocialAccountOutPort
-import com.unicorn.server.domain.member.port.out.TokenIssuer
-import com.unicorn.server.domain.member.port.out.TokenStore
+import com.unicorn.server.domain.member.port.out.MemberTokenIssueOutPort
+import com.unicorn.server.domain.member.port.out.MemberTokenStoreOutPort
 import com.unicorn.server.domain.member.vo.MemberId
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -174,7 +174,7 @@ class MemberAuthServiceTest {
 	}
 
 	@Test
-	@DisplayName("logout 호출 시 TokenStore에서 refresh token을 삭제한다")
+	@DisplayName("logout 호출 시 MemberTokenStoreOutPort에서 refresh token을 삭제한다")
 	fun logout_deletesRefreshTokenFromTokenStore() {
 		val member = memberOutPort.save(Member.create(Email("test@example.com"), "홍길동", "길동이"))
 		tokenStore.save(member.id.toString(), "some-refresh-token")
@@ -279,7 +279,7 @@ class MemberAuthServiceTest {
 		}
 	}
 
-	private class FakeTokenIssuer : TokenIssuer {
+	private class FakeTokenIssuer : MemberTokenIssueOutPort {
 		private val refreshTokens = mutableMapOf<String, String>()
 
 		override fun issue(memberId: String, role: Role): TokenPair =
@@ -293,7 +293,7 @@ class MemberAuthServiceTest {
 		}
 	}
 
-	private class FakeTokenStore : TokenStore {
+	private class FakeTokenStore : MemberTokenStoreOutPort {
 		private val memberToToken = mutableMapOf<String, String>()
 		private val tokenToMember = mutableMapOf<String, String>()
 

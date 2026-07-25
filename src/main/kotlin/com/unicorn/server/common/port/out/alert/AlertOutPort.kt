@@ -1,5 +1,5 @@
 package com.unicorn.server.common.port.out.alert
 
-interface ErrorAlertPort {
+interface AlertOutPort {
     fun sendErrorAlert(e: Exception)
 }

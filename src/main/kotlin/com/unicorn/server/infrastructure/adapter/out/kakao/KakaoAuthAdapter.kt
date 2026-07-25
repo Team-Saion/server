@@ -2,7 +2,7 @@ package com.unicorn.server.infrastructure.adapter.out.kakao
 
 import com.unicorn.server.domain.member.exception.InvalidSocialTokenException
 import com.unicorn.server.domain.member.port.dto.KakaoUserInfo
-import com.unicorn.server.domain.member.port.out.KakaoAuthPort
+import com.unicorn.server.domain.member.port.out.MemberKakaoAuthOutPort
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator
 import org.springframework.security.oauth2.jwt.JwtClaimValidator
@@ -17,7 +17,7 @@ class KakaoAuthAdapter(
 	@param:Value("\${app.kakao.app-key}") private val appKey: String,
 	@param:Value("\${app.kakao.jwks-uri}") private val jwksUri: String,
 	@param:Value("\${app.kakao.issuer}") private val issuer: String,
-) : KakaoAuthPort {
+) : MemberKakaoAuthOutPort {
 
 	private val jwtDecoder: NimbusJwtDecoder = NimbusJwtDecoder
 		.withJwkSetUri(jwksUri)

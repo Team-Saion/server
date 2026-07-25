@@ -10,10 +10,10 @@ import com.unicorn.server.domain.invitation.exception.InvitationExpiredException
 import com.unicorn.server.domain.invitation.exception.InvitationSelfApprovalForbiddenException
 import com.unicorn.server.domain.invitation.port.dto.DispatchInvitationCommand
 import com.unicorn.server.domain.invitation.port.dto.IssueInvitationCommand
-import com.unicorn.server.domain.invitation.port.`in`.AcceptCircleInvitationInPort
-import com.unicorn.server.domain.invitation.port.`in`.DispatchInvitationInPort
-import com.unicorn.server.domain.invitation.port.`in`.GetInvitationByTokenInPort
-import com.unicorn.server.domain.invitation.port.`in`.IssueInvitationInPort
+import com.unicorn.server.domain.invitation.port.`in`.InvitationAcceptInPort
+import com.unicorn.server.domain.invitation.port.`in`.InvitationDispatchInPort
+import com.unicorn.server.domain.invitation.port.`in`.InvitationByTokenInPort
+import com.unicorn.server.domain.invitation.port.`in`.InvitationIssueInPort
 import com.unicorn.server.domain.member.Member
 import com.unicorn.server.domain.member.enums.Role
 import com.unicorn.server.domain.member.port.out.MemberOutPort
@@ -35,10 +35,10 @@ class CircleInvitationFlowIntegrationTest : BaseTest() {
 	@Autowired private lateinit var memberOutPort: MemberOutPort
 	@Autowired private lateinit var circleInPort: CircleInPort
 	@Autowired private lateinit var homeQueryInPort: HomeQueryInPort
-	@Autowired private lateinit var issueInvitationInPort: IssueInvitationInPort
-	@Autowired private lateinit var dispatchInvitationInPort: DispatchInvitationInPort
-	@Autowired private lateinit var getInvitationByTokenInPort: GetInvitationByTokenInPort
-	@Autowired private lateinit var acceptCircleInvitationInPort: AcceptCircleInvitationInPort
+	@Autowired private lateinit var issueInvitationInPort: InvitationIssueInPort
+	@Autowired private lateinit var dispatchInvitationInPort: InvitationDispatchInPort
+	@Autowired private lateinit var getInvitationByTokenInPort: InvitationByTokenInPort
+	@Autowired private lateinit var acceptCircleInvitationInPort: InvitationAcceptInPort
 	@Autowired private lateinit var invitationDispatchLogJpaRepository: InvitationDispatchLogJpaRepository
 	@Autowired private lateinit var invitationClickLogJpaRepository: InvitationClickLogJpaRepository
 	@Autowired private lateinit var invitationRedemptionLogJpaRepository: InvitationRedemptionLogJpaRepository

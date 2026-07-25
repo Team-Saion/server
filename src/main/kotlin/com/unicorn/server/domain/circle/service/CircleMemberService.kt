@@ -1,7 +1,7 @@
 package com.unicorn.server.domain.circle.service
 
 import com.unicorn.server.common.exception.BusinessException
-import com.unicorn.server.common.port.out.event.EventPublisher
+import com.unicorn.server.common.port.out.event.EventOutPort
 import com.unicorn.server.domain.circle.Circle
 import com.unicorn.server.domain.circle.CircleMember
 import com.unicorn.server.domain.circle.enums.CircleMemberStatus
@@ -20,7 +20,7 @@ import com.unicorn.server.domain.circle.port.out.CircleMemberOutPort
 import com.unicorn.server.domain.circle.port.out.CircleOutPort
 import com.unicorn.server.domain.circle.vo.CircleId
 import com.unicorn.server.domain.member.exception.MemberNotFoundException
-import com.unicorn.server.domain.member.port.`in`.GetMemberProfileInPort
+import com.unicorn.server.domain.member.port.`in`.MemberProfileInPort
 import com.unicorn.server.domain.member.vo.MemberId
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -31,8 +31,8 @@ class CircleMemberService(
     private val circleOutPort: CircleOutPort,
     private val circleMemberOutPort: CircleMemberOutPort,
     private val circleMemberIdGenerator: CircleMemberIdGenerator,
-    private val getMemberProfileInPort: GetMemberProfileInPort,
-    private val eventPublisher: EventPublisher,
+    private val getMemberProfileInPort: MemberProfileInPort,
+    private val eventPublisher: EventOutPort,
 ) : CircleMemberInPort {
     override fun join(circleId: String, memberId: String): JoinCircleResult {
         val targetCircleId = CircleId.of(circleId)

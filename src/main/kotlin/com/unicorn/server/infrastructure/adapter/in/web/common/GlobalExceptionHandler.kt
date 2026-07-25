@@ -2,7 +2,7 @@ package com.unicorn.server.infrastructure.adapter.`in`.web.common
 
 import com.unicorn.server.common.exception.BusinessException
 import com.unicorn.server.common.exception.CommonErrorCode
-import com.unicorn.server.common.port.out.alert.ErrorAlertPort
+import com.unicorn.server.common.port.out.alert.AlertOutPort
 import com.unicorn.server.common.port.out.storage.exception.ObjectStorageErrorCode
 import com.unicorn.server.infrastructure.adapter.`in`.web.common.dto.ApiResponse
 import org.springframework.http.converter.HttpMessageNotReadableException
@@ -16,7 +16,7 @@ import org.springframework.web.servlet.resource.NoResourceFoundException
 
 @RestControllerAdvice
 class GlobalExceptionHandler(
-    private val errorAlertPort: ErrorAlertPort,
+    private val errorAlertPort: AlertOutPort,
 ) {
     @ExceptionHandler(BusinessException::class)
     fun handleBusinessException(e: BusinessException): ApiResponse<Unit> =

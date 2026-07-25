@@ -1,12 +1,12 @@
 package com.unicorn.server.domain.schedule.service
 
 import com.unicorn.server.common.exception.BusinessException
-import com.unicorn.server.common.port.out.event.EventPublisher
+import com.unicorn.server.common.port.out.event.EventOutPort
 import com.unicorn.server.domain.schedule.ScheduleConfirmation
 import com.unicorn.server.domain.schedule.enums.ConfirmationType
 import com.unicorn.server.domain.schedule.event.ScheduleConfirmedEvent
 import com.unicorn.server.domain.schedule.exception.ScheduleErrorCode
-import com.unicorn.server.domain.schedule.port.`in`.ManageScheduleConfirmationInPort
+import com.unicorn.server.domain.schedule.port.`in`.ScheduleConfirmationInPort
 import com.unicorn.server.domain.schedule.port.`in`.ScheduleConfirmationStatusInPort
 import com.unicorn.server.domain.schedule.port.dto.RegisterConfirmationCommand
 import com.unicorn.server.domain.schedule.port.out.CircleAccessOutPort
@@ -22,8 +22,8 @@ class ScheduleConfirmationService(
 	private val scheduleOutPort: ScheduleOutPort,
 	private val scheduleConfirmationOutPort: ScheduleConfirmationOutPort,
 	private val circleAccessOutPort: CircleAccessOutPort,
-	private val eventPublisher: EventPublisher,
-) : ManageScheduleConfirmationInPort, ScheduleConfirmationStatusInPort {
+	private val eventPublisher: EventOutPort,
+) : ScheduleConfirmationInPort, ScheduleConfirmationStatusInPort {
 
 	override fun register(command: RegisterConfirmationCommand): ConfirmationType {
 		if (!command.confirmationType.available) {

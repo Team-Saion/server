@@ -10,10 +10,10 @@ import com.unicorn.server.domain.circle.port.`in`.CircleInPort
 import com.unicorn.server.domain.circle.port.`in`.CircleMemberInPort
 import com.unicorn.server.domain.circle.vo.CircleId
 import com.unicorn.server.domain.member.port.dto.MemberProfileDto
-import com.unicorn.server.domain.member.port.`in`.GetMemberProfileInPort
+import com.unicorn.server.domain.member.port.`in`.MemberProfileInPort
 import com.unicorn.server.domain.member.enums.AvatarColor
 import com.unicorn.server.domain.home.service.HomeQueryService
-import com.unicorn.server.domain.schedule.port.`in`.GetSchedulesForCircleInPort
+import com.unicorn.server.domain.schedule.port.`in`.ScheduleForCircleInPort
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.DisplayName
@@ -106,7 +106,7 @@ class HomeQueryServiceTest {
 		fun put(circleId: String, dto: CircleMemberDto) { memberships.computeIfAbsent(circleId) { mutableListOf() }.add(dto) }
 	}
 
-	private class FakeMemberProfileInPort : GetMemberProfileInPort {
+	private class FakeMemberProfileInPort : MemberProfileInPort {
 		private val profiles = linkedMapOf<String, MemberProfileDto>()
 		override fun getMemberProfile(memberId: String): MemberProfileDto? = profiles[memberId]
 		fun put(memberId: String, active: Boolean, profileImageKey: String? = null) {
@@ -121,7 +121,7 @@ class HomeQueryServiceTest {
 		}
 	}
 
-	private class FakeScheduleQueryInPort : GetSchedulesForCircleInPort {
+	private class FakeScheduleQueryInPort : ScheduleForCircleInPort {
 		var listCalled = false
 		var countCalled = false
 

@@ -4,7 +4,7 @@ import com.unicorn.server.domain.schedule.port.dto.CreateScheduleCommand
 import com.unicorn.server.domain.schedule.port.dto.UpdateScheduleCommand
 import com.unicorn.server.domain.schedule.vo.ScheduleId
 
-interface ManageScheduleInPort {
+interface ScheduleCommandInPort {
 	fun create(command: CreateScheduleCommand): ScheduleId
 
 	fun update(command: UpdateScheduleCommand)

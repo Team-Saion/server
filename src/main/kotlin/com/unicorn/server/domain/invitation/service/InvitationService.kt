@@ -1,7 +1,7 @@
 package com.unicorn.server.domain.invitation.service
 
 import com.unicorn.server.common.exception.BusinessException
-import com.unicorn.server.common.port.out.event.EventPublisher
+import com.unicorn.server.common.port.out.event.EventOutPort
 import com.unicorn.server.domain.circle.exception.CircleErrorCode
 import com.unicorn.server.domain.circle.port.`in`.CircleInPort
 import com.unicorn.server.domain.circle.port.`in`.CircleMemberInPort
@@ -20,17 +20,17 @@ import com.unicorn.server.domain.invitation.port.dto.DispatchInvitationCommand
 import com.unicorn.server.domain.invitation.port.dto.InvitationDetailView
 import com.unicorn.server.domain.invitation.port.dto.IssueInvitationCommand
 import com.unicorn.server.domain.invitation.port.dto.IssuedInvitationResult
-import com.unicorn.server.domain.invitation.port.`in`.AcceptCircleInvitationInPort
-import com.unicorn.server.domain.invitation.port.`in`.DispatchInvitationInPort
-import com.unicorn.server.domain.invitation.port.`in`.GetInvitationByTokenInPort
-import com.unicorn.server.domain.invitation.port.`in`.IssueInvitationInPort
+import com.unicorn.server.domain.invitation.port.`in`.InvitationAcceptInPort
+import com.unicorn.server.domain.invitation.port.`in`.InvitationDispatchInPort
+import com.unicorn.server.domain.invitation.port.`in`.InvitationByTokenInPort
+import com.unicorn.server.domain.invitation.port.`in`.InvitationIssueInPort
 import com.unicorn.server.domain.invitation.port.out.InvitationOutPort
 import com.unicorn.server.domain.invitation.port.out.InvitationIdGenerator
 import com.unicorn.server.domain.invitation.port.out.InvitationTokenGenerator
 import com.unicorn.server.domain.invitation.vo.InvitationId
 import com.unicorn.server.domain.invitation.vo.InvitationToken
 import com.unicorn.server.domain.member.exception.MemberNotFoundException
-import com.unicorn.server.domain.member.port.`in`.GetMemberProfileInPort
+import com.unicorn.server.domain.member.port.`in`.MemberProfileInPort
 import com.unicorn.server.domain.member.vo.MemberId
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -44,9 +44,9 @@ class InvitationService(
 	private val tokenGenerator: InvitationTokenGenerator,
 	private val circleInPort: CircleInPort,
 	private val circleMemberInPort: CircleMemberInPort,
-	private val getMemberProfileInPort: GetMemberProfileInPort,
-	private val eventPublisher: EventPublisher,
-) : IssueInvitationInPort, DispatchInvitationInPort, GetInvitationByTokenInPort, AcceptCircleInvitationInPort {
+	private val getMemberProfileInPort: MemberProfileInPort,
+	private val eventPublisher: EventOutPort,
+) : InvitationIssueInPort, InvitationDispatchInPort, InvitationByTokenInPort, InvitationAcceptInPort {
 	override fun issue(inviterMemberId: String, command: IssueInvitationCommand): IssuedInvitationResult {
 		val type = InvitationType.CIRCLE
 		circleInPort.getCircleSummary(command.targetId)

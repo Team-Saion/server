@@ -2,7 +2,7 @@ package com.unicorn.server.domain.schedule.service
 
 import com.unicorn.server.common.exception.BusinessException
 import com.unicorn.server.common.domain.Event
-import com.unicorn.server.common.port.out.event.EventPublisher
+import com.unicorn.server.common.port.out.event.EventOutPort
 import com.unicorn.server.domain.schedule.Schedule
 import com.unicorn.server.domain.schedule.ScheduleConfirmation
 import com.unicorn.server.domain.schedule.event.ScheduleCreatedEvent
@@ -351,7 +351,7 @@ class ScheduleCommandServiceTest {
 		override fun isInitiator(circleId: String, memberId: String): Boolean = circleId to memberId in initiators
 	}
 
-	private class RecordingEventPublisher : EventPublisher {
+	private class RecordingEventPublisher : EventOutPort {
 		val events = mutableListOf<Event>()
 
 		override fun publish(event: Event) {
