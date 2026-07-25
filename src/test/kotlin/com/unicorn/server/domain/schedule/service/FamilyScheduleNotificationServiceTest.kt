@@ -49,16 +49,16 @@ class FamilyScheduleNotificationServiceTest {
 	}
 
 	@Test
-	@DisplayName("시작일이 지난 일정에 가족에게 전하기를 요청하면 사용할 수 없다는 예외가 발생한다")
-	fun request_withStartedSchedule_throwsNotAvailable() {
+	@DisplayName("진행 중인 일정에 가족에게 전하기를 요청하면 D-day 가족 일정 알림 이벤트를 발행한다")
+	fun request_withInProgressSchedule_publishesFamilyScheduleNotificationEvent() {
 		circleAccessOutPort.seedMember(CIRCLE_ID, MEMBER_ID)
 		circleAccessOutPort.seedMember(CIRCLE_ID, OTHER_MEMBER_ID)
-		scheduleOutPort.seed(schedule(startDate = LocalDate.now().minusDays(1)))
+		scheduleOutPort.seed(schedule(startDate = LocalDate.now().minusDays(1), endDate = LocalDate.now()))
 
-		assertThatThrownBy { service.request(command()) }
-			.isInstanceOf(BusinessException::class.java)
-			.extracting { (it as BusinessException).errorCode }
-			.isEqualTo(ScheduleErrorCode.FAMILY_SCHEDULE_NOTIFICATION_NOT_AVAILABLE)
+		service.request(command())
+
+		val event = eventPublisher.events.filterIsInstance<FamilyScheduleNotificationRequestedEvent>().single()
+		assertThat(event.dDay).isEqualTo("D-day")
 	}
 
 	@Test
@@ -79,12 +79,12 @@ class FamilyScheduleNotificationServiceTest {
 		memberId = MEMBER_ID,
 	)
 
-	private fun schedule(startDate: LocalDate): Schedule = Schedule.reconstitute(
+	private fun schedule(startDate: LocalDate, endDate: LocalDate = startDate): Schedule = Schedule.reconstitute(
 		id = SCHEDULE_ID,
 		circleId = CIRCLE_ID,
 		title = "제주도 여행",
 		startDate = startDate,
-		endDate = startDate,
+		endDate = endDate,
 		startTime = null,
 		endTime = null,
 		needConfirm = false,
@@ -112,7 +112,7 @@ class FamilyScheduleNotificationServiceTest {
 
 		override fun findActiveByCircleId(
 			circleId: String,
-			today: LocalDate,
+			now: LocalDateTime,
 			cursor: SchedulePageCursor?,
 			size: Int,
 		): List<Schedule> = emptyList()
@@ -138,7 +138,7 @@ class FamilyScheduleNotificationServiceTest {
 			createdBefore: LocalDateTime,
 		): List<Schedule> = emptyList()
 
-		override fun findUpcomingByCircleId(circleId: String, today: LocalDate, limit: Int): List<Schedule> = emptyList()
+		override fun findUpcomingByCircleId(circleId: String, now: LocalDateTime, limit: Int): List<Schedule> = emptyList()
 
 		override fun countActiveByCircleId(circleId: String): Long = 0L
 	}
