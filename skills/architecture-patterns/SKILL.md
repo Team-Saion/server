@@ -654,6 +654,48 @@ interface SchedulePersistOutPort {
 }
 ```
 
+This format applies to every driven port under `port/out`, even ones that today read like a plain capability noun (`TokenIssuer`, `TokenStore`, `NotificationSender`, `KakaoAuthPort`, ...). The package location (`port/out`) already marks these as ports; the class name must say so too, so a grep for `OutPort` or an IDE autocomplete on `Port` reliably finds them all:
+
+| Wrong | Correct |
+|---|---|
+| `TokenIssuer` | `MemberTokenIssueOutPort` |
+| `TokenStore` | `MemberTokenStoreOutPort` |
+| `NotificationSender` | `NotificationSendOutPort` |
+| `KakaoAuthPort` | `MemberKakaoAuthOutPort` |
+
+### Port Name Format: Common Ports
+
+`common/port/out` has no bounded-context domain to anchor `<Domain>`, so the format becomes `<Capability>[<Purpose>]OutPort`, where `<Capability>` is the cross-cutting concern the port abstracts (still vendor-neutral, per [Platform and Service Names Belong in Infrastructure Only](#platform-and-service-names-belong-in-infrastructure-only)).
+
+| Wrong | Correct |
+|---|---|
+| `ErrorAlertPort` | `AlertOutPort` |
+| `EventPublisher` | `EventOutPort` |
+| `ObjectStorage` | `ObjectStorageOutPort` |
+
+### Port Name Format: Exceptions
+
+Two categories are intentionally exempt from the `<Domain>[<Purpose>]<In|Out>Port` suffix rule:
+
+**ID/token generators.** A generator's only responsibility is producing a new identifier, and `Generator` already communicates both the responsibility and that it is a driven port. Appending `OutPort` adds length without adding information.
+
+```kotlin
+// domain/schedule/port/out/ScheduleIdGenerator.kt ✅ (exception — no OutPort suffix)
+interface ScheduleIdGenerator {
+    fun next(): ScheduleId
+}
+```
+
+**Anti-corruption ports.** When a port exists solely to let one bounded context read another context's aggregate without importing it directly, name the port after the *target* context/capability it exposes, not the package it physically lives in. The name should tell the reader what the port guards against, not where the file happens to sit.
+
+```kotlin
+// domain/schedule/port/out/CircleAccessOutPort.kt ✅ (exception — target-context name, not "Schedule...")
+interface CircleAccessOutPort {
+    fun existsById(circleId: String): Boolean
+    fun isMember(circleId: String, memberId: String): Boolean
+}
+```
+
 ## Spring Configuration Management
 
 Choose between `@Value`, `@ConfigurationProperties`, and `@Configuration` based on the scope and purpose of the configuration.
