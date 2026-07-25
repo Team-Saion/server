@@ -1,8 +1,8 @@
 package com.unicorn.server.domain.member.service
 
 import com.unicorn.server.common.domain.Event
-import com.unicorn.server.common.port.out.event.EventPublisher
-import com.unicorn.server.common.port.out.storage.ObjectStorage
+import com.unicorn.server.common.port.out.event.EventOutPort
+import com.unicorn.server.common.port.out.storage.ObjectStorageOutPort
 import com.unicorn.server.common.port.out.storage.ObjectUploadCommand
 import com.unicorn.server.common.port.out.storage.StoredObject
 import com.unicorn.server.common.port.out.storage.exception.ObjectSizeExceededException
@@ -350,7 +350,7 @@ class MemberProfileServiceTest {
 		}
 	}
 
-	private class RecordingEventPublisher : EventPublisher {
+	private class RecordingEventPublisher : EventOutPort {
 		val events = mutableListOf<Event>()
 
 		override fun publish(event: Event) {
@@ -358,7 +358,7 @@ class MemberProfileServiceTest {
 		}
 	}
 
-	private class FakeObjectStorage : ObjectStorage {
+	private class FakeObjectStorage : ObjectStorageOutPort {
 		val deleted = mutableListOf<String>()
 
 		override fun upload(command: ObjectUploadCommand): StoredObject =

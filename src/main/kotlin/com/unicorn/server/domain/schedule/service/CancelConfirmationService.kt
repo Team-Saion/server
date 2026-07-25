@@ -2,7 +2,7 @@ package com.unicorn.server.domain.schedule.service
 
 import com.unicorn.server.common.exception.BusinessException
 import com.unicorn.server.domain.schedule.exception.ScheduleErrorCode
-import com.unicorn.server.domain.schedule.port.`in`.CancelConfirmationInPort
+import com.unicorn.server.domain.schedule.port.`in`.ScheduleConfirmationCancelInPort
 import com.unicorn.server.domain.schedule.port.out.CircleAccessOutPort
 import com.unicorn.server.domain.schedule.port.out.ScheduleConfirmationOutPort
 import com.unicorn.server.domain.schedule.port.out.ScheduleOutPort
@@ -16,7 +16,7 @@ class CancelConfirmationService(
 	private val scheduleOutPort: ScheduleOutPort,
 	private val scheduleConfirmationOutPort: ScheduleConfirmationOutPort,
 	private val circleAccessOutPort: CircleAccessOutPort,
-) : CancelConfirmationInPort {
+) : ScheduleConfirmationCancelInPort {
 
 	override fun cancel(confirmationId: Long, scheduleId: ScheduleId, circleId: String, memberId: String) {
 		if (!circleAccessOutPort.isMember(circleId, memberId)) {

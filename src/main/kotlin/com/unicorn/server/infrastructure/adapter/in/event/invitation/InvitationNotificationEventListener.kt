@@ -1,6 +1,6 @@
 package com.unicorn.server.infrastructure.adapter.`in`.event.invitation
 
-import com.unicorn.server.common.port.out.event.EventPublisher
+import com.unicorn.server.common.port.out.event.EventOutPort
 import com.unicorn.server.domain.circle.port.`in`.CircleMemberInPort
 import com.unicorn.server.domain.invitation.event.InvitationRedeemedEvent
 import com.unicorn.server.domain.notification.enums.NotificationChannel
@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component
 class InvitationNotificationEventListener(
 	private val circleMemberInPort: CircleMemberInPort,
 	private val notificationPushTokenInPort: NotificationPushTokenInPort,
-	private val eventPublisher: EventPublisher,
+	private val eventPublisher: EventOutPort,
 ) {
 	@EventListener
 	fun handle(event: InvitationRedeemedEvent) {

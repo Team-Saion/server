@@ -2,7 +2,7 @@ package com.unicorn.server.infrastructure.adapter.out.token
 
 import com.unicorn.server.domain.member.enums.Role
 import com.unicorn.server.domain.member.port.dto.TokenPair
-import com.unicorn.server.domain.member.port.out.TokenIssuer
+import com.unicorn.server.domain.member.port.out.MemberTokenIssueOutPort
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.security.Keys
@@ -17,7 +17,7 @@ class JwtProvider(
 	@Value("\${app.jwt.secret}") secretKey: String,
 	@param:Value("\${app.jwt.access-token-expiration}") private val accessTokenExpiration: Long,
 	@param:Value("\${app.jwt.refresh-token-expiration}") private val refreshTokenExpiration: Long,
-) : TokenIssuer {
+) : MemberTokenIssueOutPort {
 
 	private val key: SecretKey = Keys.hmacShaKeyFor(secretKey.toByteArray(Charsets.UTF_8))
 

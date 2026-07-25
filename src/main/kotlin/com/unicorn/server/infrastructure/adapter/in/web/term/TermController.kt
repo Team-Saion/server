@@ -1,7 +1,7 @@
 package com.unicorn.server.infrastructure.adapter.`in`.web.term
 
-import com.unicorn.server.domain.term.port.`in`.AgreeTermsInPort
-import com.unicorn.server.domain.term.port.`in`.GetActiveTermsInPort
+import com.unicorn.server.domain.term.port.`in`.TermAgreeInPort
+import com.unicorn.server.domain.term.port.`in`.TermActiveInPort
 import com.unicorn.server.domain.term.port.dto.AgreeTermsCommand
 import com.unicorn.server.infrastructure.adapter.`in`.web.common.dto.ApiResponse
 import com.unicorn.server.infrastructure.adapter.`in`.web.term.dto.AgreeTermsRequest
@@ -23,8 +23,8 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/v1/terms")
 class TermController(
-	private val getActiveTermsInPort: GetActiveTermsInPort,
-	private val agreeTermsInPort: AgreeTermsInPort,
+	private val getActiveTermsInPort: TermActiveInPort,
+	private val agreeTermsInPort: TermAgreeInPort,
 ) : TermApiDoc {
 
 	// GET /api/v1/terms - term_code별 현재 발효 중인 최신 버전 목록을 조회한다.

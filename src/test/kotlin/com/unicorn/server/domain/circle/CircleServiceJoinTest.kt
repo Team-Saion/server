@@ -2,7 +2,7 @@ package com.unicorn.server.domain.circle
 
 import com.unicorn.server.TestIdFactory
 import com.unicorn.server.common.exception.BusinessException
-import com.unicorn.server.common.port.out.event.EventPublisher
+import com.unicorn.server.common.port.out.event.EventOutPort
 import com.unicorn.server.common.vo.Email
 import com.unicorn.server.domain.circle.enums.CircleMemberStatus
 import com.unicorn.server.domain.circle.enums.CircleRole
@@ -17,7 +17,7 @@ import com.unicorn.server.domain.circle.vo.CircleId
 import com.unicorn.server.domain.member.Member
 import com.unicorn.server.domain.member.enums.Role
 import com.unicorn.server.domain.member.port.dto.MemberProfileDto
-import com.unicorn.server.domain.member.port.`in`.GetMemberProfileInPort
+import com.unicorn.server.domain.member.port.`in`.MemberProfileInPort
 import com.unicorn.server.domain.member.vo.MemberId
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -264,7 +264,7 @@ class CircleServiceJoinTest {
 		override fun countActiveByCircleId(circleId: CircleId): Long = members.count { it.circleId == circleId && it.status == CircleMemberStatus.ACTIVE && !it.deleted }.toLong()
 	}
 
-	private class FakeMemberQueryInPort : GetMemberProfileInPort {
+	private class FakeMemberQueryInPort : MemberProfileInPort {
 		private val members = linkedMapOf<MemberId, Member>()
 		fun save(member: Member): Member { members[member.id] = member; return member }
 		override fun getMemberProfile(memberId: String): MemberProfileDto? =
@@ -280,7 +280,7 @@ class CircleServiceJoinTest {
 			}
 	}
 
-	private class RecordingEventPublisher : EventPublisher {
+	private class RecordingEventPublisher : EventOutPort {
 		override fun publish(event: com.unicorn.server.common.domain.Event) = Unit
 	}
 }

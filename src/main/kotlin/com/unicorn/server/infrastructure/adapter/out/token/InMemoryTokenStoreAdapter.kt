@@ -1,13 +1,13 @@
 package com.unicorn.server.infrastructure.adapter.out.token
 
-import com.unicorn.server.domain.member.port.out.TokenStore
+import com.unicorn.server.domain.member.port.out.MemberTokenStoreOutPort
 import org.springframework.stereotype.Component
 import java.util.concurrent.ConcurrentHashMap
 
 // InMemoryTokenStoreAdapter - refresh token을 메모리에 저장한다.
 // 추후 RedisTokenStoreAdapter로 교체 가능하다.
 @Component
-class InMemoryTokenStoreAdapter : TokenStore {
+class InMemoryTokenStoreAdapter : MemberTokenStoreOutPort {
 
 	// memberId -> refreshToken
 	private val memberToToken = ConcurrentHashMap<String, String>()

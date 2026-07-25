@@ -1,15 +1,15 @@
 package com.unicorn.server.infrastructure.adapter.`in`.web.schedule
 
 import com.unicorn.server.domain.schedule.enums.ConfirmationType
-import com.unicorn.server.domain.schedule.port.`in`.CancelConfirmationInPort
-import com.unicorn.server.domain.schedule.port.`in`.CreateScheduleInPort
-import com.unicorn.server.domain.schedule.port.`in`.DeleteScheduleInPort
-import com.unicorn.server.domain.schedule.port.`in`.GetScheduleDetailInPort
-import com.unicorn.server.domain.schedule.port.`in`.GetScheduleListInPort
-import com.unicorn.server.domain.schedule.port.`in`.RegisterConfirmationInPort
+import com.unicorn.server.domain.schedule.port.`in`.ScheduleConfirmationCancelInPort
+import com.unicorn.server.domain.schedule.port.`in`.ScheduleCreateInPort
+import com.unicorn.server.domain.schedule.port.`in`.ScheduleDeleteInPort
+import com.unicorn.server.domain.schedule.port.`in`.ScheduleDetailInPort
+import com.unicorn.server.domain.schedule.port.`in`.ScheduleListInPort
+import com.unicorn.server.domain.schedule.port.`in`.ScheduleConfirmationRegisterInPort
 
-import com.unicorn.server.domain.schedule.port.`in`.RequestFamilyScheduleNotificationInPort
-import com.unicorn.server.domain.schedule.port.`in`.UpdateScheduleInPort
+import com.unicorn.server.domain.schedule.port.`in`.ScheduleFamilyNotificationRequestInPort
+import com.unicorn.server.domain.schedule.port.`in`.ScheduleUpdateInPort
 import com.unicorn.server.domain.schedule.port.dto.CreateScheduleCommand
 import com.unicorn.server.domain.schedule.port.dto.RegisterConfirmationCommand
 import com.unicorn.server.domain.schedule.port.dto.RequestFamilyScheduleNotificationCommand
@@ -39,14 +39,14 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/v1/circles/{circleId}/schedules")
 class ScheduleController(
-	private val createScheduleInPort: CreateScheduleInPort,
-	private val updateScheduleInPort: UpdateScheduleInPort,
-	private val deleteScheduleInPort: DeleteScheduleInPort,
-	private val getScheduleListInPort: GetScheduleListInPort,
-	private val getScheduleDetailInPort: GetScheduleDetailInPort,
-	private val registerConfirmationInPort: RegisterConfirmationInPort,
-	private val cancelConfirmationInPort: CancelConfirmationInPort,
-	private val requestFamilyScheduleNotificationInPort: RequestFamilyScheduleNotificationInPort,
+	private val createScheduleInPort: ScheduleCreateInPort,
+	private val updateScheduleInPort: ScheduleUpdateInPort,
+	private val deleteScheduleInPort: ScheduleDeleteInPort,
+	private val getScheduleListInPort: ScheduleListInPort,
+	private val getScheduleDetailInPort: ScheduleDetailInPort,
+	private val registerConfirmationInPort: ScheduleConfirmationRegisterInPort,
+	private val cancelConfirmationInPort: ScheduleConfirmationCancelInPort,
+	private val requestFamilyScheduleNotificationInPort: ScheduleFamilyNotificationRequestInPort,
 ) : ScheduleApiDoc {
 
 	@PostMapping

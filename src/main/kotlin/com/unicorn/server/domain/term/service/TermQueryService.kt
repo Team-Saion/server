@@ -1,7 +1,7 @@
 package com.unicorn.server.domain.term.service
 
 import com.unicorn.server.domain.term.Term
-import com.unicorn.server.domain.term.port.`in`.GetActiveTermsInPort
+import com.unicorn.server.domain.term.port.`in`.TermActiveInPort
 import com.unicorn.server.domain.term.port.out.TermOutPort
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -21,7 +21,7 @@ import java.time.LocalDateTime
 @Transactional(readOnly = true)
 class TermQueryService(
 	private val termOutPort: TermOutPort,
-) : GetActiveTermsInPort {
+) : TermActiveInPort {
 
 	override fun getActiveTerms(): List<Term> =
 		termOutPort.findAllEffectiveAsOf(LocalDateTime.now())

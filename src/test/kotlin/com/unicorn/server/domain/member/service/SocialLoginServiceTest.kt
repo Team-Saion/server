@@ -1,12 +1,12 @@
 package com.unicorn.server.domain.member.service
 
 import com.unicorn.server.domain.member.enums.SocialProvider
-import com.unicorn.server.domain.member.port.`in`.SocialLoginInPort
+import com.unicorn.server.domain.member.port.`in`.MemberSocialLoginInPort
 import com.unicorn.server.domain.member.port.dto.KakaoUserInfo
 import com.unicorn.server.domain.member.port.dto.SocialLoginCommand
 import com.unicorn.server.domain.member.port.dto.SocialLoginResult
 import com.unicorn.server.domain.member.port.dto.TokenPair
-import com.unicorn.server.domain.member.port.out.KakaoAuthPort
+import com.unicorn.server.domain.member.port.out.MemberKakaoAuthOutPort
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -38,7 +38,7 @@ class SocialLoginServiceTest {
 		)
 	}
 
-	private class FakeKakaoAuthPort : KakaoAuthPort {
+	private class FakeKakaoAuthPort : MemberKakaoAuthOutPort {
 		override fun verify(idToken: String): KakaoUserInfo =
 			KakaoUserInfo(
 				providerId = "fake-kakao-id",
@@ -48,7 +48,7 @@ class SocialLoginServiceTest {
 			)
 	}
 
-	private class RecordingSocialLoginInPort : SocialLoginInPort {
+	private class RecordingSocialLoginInPort : MemberSocialLoginInPort {
 		var command: SocialLoginCommand? = null
 
 		override fun login(command: SocialLoginCommand): SocialLoginResult {

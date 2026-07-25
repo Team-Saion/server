@@ -1,7 +1,7 @@
 package com.unicorn.server.infrastructure.adapter.`in`.event.invitation
 
 import com.unicorn.server.common.domain.Event
-import com.unicorn.server.common.port.out.event.EventPublisher
+import com.unicorn.server.common.port.out.event.EventOutPort
 import com.unicorn.server.domain.circle.port.`in`.CircleMemberInPort
 import com.unicorn.server.domain.circle.port.dto.CircleMemberDto
 import com.unicorn.server.domain.circle.port.dto.CircleSummary
@@ -113,7 +113,7 @@ class InvitationNotificationEventListenerTest {
 		override fun deactivate(memberId: String, tokenId: Long) = error("not used")
 	}
 
-	private class RecordingEventPublisher : EventPublisher {
+	private class RecordingEventPublisher : EventOutPort {
 		val events = mutableListOf<Event>()
 
 		override fun publish(event: Event) {

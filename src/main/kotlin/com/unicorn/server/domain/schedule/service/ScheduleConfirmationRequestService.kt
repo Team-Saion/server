@@ -1,6 +1,6 @@
 package com.unicorn.server.domain.schedule.service
 
-import com.unicorn.server.common.port.out.event.EventPublisher
+import com.unicorn.server.common.port.out.event.EventOutPort
 import com.unicorn.server.domain.schedule.Schedule
 import com.unicorn.server.domain.schedule.event.ScheduleConfirmationRequestDueEvent
 import com.unicorn.server.domain.schedule.port.`in`.ScheduleConfirmationRequestInPort
@@ -14,7 +14,7 @@ import java.time.LocalTime
 @Transactional
 class ScheduleConfirmationRequestService(
 	private val scheduleOutPort: ScheduleOutPort,
-	private val eventPublisher: EventPublisher,
+	private val eventPublisher: EventOutPort,
 ) : ScheduleConfirmationRequestInPort {
 
 	override fun dispatchDue(now: LocalDateTime) {

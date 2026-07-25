@@ -1,10 +1,10 @@
 package com.unicorn.server.domain.schedule.service
 
 import com.unicorn.server.common.exception.BusinessException
-import com.unicorn.server.common.port.out.event.EventPublisher
+import com.unicorn.server.common.port.out.event.EventOutPort
 import com.unicorn.server.domain.schedule.event.FamilyScheduleNotificationRequestedEvent
 import com.unicorn.server.domain.schedule.exception.ScheduleErrorCode
-import com.unicorn.server.domain.schedule.port.`in`.RequestFamilyScheduleNotificationInPort
+import com.unicorn.server.domain.schedule.port.`in`.ScheduleFamilyNotificationRequestInPort
 import com.unicorn.server.domain.schedule.port.dto.RequestFamilyScheduleNotificationCommand
 import com.unicorn.server.domain.schedule.port.out.CircleAccessOutPort
 import com.unicorn.server.domain.schedule.port.out.ScheduleOutPort
@@ -19,8 +19,8 @@ import java.util.UUID
 class FamilyScheduleNotificationService(
 	private val scheduleOutPort: ScheduleOutPort,
 	private val circleAccessOutPort: CircleAccessOutPort,
-	private val eventPublisher: EventPublisher,
-) : RequestFamilyScheduleNotificationInPort {
+	private val eventPublisher: EventOutPort,
+) : ScheduleFamilyNotificationRequestInPort {
 
 	override fun request(command: RequestFamilyScheduleNotificationCommand) {
 		if (!circleAccessOutPort.isMember(command.circleId, command.memberId)) {

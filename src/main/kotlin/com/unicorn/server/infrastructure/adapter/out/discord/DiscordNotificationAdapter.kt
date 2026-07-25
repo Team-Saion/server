@@ -1,6 +1,6 @@
 package com.unicorn.server.infrastructure.adapter.out.discord
 
-import com.unicorn.server.common.port.out.alert.ErrorAlertPort
+import com.unicorn.server.common.port.out.alert.AlertOutPort
 import com.unicorn.server.infrastructure.config.DiscordProperties
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpEntity
@@ -13,7 +13,7 @@ import org.springframework.web.client.RestTemplate
 class DiscordNotificationAdapter(
     private val discordProperties: DiscordProperties,
     private val discordRestTemplate: RestTemplate,
-) : ErrorAlertPort {
+) : AlertOutPort {
 
     override fun sendErrorAlert(e: Exception) {
         if (!discordProperties.enabled) return

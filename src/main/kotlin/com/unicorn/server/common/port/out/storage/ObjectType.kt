@@ -7,9 +7,9 @@ import java.util.UUID
 /**
  * 업로드 가능한 파일 유형과 유형별 정책(허용 contentType, 최대 용량, 저장 경로 prefix)을 표현하는 값 객체.
  *
- * ObjectStorage/어댑터(S3 등)는 이 타입을 모른다. 업로드를 요청하는 use-case가 ObjectUploadCommand를
+ * ObjectStorageOutPort/어댑터(S3 등)는 이 타입을 모른다. 업로드를 요청하는 use-case가 ObjectUploadCommand를
  * 만들기 전에 validate()로 검증하고 generateObjectKey()로 objectKey를 만들어야 한다.
- * 새 파일 유형이 필요하면 이 enum에 상수만 추가하면 되고, ObjectStorage 쪽은 수정할 필요가 없다.
+ * 새 파일 유형이 필요하면 이 enum에 상수만 추가하면 되고, ObjectStorageOutPort 쪽은 수정할 필요가 없다.
  */
 enum class ObjectType(
 	val allowedContentTypes: Set<String>,

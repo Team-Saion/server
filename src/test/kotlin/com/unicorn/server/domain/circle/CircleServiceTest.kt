@@ -3,7 +3,7 @@ package com.unicorn.server.domain.circle
 import com.unicorn.server.TestIdFactory
 import com.unicorn.server.common.exception.BusinessException
 import com.unicorn.server.common.domain.Event
-import com.unicorn.server.common.port.out.event.EventPublisher
+import com.unicorn.server.common.port.out.event.EventOutPort
 import com.unicorn.server.common.vo.Email
 import com.unicorn.server.domain.circle.enums.CircleRole
 import com.unicorn.server.domain.circle.exception.CircleErrorCode
@@ -18,7 +18,7 @@ import com.unicorn.server.domain.circle.service.CircleService
 import com.unicorn.server.domain.circle.vo.CircleId
 import com.unicorn.server.domain.member.Member
 import com.unicorn.server.domain.member.port.dto.MemberProfileDto
-import com.unicorn.server.domain.member.port.`in`.GetMemberProfileInPort
+import com.unicorn.server.domain.member.port.`in`.MemberProfileInPort
 import com.unicorn.server.domain.member.port.out.MemberOutPort
 import com.unicorn.server.domain.member.vo.MemberId
 import org.assertj.core.api.Assertions.assertThat
@@ -282,7 +282,7 @@ class CircleServiceTest {
 		override fun countActiveByCircleId(circleId: CircleId) = members.count { it.circleId == circleId && it.status == com.unicorn.server.domain.circle.enums.CircleMemberStatus.ACTIVE && !it.deleted }.toLong()
 	}
 
-	private class FakeMemberQueryInPort : GetMemberProfileInPort {
+	private class FakeMemberQueryInPort : MemberProfileInPort {
 		private val members = linkedMapOf<MemberId, Member>()
 		fun save(member: Member): Member {
 			members[member.id] = member
@@ -301,7 +301,7 @@ class CircleServiceTest {
 			}
 	}
 
-	private class RecordingEventPublisher : EventPublisher {
+	private class RecordingEventPublisher : EventOutPort {
 		val events = mutableListOf<Event>()
 
 		override fun publish(event: Event) {

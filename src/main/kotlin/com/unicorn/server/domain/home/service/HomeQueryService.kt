@@ -9,8 +9,8 @@ import com.unicorn.server.domain.home.port.dto.HomeCircleDto
 import com.unicorn.server.domain.home.port.dto.HomeMemberDto
 import com.unicorn.server.domain.home.port.dto.HomeView
 import com.unicorn.server.domain.home.port.`in`.HomeQueryInPort
-import com.unicorn.server.domain.member.port.`in`.GetMemberProfileInPort
-import com.unicorn.server.domain.schedule.port.`in`.GetSchedulesForCircleInPort
+import com.unicorn.server.domain.member.port.`in`.MemberProfileInPort
+import com.unicorn.server.domain.schedule.port.`in`.ScheduleForCircleInPort
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -20,8 +20,8 @@ import java.time.LocalDate
 class HomeQueryService(
     private val circleInPort: CircleInPort,
     private val circleMemberInPort: CircleMemberInPort,
-    private val getMemberProfileInPort: GetMemberProfileInPort,
-    private val scheduleQueryInPort: GetSchedulesForCircleInPort,
+    private val getMemberProfileInPort: MemberProfileInPort,
+    private val scheduleQueryInPort: ScheduleForCircleInPort,
 ) : HomeQueryInPort {
     override fun getHome(circleId: String, requesterId: String): HomeView {
         val circle = circleInPort.getCircleSummary(circleId)

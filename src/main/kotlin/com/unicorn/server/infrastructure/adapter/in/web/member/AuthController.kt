@@ -1,7 +1,7 @@
 package com.unicorn.server.infrastructure.adapter.`in`.web.member
 
-import com.unicorn.server.domain.member.port.`in`.KakaoLoginInPort
-import com.unicorn.server.domain.member.port.`in`.ReissueTokenInPort
+import com.unicorn.server.domain.member.port.`in`.MemberKakaoLoginInPort
+import com.unicorn.server.domain.member.port.`in`.MemberTokenReissueInPort
 import com.unicorn.server.infrastructure.adapter.`in`.web.common.dto.ApiResponse
 import com.unicorn.server.infrastructure.adapter.`in`.web.member.dto.KakaoLoginRequest
 import com.unicorn.server.infrastructure.adapter.`in`.web.member.dto.KakaoLoginResponse
@@ -17,8 +17,8 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/v1/auth")
 class AuthController(
-	private val kakaoLoginInPort: KakaoLoginInPort,
-	private val reissueTokenInPort: ReissueTokenInPort,
+	private val kakaoLoginInPort: MemberKakaoLoginInPort,
+	private val reissueTokenInPort: MemberTokenReissueInPort,
 ) : AuthApiDoc {
 
 	@PostMapping("/kakao")

@@ -3,14 +3,14 @@ package com.unicorn.server.infrastructure.adapter.`in`.web.member
 import com.unicorn.server.domain.member.Member
 import com.unicorn.server.domain.member.enums.MemberStatus
 import com.unicorn.server.domain.member.enums.Role
-import com.unicorn.server.domain.member.port.`in`.CompleteOnboardingInPort
-import com.unicorn.server.domain.member.port.`in`.GetMemberInPort
-import com.unicorn.server.domain.member.port.`in`.GetOnboardingInfoInPort
-import com.unicorn.server.domain.member.port.`in`.LogoutInPort
-import com.unicorn.server.domain.member.port.`in`.UpdateMemberStateInPort
-import com.unicorn.server.domain.member.port.`in`.UpdateProfileInPort
-import com.unicorn.server.domain.member.port.`in`.UploadProfileImageInPort
-import com.unicorn.server.domain.member.port.`in`.WithdrawMemberInPort
+import com.unicorn.server.domain.member.port.`in`.MemberOnboardingCompleteInPort
+import com.unicorn.server.domain.member.port.`in`.MemberInPort
+import com.unicorn.server.domain.member.port.`in`.MemberOnboardingInfoInPort
+import com.unicorn.server.domain.member.port.`in`.MemberLogoutInPort
+import com.unicorn.server.domain.member.port.`in`.MemberStateUpdateInPort
+import com.unicorn.server.domain.member.port.`in`.MemberProfileUpdateInPort
+import com.unicorn.server.domain.member.port.`in`.MemberProfileImageUploadInPort
+import com.unicorn.server.domain.member.port.`in`.MemberWithdrawInPort
 import com.unicorn.server.domain.member.port.dto.CompleteOnboardingCommand
 import com.unicorn.server.domain.member.port.dto.UpdateProfileCommand
 import com.unicorn.server.domain.member.port.dto.UploadProfileImageCommand
@@ -40,14 +40,14 @@ import org.springframework.web.multipart.MultipartFile
 @RestController
 @RequestMapping("/api/v1/members")
 class MemberController(
-	private val getMemberInPort: GetMemberInPort,
-	private val getOnboardingInfoInPort: GetOnboardingInfoInPort,
-	private val updateProfileInPort: UpdateProfileInPort,
-	private val uploadProfileImageInPort: UploadProfileImageInPort,
-	private val logoutInPort: LogoutInPort,
-	private val withdrawMemberInPort: WithdrawMemberInPort,
-	private val completeOnboardingInPort: CompleteOnboardingInPort,
-	private val updateMemberStateInPort: UpdateMemberStateInPort,
+	private val getMemberInPort: MemberInPort,
+	private val getOnboardingInfoInPort: MemberOnboardingInfoInPort,
+	private val updateProfileInPort: MemberProfileUpdateInPort,
+	private val uploadProfileImageInPort: MemberProfileImageUploadInPort,
+	private val logoutInPort: MemberLogoutInPort,
+	private val withdrawMemberInPort: MemberWithdrawInPort,
+	private val completeOnboardingInPort: MemberOnboardingCompleteInPort,
+	private val updateMemberStateInPort: MemberStateUpdateInPort,
 	@param:Value("\${app.server.url}") private val serverUrl: String,
 ) : MemberApiDoc {
 

@@ -1,6 +1,6 @@
 package com.unicorn.server.domain.schedule.service
 
-import com.unicorn.server.common.port.out.event.EventPublisher
+import com.unicorn.server.common.port.out.event.EventOutPort
 import com.unicorn.server.domain.schedule.Schedule
 import com.unicorn.server.domain.schedule.enums.ScheduleReminderType
 import com.unicorn.server.domain.schedule.event.ScheduleReminderDueEvent
@@ -15,7 +15,7 @@ import java.time.LocalTime
 @Transactional
 class ScheduleReminderService(
 	private val scheduleOutPort: ScheduleOutPort,
-	private val eventPublisher: EventPublisher,
+	private val eventPublisher: EventOutPort,
 ) : ScheduleReminderInPort {
 
 	override fun dispatchDaily(now: LocalDateTime) {

@@ -10,8 +10,8 @@ import com.unicorn.server.domain.member.exception.WithdrawnMemberException
 import com.unicorn.server.domain.member.port.dto.CompleteOnboardingCommand
 import com.unicorn.server.domain.member.port.dto.TokenPair
 import com.unicorn.server.domain.member.port.out.MemberOutPort
-import com.unicorn.server.domain.member.port.out.TokenIssuer
-import com.unicorn.server.domain.member.port.out.TokenStore
+import com.unicorn.server.domain.member.port.out.MemberTokenIssueOutPort
+import com.unicorn.server.domain.member.port.out.MemberTokenStoreOutPort
 import com.unicorn.server.domain.member.vo.MemberId
 import com.unicorn.server.domain.term.MemberTerm
 import com.unicorn.server.domain.term.Term
@@ -174,14 +174,14 @@ class OnboardingServiceTest {
 			store.filter { it.memberId == memberId }
 	}
 
-	private class FakeTokenIssuer : TokenIssuer {
+	private class FakeTokenIssuer : MemberTokenIssueOutPort {
 		override fun issue(memberId: String, role: Role): TokenPair =
 			TokenPair("access-$memberId-$role", "refresh-$memberId-$role")
 
 		override fun parseRefreshToken(refreshToken: String): String? = null
 	}
 
-	private class FakeTokenStore : TokenStore {
+	private class FakeTokenStore : MemberTokenStoreOutPort {
 		private val memberToToken = mutableMapOf<String, String>()
 		private val tokenToMember = mutableMapOf<String, String>()
 
