@@ -11,8 +11,8 @@ import com.unicorn.server.domain.notification.event.ScheduleReminderD1Payload
 import com.unicorn.server.domain.notification.event.ScheduleReminderDDayAllDayPayload
 import com.unicorn.server.domain.notification.event.ScheduleReminderDDayTimedPayload
 import com.unicorn.server.domain.notification.event.ScheduleReminderD7Payload
-import com.unicorn.server.domain.notification.port.`in`.NotificationRequestInPort
-import com.unicorn.server.domain.notification.port.dto.RequestNotificationCommand
+import com.unicorn.server.domain.notification.port.`in`.NotificationPublishInPort
+import com.unicorn.server.domain.notification.port.dto.PublishNotificationCommand
 import com.unicorn.server.domain.schedule.event.ScheduleCreatedEvent
 import com.unicorn.server.domain.schedule.event.ScheduleDeletedEvent
 import com.unicorn.server.domain.schedule.event.ScheduleConfirmationRequestDueEvent
@@ -30,7 +30,7 @@ import java.time.format.DateTimeFormatter
 class ScheduleNotificationEventListener(
 	private val circleMemberInPort: CircleMemberInPort,
 	private val scheduleConfirmationStatusInPort: ScheduleConfirmationStatusInPort,
-	private val notificationRequestInPort: NotificationRequestInPort,
+	private val notificationPublishInPort: NotificationPublishInPort,
 ) {
 	@EventListener
 	fun handle(event: ScheduleCreatedEvent) {
@@ -42,7 +42,7 @@ class ScheduleNotificationEventListener(
 			.asSequence()
 			.filter { it.active && it.memberId != event.creatorMemberId }
 			.forEach { member ->
-				notificationRequestInPort.request(
+				notificationPublishInPort.publish(
 					event.commandFor(member.memberId, payload),
 				)
 			}
@@ -60,8 +60,8 @@ class ScheduleNotificationEventListener(
 		members.asSequence()
 			.filter { it.active }
 			.forEach { member ->
-				notificationRequestInPort.request(
-					RequestNotificationCommand(
+				notificationPublishInPort.publish(
+					PublishNotificationCommand(
 						receiverMemberId = member.memberId,
 						payload = payload,
 						eventId = event.scheduleId,
@@ -79,8 +79,8 @@ class ScheduleNotificationEventListener(
 			.asSequence()
 			.filter { it.active }
 			.forEach { member ->
-				notificationRequestInPort.request(
-					RequestNotificationCommand(
+				notificationPublishInPort.publish(
+					PublishNotificationCommand(
 						receiverMemberId = member.memberId,
 						payload = payload,
 						eventId = "${event.reminderType.name.lowercase()}:${event.scheduleId}",
@@ -94,21 +94,16 @@ class ScheduleNotificationEventListener(
 	@EventListener
 	fun handle(event: ScheduleConfirmedEvent) {
 		val confirmerName = circleMemberInPort.getCircleMembers(event.circleId).nicknameOf(event.confirmerMemberId)
-		val payload = ScheduleConfirmedByFamilyPayload(confirmerName, event.scheduleTitle, event.scheduleId)
-		circleMemberInPort.getCircleMembers(event.circleId)
-			.asSequence()
-			.filter { it.active && it.memberId != event.confirmerMemberId }
-			.forEach { member ->
-				notificationRequestInPort.request(
-					RequestNotificationCommand(
-						receiverMemberId = member.memberId,
-						payload = payload,
-						eventId = "${event.scheduleId}:${event.confirmerMemberId}",
-						circleId = event.circleId,
-						scheduleId = event.scheduleId,
-					),
-				)
-			}
+		val payload = ScheduleConfirmedByFamilyPayload(confirmerName, event.scheduleTitle)
+		notificationPublishInPort.publish(
+			PublishNotificationCommand(
+				receiverMemberId = event.scheduleCreatorMemberId,
+				payload = payload,
+				eventId = "${event.scheduleId}:${event.confirmerMemberId}",
+				circleId = event.circleId,
+				scheduleId = event.scheduleId,
+			),
+		)
 	}
 
 	@EventListener
@@ -119,8 +114,8 @@ class ScheduleNotificationEventListener(
 			.filter { it.active && it.memberId != event.scheduleCreatorMemberId }
 			.filterNot { scheduleConfirmationStatusInPort.hasConfirmed(ScheduleId.of(event.scheduleId), it.memberId) }
 			.forEach { member ->
-				notificationRequestInPort.request(
-					RequestNotificationCommand(
+				notificationPublishInPort.publish(
+					PublishNotificationCommand(
 						receiverMemberId = member.memberId,
 						payload = payload,
 						eventId = event.scheduleId,
@@ -145,8 +140,8 @@ class ScheduleNotificationEventListener(
 			.asSequence()
 			.filter { it.active && it.memberId != event.senderMemberId }
 			.forEach { member ->
-				notificationRequestInPort.request(
-					RequestNotificationCommand(
+				notificationPublishInPort.publish(
+					PublishNotificationCommand(
 						receiverMemberId = member.memberId,
 						payload = payload,
 						eventId = event.requestId,
@@ -175,7 +170,7 @@ class ScheduleNotificationEventListener(
 	private fun ScheduleCreatedEvent.commandFor(
 		receiverMemberId: String,
 		payload: ScheduleCreatedPayload,
-	) = RequestNotificationCommand(
+	) = PublishNotificationCommand(
 		receiverMemberId = receiverMemberId,
 		payload = payload,
 		eventId = scheduleId,

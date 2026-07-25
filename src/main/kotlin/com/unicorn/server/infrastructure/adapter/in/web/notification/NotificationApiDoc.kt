@@ -143,7 +143,7 @@ interface NotificationApiDoc {
 		ApiErrorCodeExample(codeType = CommonErrorCode::class, code = "INVALID_INPUT"),
 	)
 	@ApiSuccessCodeExample(NotificationInboxPageResponse::class)
-	fun getInbox(
+	fun getNotifications(
 		@Parameter(hidden = true)
 		@AuthenticationPrincipal memberId: String,
 		@RequestParam(required = false) cursor: Long?,
@@ -164,7 +164,7 @@ interface NotificationApiDoc {
 		ApiErrorCodeExample(codeType = NotificationErrorCode::class, code = "NOTIFICATION_NOT_FOUND"),
 	)
 	@ApiSuccessCodeExample(NotificationInboxItemResponse::class)
-	fun markRead(
+	fun markNotificationAsRead(
 		@Parameter(hidden = true)
 		@AuthenticationPrincipal memberId: String,
 		@PathVariable notificationId: Long,
