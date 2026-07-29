@@ -8,5 +8,5 @@ interface NotificationOutPort {
 
 	fun findByDedupKey(dedupKey: String): Notification?
 
-	fun findDispatchTargets(limit: Int, now: LocalDateTime): List<Notification>
+	fun claimDispatchTargets(limit: Int, now: LocalDateTime): List<Notification>
 }

@@ -34,4 +34,9 @@ class DevicePushTokenPersistenceAdapter(
 	override fun findActiveReceivableByMemberId(memberId: String): List<DevicePushToken> =
 		devicePushTokenJpaRepository.findAllByMemberIdAndActiveTrue(memberId)
 			.map { it.toDomain() }
+
+	@Transactional
+	override fun deleteByToken(token: String) {
+		devicePushTokenJpaRepository.deleteByToken(token)
+	}
 }

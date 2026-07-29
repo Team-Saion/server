@@ -12,4 +12,6 @@ interface NotificationPushTokenOutPort {
 	fun findByIdAndMemberId(tokenId: Long, memberId: String): DevicePushToken?
 
 	fun findActiveReceivableByMemberId(memberId: String): List<DevicePushToken>
+
+	fun deleteByToken(token: String)
 }

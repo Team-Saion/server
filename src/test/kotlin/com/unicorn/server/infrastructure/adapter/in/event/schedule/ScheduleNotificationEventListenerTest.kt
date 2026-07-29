@@ -25,7 +25,7 @@ class ScheduleNotificationEventListenerTest {
 	@Test
 	@DisplayName("일정 생성 시 작성자를 제외한 활성 구성원에게 알림을 요청한다")
 	fun handle_scheduleCreated_excludesCreatorFromNotificationRequests() {
-		val recorder = RecordingNotificationRequestInPort()
+		val recorder = RecordingNotificationPublishInPort()
 		val listener = listener(
 			members = listOf(
 				member("creator", "유니콘"),
@@ -67,7 +67,7 @@ class ScheduleNotificationEventListenerTest {
 	@Test
 	@DisplayName("D-day 리마인더 알림 payload에는 일정 ID를 포함한다")
 	fun handle_dDayReminder_includesScheduleIdInPayload() {
-		val recorder = RecordingNotificationRequestInPort()
+		val recorder = RecordingNotificationPublishInPort()
 		val listener = listener(listOf(member("receiver", "수신")), recorder)
 
 		listener.handle(ScheduleReminderDueEvent(ScheduleReminderType.DDAY_ALL_DAY, "SC1", "circle-1", "여행", null))
@@ -80,9 +80,9 @@ class ScheduleNotificationEventListenerTest {
 	}
 
 	@Test
-	@DisplayName("가족 확인 완료 시 확인자를 제외한 활성 구성원에게 알림을 요청한다")
-	fun handle_scheduleConfirmed_requestsNotificationForOtherActiveMembers() {
-		val recorder = RecordingNotificationRequestInPort()
+	@DisplayName("가족 확인 완료 시 일정 작성자에게 알림을 요청한다")
+	fun handle_scheduleConfirmed_requestsNotificationForCreator() {
+		val recorder = RecordingNotificationPublishInPort()
 		val listener = listener(
 			listOf(member("creator", "작성자"), member("confirmer", "가족"), member("other", "다른 가족")),
 			recorder,
@@ -91,7 +91,7 @@ class ScheduleNotificationEventListenerTest {
 		listener.handle(ScheduleConfirmedEvent("SC1", "circle-1", "creator", "confirmer", "여행"))
 
 		assertThat(recorder.commands).extracting<String> { it.receiverMemberId }
-			.containsExactlyInAnyOrder("creator", "other")
+			.containsExactly("creator")
 		assertThat(recorder.commands).allSatisfy { command ->
 			assertThat(command.payload.type).isEqualTo(NotificationType.SCHEDULE_CONFIRMED_BY_FAMILY)
 			assertThat(command.eventId).isEqualTo("SC1:confirmer")
@@ -146,7 +146,7 @@ class ScheduleNotificationEventListenerTest {
 	@Test
 	@DisplayName("일정 삭제 알림 payload에는 일정 ID를 포함한다")
 	fun handle_scheduleDeleted_includesScheduleIdInPayload() {
-		val recorder = RecordingNotificationRequestInPort()
+		val recorder = RecordingNotificationPublishInPort()
 		val listener = listener(listOf(member("deleter", "삭제자"), member("receiver", "수신")), recorder)
 
 		listener.handle(ScheduleDeletedEvent("SC1", "circle-1", "deleter", "여행"))

@@ -2,21 +2,22 @@ package com.unicorn.server.domain.notification.service
 
 import com.unicorn.server.domain.notification.Notification
 import com.unicorn.server.domain.notification.enums.NotificationChannel
+import com.unicorn.server.domain.notification.exception.ExpiredPushTokenException
 import com.unicorn.server.domain.notification.exception.PermanentNotificationSendException
 import com.unicorn.server.domain.notification.exception.RetryableNotificationSendException
 import com.unicorn.server.domain.notification.port.`in`.NotificationDispatchInPort
 import com.unicorn.server.domain.notification.port.out.NotificationMessageComposeOutPort
 import com.unicorn.server.domain.notification.port.out.NotificationOutPort
+import com.unicorn.server.domain.notification.port.out.NotificationPushTokenOutPort
 import com.unicorn.server.domain.notification.port.out.NotificationSendOutPort
 import com.unicorn.server.infrastructure.config.NotificationProperties
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 
 @Service
-@Transactional(readOnly = true)
 class NotificationDispatchService(
     private val notificationOutPort: NotificationOutPort,
+    private val notificationPushTokenOutPort: NotificationPushTokenOutPort,
     composers: List<NotificationMessageComposeOutPort>,
     senders: List<NotificationSendOutPort>,
     private val notificationProperties: NotificationProperties,
@@ -25,10 +26,9 @@ class NotificationDispatchService(
         composers.associateBy { it.channel() }
     private val senderRegistry: Map<NotificationChannel, NotificationSendOutPort> = senders.associateBy { it.channel() }
 
-    @Transactional
     override fun dispatch(limit: Int) {
         val now = LocalDateTime.now()
-        val notifications = notificationOutPort.findDispatchTargets(limit, now)
+        val notifications = notificationOutPort.claimDispatchTargets(limit, now)
 
         notifications.forEach { dispatchSingle(it, now) }
     }
@@ -36,9 +36,6 @@ class NotificationDispatchService(
     private fun dispatchSingle(notification: Notification, now: LocalDateTime) {
         val composer = composerRegistry[notification.channel]
         val sender = senderRegistry[notification.channel]
-
-        notification.markProcessing(now)
-        notificationOutPort.save(notification)
 
         if (composer == null || sender == null) {
             notification.markDead("No composer or sender configured for channel=${notification.channel}", now)
@@ -50,6 +47,9 @@ class NotificationDispatchService(
             val message = composer.compose(notification)
             sender.send(message)
             notification.markSent(now)
+        } catch (e: ExpiredPushTokenException) {
+            notification.markDead(e.message ?: "Expired push token", now)
+            notificationPushTokenOutPort.deleteByToken(notification.receiver)
         } catch (e: PermanentNotificationSendException) {
             notification.markDead(e.message ?: "Permanent send failure", now)
         } catch (e: RetryableNotificationSendException) {
@@ -62,14 +62,14 @@ class NotificationDispatchService(
     }
 
     private fun handleRetryableFailure(notification: Notification, reason: String, now: LocalDateTime) {
-        val maxAttempts = notificationProperties.dispatch.maxAttempts
-        if (notification.attemptCount >= maxAttempts) {
+        if (notification.attemptCount >= notificationProperties.dispatch.maxAttempts) {
             notification.markDead(reason, now)
             return
         }
 
-        val baseRetryDelayMinutes = notificationProperties.dispatch.baseRetryDelayMinutes
-        val retryAt = now.plusMinutes(baseRetryDelayMinutes * notification.attemptCount.toLong())
+        val retryAt = now.plusMinutes(
+            notificationProperties.dispatch.baseRetryDelayMinutes * notification.attemptCount.toLong(),
+        )
         notification.markFailed(reason, retryAt, now)
     }
 }
