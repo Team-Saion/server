@@ -135,5 +135,9 @@ class NotificationPushTokenServiceTest {
 
 		override fun findActiveReceivableByMemberId(memberId: String): List<DevicePushToken> =
 			tokens.values.filter { it.memberId == memberId && it.canReceivePush() }
+
+		override fun deleteByToken(token: String) {
+			tokens.entries.removeIf { it.value.token == token }
+		}
 	}
 }

@@ -77,11 +77,11 @@ class NotificationPublishServiceTest {
 
 	@Test
 	@DisplayName("D-day 시간 지정 리마인더 푸시 payload에는 일정 ID가 포함된다")
-	fun request_dDayTimedReminder_includesScheduleIdInPushPayload() {
+	fun publish_dDayTimedReminder_includesScheduleIdInPushPayload() {
 		val fixture = Fixture()
 
-		fixture.service.request(
-			RequestNotificationCommand(
+		fixture.service.publish(
+			PublishNotificationCommand(
 				receiverMemberId = "member-1",
 				payload = ScheduleReminderDDayTimedPayload("병원 방문", "09:00", "schedule-1"),
 				eventId = "dday-timed:schedule-1",
@@ -136,7 +136,10 @@ class NotificationPublishServiceTest {
 		}
 
 		override fun findByDedupKey(dedupKey: String): Notification? = notifications[dedupKey]
-		override fun findDispatchTargets(limit: Int, now: LocalDateTime): List<Notification> = emptyList()
+		override fun claimDispatchTargets(
+			limit: Int,
+			now: LocalDateTime,
+		): List<Notification> = emptyList()
 	}
 
 	private class FakeNotificationInboxOutPort : NotificationInboxOutPort {

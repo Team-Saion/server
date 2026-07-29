@@ -6,6 +6,7 @@ import com.google.firebase.messaging.Message
 import com.google.firebase.messaging.MessagingErrorCode
 import com.google.firebase.messaging.Notification
 import com.unicorn.server.domain.notification.enums.NotificationChannel
+import com.unicorn.server.domain.notification.exception.ExpiredPushTokenException
 import com.unicorn.server.domain.notification.exception.PermanentNotificationSendException
 import com.unicorn.server.domain.notification.exception.RetryableNotificationSendException
 import com.unicorn.server.domain.notification.port.dto.NotificationMessage
@@ -44,7 +45,9 @@ class FcmSender(
 
 	private fun handleFirebaseException(e: FirebaseMessagingException): Nothing {
 		when (e.messagingErrorCode) {
-			MessagingErrorCode.UNREGISTERED,
+			MessagingErrorCode.UNREGISTERED ->
+				throw ExpiredPushTokenException(e.message ?: "Expired FCM token", e)
+
 			MessagingErrorCode.INVALID_ARGUMENT,
 			MessagingErrorCode.SENDER_ID_MISMATCH,
 			-> throw PermanentNotificationSendException(e.message ?: "Permanent FCM failure", e)

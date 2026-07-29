@@ -1,16 +1,19 @@
 package com.unicorn.server.domain.notification.service
 
 import com.unicorn.server.domain.notification.Notification
+import com.unicorn.server.domain.notification.DevicePushToken
 import com.unicorn.server.domain.notification.enums.NotificationChannel
 import com.unicorn.server.domain.notification.enums.NotificationType
 import com.unicorn.server.domain.notification.enums.NotificationStatus
+import com.unicorn.server.domain.notification.exception.ExpiredPushTokenException
 import com.unicorn.server.domain.notification.exception.PermanentNotificationSendException
 import com.unicorn.server.domain.notification.exception.RetryableNotificationSendException
 import com.unicorn.server.domain.notification.port.dto.NotificationMessage
 import com.unicorn.server.domain.notification.port.out.NotificationMessageComposeOutPort
+import com.unicorn.server.domain.notification.port.out.NotificationPushTokenOutPort
 import com.unicorn.server.domain.notification.port.out.NotificationSendOutPort
-import com.unicorn.server.domain.notification.port.out.NotificationOutPort
 import com.unicorn.server.infrastructure.config.NotificationProperties
+import com.unicorn.server.domain.notification.port.out.NotificationOutPort
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -19,14 +22,13 @@ import java.time.LocalDateTime
 @DisplayName("NotificationDispatchService 단위 테스트")
 class NotificationDispatchServiceTest {
     private val notificationOutPort = FakeNotificationOutPort()
+    private val notificationPushTokenOutPort = FakeNotificationPushTokenOutPort()
     private val successComposer = FakeComposer()
     private val successSender = RecordingSender()
-    private val notificationProperties = NotificationProperties().apply {
-        dispatch.maxAttempts = 3
-        dispatch.baseRetryDelayMinutes = 5
-    }
+    private val notificationProperties = notificationProperties()
     private val notificationDispatchService = NotificationDispatchService(
         notificationOutPort = notificationOutPort,
+        notificationPushTokenOutPort = notificationPushTokenOutPort,
         composers = listOf(successComposer),
         senders = listOf(successSender),
         notificationProperties = notificationProperties,
@@ -50,12 +52,10 @@ class NotificationDispatchServiceTest {
         val outPort = FakeNotificationOutPort()
         val service = NotificationDispatchService(
             notificationOutPort = outPort,
+            notificationPushTokenOutPort = FakeNotificationPushTokenOutPort(),
             composers = listOf(FakeComposer()),
             senders = listOf(RetryableFailSender()),
-            notificationProperties = NotificationProperties().apply {
-                dispatch.maxAttempts = 3
-                dispatch.baseRetryDelayMinutes = 5
-            },
+            notificationProperties = notificationProperties(),
         )
         val notification = outPort.save(createNotification(dedupKey = "retryable-key"))
 
@@ -72,12 +72,10 @@ class NotificationDispatchServiceTest {
         val outPort = FakeNotificationOutPort()
         val service = NotificationDispatchService(
             notificationOutPort = outPort,
+            notificationPushTokenOutPort = FakeNotificationPushTokenOutPort(),
             composers = listOf(FakeComposer()),
             senders = listOf(PermanentFailSender()),
-            notificationProperties = NotificationProperties().apply {
-                dispatch.maxAttempts = 3
-                dispatch.baseRetryDelayMinutes = 5
-            },
+            notificationProperties = notificationProperties(),
         )
         val notification = outPort.save(createNotification(dedupKey = "dead-key"))
 
@@ -85,6 +83,26 @@ class NotificationDispatchServiceTest {
 
         val saved = outPort.findByDedupKey(notification.dedupKey)
         assertThat(saved?.status).isEqualTo(NotificationStatus.DEAD)
+    }
+
+    @Test
+    @DisplayName("만료된 푸시 토큰 응답 시 알림을 DEAD 처리하고 토큰을 삭제한다")
+    fun dispatch_expiredPushToken_deletesToken() {
+        val outPort = FakeNotificationOutPort()
+        val pushTokenOutPort = FakeNotificationPushTokenOutPort()
+        val service = NotificationDispatchService(
+            notificationOutPort = outPort,
+            notificationPushTokenOutPort = pushTokenOutPort,
+            composers = listOf(FakeComposer()),
+            senders = listOf(ExpiredTokenSender()),
+            notificationProperties = notificationProperties(),
+        )
+        val notification = outPort.save(createNotification(dedupKey = "expired-token-key"))
+
+        service.dispatch(10)
+
+        assertThat(outPort.findByDedupKey(notification.dedupKey)?.status).isEqualTo(NotificationStatus.DEAD)
+        assertThat(pushTokenOutPort.deletedTokens).containsExactly("token-1")
     }
 
     private fun createNotification(dedupKey: String = "schedule-created-1"): Notification = Notification.create(
@@ -100,6 +118,12 @@ class NotificationDispatchServiceTest {
         dedupKey = dedupKey,
     )
 
+    private fun notificationProperties(): NotificationProperties =
+        NotificationProperties().apply {
+            dispatch.maxAttempts = 3
+            dispatch.baseRetryDelayMinutes = 5
+        }
+
     private class FakeNotificationOutPort : NotificationOutPort {
         private val notifications = linkedMapOf<String, Notification>()
 
@@ -110,8 +134,14 @@ class NotificationDispatchServiceTest {
 
         override fun findByDedupKey(dedupKey: String): Notification? = notifications[dedupKey]
 
-        override fun findDispatchTargets(limit: Int, now: LocalDateTime): List<Notification> =
-            notifications.values.filter { it.isDispatchable(now) }.take(limit)
+        override fun claimDispatchTargets(
+            limit: Int,
+            now: LocalDateTime,
+        ): List<Notification> =
+            notifications.values
+                .filter { it.isDispatchable(now) }
+                .take(limit)
+                .onEach { it.markProcessing(now) }
     }
 
     private class FakeComposer : NotificationMessageComposeOutPort {
@@ -146,6 +176,28 @@ class NotificationDispatchServiceTest {
 
         override fun send(message: NotificationMessage) {
             throw PermanentNotificationSendException("invalid token")
+        }
+    }
+
+    private class ExpiredTokenSender : NotificationSendOutPort {
+        override fun channel(): NotificationChannel = NotificationChannel.PUSH
+
+        override fun send(message: NotificationMessage) {
+            throw ExpiredPushTokenException("expired token")
+        }
+    }
+
+    private class FakeNotificationPushTokenOutPort : NotificationPushTokenOutPort {
+        val deletedTokens = mutableListOf<String>()
+
+        override fun save(pushToken: DevicePushToken): DevicePushToken = pushToken
+        override fun findByInstallationId(installationId: String): DevicePushToken? = null
+        override fun findByToken(token: String): DevicePushToken? = null
+        override fun findByIdAndMemberId(tokenId: Long, memberId: String): DevicePushToken? = null
+        override fun findActiveReceivableByMemberId(memberId: String): List<DevicePushToken> = emptyList()
+
+        override fun deleteByToken(token: String) {
+            deletedTokens += token
         }
     }
 }

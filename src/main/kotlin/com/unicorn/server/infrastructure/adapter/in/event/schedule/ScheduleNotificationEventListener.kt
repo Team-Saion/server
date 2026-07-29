@@ -94,7 +94,7 @@ class ScheduleNotificationEventListener(
 	@EventListener
 	fun handle(event: ScheduleConfirmedEvent) {
 		val confirmerName = circleMemberInPort.getCircleMembers(event.circleId).nicknameOf(event.confirmerMemberId)
-		val payload = ScheduleConfirmedByFamilyPayload(confirmerName, event.scheduleTitle)
+		val payload = ScheduleConfirmedByFamilyPayload(confirmerName, event.scheduleTitle, event.scheduleId)
 		notificationPublishInPort.publish(
 			PublishNotificationCommand(
 				receiverMemberId = event.scheduleCreatorMemberId,

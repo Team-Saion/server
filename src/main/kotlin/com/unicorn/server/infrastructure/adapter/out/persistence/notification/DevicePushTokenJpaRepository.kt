@@ -11,4 +11,6 @@ interface DevicePushTokenJpaRepository : JpaRepository<DevicePushTokenEntity, Lo
 	fun findByIdAndMemberId(id: Long, memberId: String): DevicePushTokenEntity?
 
 	fun findAllByMemberIdAndActiveTrue(memberId: String): List<DevicePushTokenEntity>
+
+	fun deleteByToken(token: String)
 }
