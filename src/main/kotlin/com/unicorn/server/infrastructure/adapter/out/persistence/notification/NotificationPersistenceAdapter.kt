@@ -30,7 +30,13 @@ class NotificationPersistenceAdapter(
 			?.toDomain(objectMapper, payloadTypeReference)
 
 	@Transactional
-	override fun findDispatchTargets(limit: Int, now: LocalDateTime): List<Notification> =
-		notificationJpaRepository.findDispatchTargets(now, PageRequest.of(0, limit))
-			.map { it.toDomain(objectMapper, payloadTypeReference) }
+	override fun claimDispatchTargets(limit: Int, now: LocalDateTime): List<Notification> =
+		notificationJpaRepository.findDispatchTargets(
+			now,
+			PageRequest.of(0, limit),
+		).map { entity ->
+			entity.toDomain(objectMapper, payloadTypeReference)
+				.also { it.markProcessing(now) }
+				.also { notificationJpaRepository.save(it.toEntity(objectMapper)) }
+		}
 }
