@@ -5,6 +5,7 @@ import com.unicorn.server.domain.schedule.port.`in`.ScheduleCommandInPort
 import com.unicorn.server.domain.schedule.port.`in`.ScheduleQueryInPort
 import com.unicorn.server.domain.schedule.port.`in`.ScheduleConfirmationInPort
 import com.unicorn.server.domain.schedule.port.`in`.ScheduleFamilyNotificationRequestInPort
+import com.unicorn.server.domain.schedule.port.`in`.TodoQueryInPort
 import com.unicorn.server.domain.schedule.port.dto.CreateScheduleCommand
 import com.unicorn.server.domain.schedule.port.dto.RegisterConfirmationCommand
 import com.unicorn.server.domain.schedule.port.dto.RequestFamilyScheduleNotificationCommand
@@ -38,6 +39,7 @@ class ScheduleController(
 	private val scheduleQueryInPort: ScheduleQueryInPort,
 	private val scheduleConfirmationInPort: ScheduleConfirmationInPort,
 	private val requestFamilyScheduleNotificationInPort: ScheduleFamilyNotificationRequestInPort,
+	private val todoQueryInPort: TodoQueryInPort,
 ) : ScheduleApiDoc {
 
 	@PostMapping
@@ -117,7 +119,8 @@ class ScheduleController(
 		@PathVariable scheduleId: String,
 	): ApiResponse<ScheduleDetailResponse> {
 		val result = scheduleQueryInPort.getDetail(ScheduleId.of(scheduleId), circleId, memberId)
-		return ApiResponse.success(ScheduleDetailResponse.from(result))
+		val todos = todoQueryInPort.getTodosByScheduleId(scheduleId, circleId, memberId)
+		return ApiResponse.success(ScheduleDetailResponse.from(result, todos))
 	}
 
 	@PostMapping("/{scheduleId}/confirmations")
