@@ -194,7 +194,8 @@ interface TodoApiDoc {
 	@Operation(
 		summary = "할일 목록 조회",
 		description = """
-			일정에 연결된 할일 목록을 조회합니다.
+			일정에 연결된 할일 목록을 조회합니다. 
+			일정 상세 조회에서 [{myTodos, allTodos}]로도 받아올 수 있습니다.
 
 			**권한**: 활성 써클 구성원이라면 누구나 조회할 수 있습니다.
 			부모 일정이 존재하지 않거나 삭제된 상태이면 404(SCHEDULE_NOT_FOUND)를 반환합니다.
