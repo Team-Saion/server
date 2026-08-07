@@ -7,6 +7,6 @@ import java.time.LocalDateTime
 
 // MemberJpaRepository - member 테이블 접근을 담당하는 Spring Data JPA repository다.
 interface MemberJpaRepository : JpaRepository<MemberEntity, String> {
-	fun findByEmail(email: String): MemberEntity?
+	fun findAllByEmail(email: String): List<MemberEntity>
 	fun findAllByStatusAndDeletedAtBefore(status: MemberStatus, threshold: LocalDateTime): List<MemberEntity>
 }

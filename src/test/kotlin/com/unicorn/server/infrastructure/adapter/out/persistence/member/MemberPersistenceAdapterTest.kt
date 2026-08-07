@@ -33,4 +33,19 @@ class MemberPersistenceAdapterTest(
 		assertThat(memberPersistenceAdapter.findById(second.id)?.email).isEqualTo(email)
 		assertThat(memberPersistenceAdapter.findById(first.id)?.email).isEqualTo(email)
 	}
+
+	@Test
+	@DisplayName("같은 이메일의 멤버는 모두 조회하고 일치하는 이메일이 없으면 빈 목록을 반환한다")
+	fun findAllByEmail_withDuplicateAndMissingEmails_returnsMatchingMembersAndEmptyList() {
+		val sharedEmail = Email("find-all-dup@example.com")
+		val first = memberPersistenceAdapter.save(Member.create(sharedEmail, "회원A", "회원에이"))
+		val second = memberPersistenceAdapter.save(Member.create(sharedEmail, "회원B", "회원비"))
+		memberJpaRepository.flush()
+
+		val members = memberPersistenceAdapter.findAllByEmail(sharedEmail)
+		val missingMembers = memberPersistenceAdapter.findAllByEmail(Email("missing@example.com"))
+
+		assertThat(members.map { it.id }).containsExactlyInAnyOrder(first.id, second.id)
+		assertThat(missingMembers).isEmpty()
+	}
 }

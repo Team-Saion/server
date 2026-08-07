@@ -13,8 +13,8 @@ interface MemberOutPort {
 	// 멤버 식별자로 멤버를 조회한다.
 	fun findById(memberId: MemberId): Member?
 
-	// 이메일로 멤버를 조회한다.
-	fun findByEmail(email: Email): Member?
+	// 이메일로 멤버 목록을 조회한다.
+	fun findAllByEmail(email: Email): List<Member>
 
 	// 보관 기간이 지난 탈퇴 멤버 목록을 조회한다.
 	fun findAllDeletedBefore(threshold: LocalDateTime): List<Member>

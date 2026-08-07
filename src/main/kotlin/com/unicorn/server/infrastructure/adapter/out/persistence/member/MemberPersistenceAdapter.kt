@@ -31,10 +31,10 @@ class MemberPersistenceAdapter(
 			.map { it.toDomain() }
 			.orElse(null)
 
-	// 이메일로 멤버를 조회한다.
+	// 이메일로 멤버 목록을 조회한다.
 	@Transactional(readOnly = true)
-	override fun findByEmail(email: Email): Member? =
-		memberJpaRepository.findByEmail(email.value)?.toDomain()
+	override fun findAllByEmail(email: Email): List<Member> =
+		memberJpaRepository.findAllByEmail(email.value).map { it.toDomain() }
 
 	// 탈퇴 상태이고 보관 기준 시각보다 오래된 멤버를 조회한다.
 	@Transactional(readOnly = true)
