@@ -3,11 +3,9 @@ package com.unicorn.server.infrastructure.adapter.out.apple
 import com.unicorn.server.domain.member.exception.InvalidSocialTokenException
 import com.unicorn.server.domain.member.port.dto.AppleUserInfo
 import com.unicorn.server.domain.member.port.out.MemberAppleAuthOutPort
+import com.unicorn.server.infrastructure.adapter.out.oidc.OidcJwtDecoderFactory
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator
-import org.springframework.security.oauth2.jwt.JwtClaimValidator
 import org.springframework.security.oauth2.jwt.JwtException
-import org.springframework.security.oauth2.jwt.JwtValidators
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder
 import org.springframework.stereotype.Component
 
@@ -19,23 +17,7 @@ class AppleAuthAdapter(
 	@param:Value("\${app.apple.issuer}") private val issuer: String,
 ) : MemberAppleAuthOutPort {
 
-	private val jwtDecoder: NimbusJwtDecoder = NimbusJwtDecoder
-		.withJwkSetUri(jwksUri)
-		.build()
-		.also { decoder ->
-			decoder.setJwtValidator(
-				DelegatingOAuth2TokenValidator(
-					JwtValidators.createDefaultWithIssuer(issuer),
-					JwtClaimValidator<Any>("aud") { aud ->
-						when (aud) {
-							is String -> aud == clientId
-							is List<*> -> aud.contains(clientId)
-							else -> false
-						}
-					},
-				),
-			)
-		}
+	private val jwtDecoder: NimbusJwtDecoder = OidcJwtDecoderFactory.create(jwksUri, issuer, clientId)
 
 	// 애플 ID Token을 검증하고 서비스 로그인에 필요한 사용자 정보를 추출한다.
 	override fun verify(idToken: String): AppleUserInfo {

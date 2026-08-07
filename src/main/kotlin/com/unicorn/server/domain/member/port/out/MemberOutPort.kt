@@ -16,9 +16,6 @@ interface MemberOutPort {
 	// 이메일로 멤버를 조회한다.
 	fun findByEmail(email: Email): Member?
 
-	// 이메일 중복 여부를 확인한다.
-	fun existsByEmail(email: Email): Boolean
-
 	// 보관 기간이 지난 탈퇴 멤버 목록을 조회한다.
 	fun findAllDeletedBefore(threshold: LocalDateTime): List<Member>
 }

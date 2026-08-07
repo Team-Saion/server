@@ -50,7 +50,7 @@ class MemberProfileService(
 			nickname = member.nickname,
 			avatarColor = member.avatarColor,
 			profileImageKey = member.profileImageKey,
-			kakaoNickname = socialAccount?.nickname,
+			socialNickname = socialAccount?.nickname,
 			active = !member.isDeleted(),
 		)
 	}

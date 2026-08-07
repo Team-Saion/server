@@ -35,8 +35,8 @@ class SocialLoginServiceTest {
 				providerId = "fake-kakao-id",
 				email = "fake@example.com",
 				name = null,
-				kakaoNickname = "가짜유저",
-				kakaoProfileImageUrl = "https://example.com/profile.png",
+				socialNickname = "가짜유저",
+				socialProfileImageUrl = "https://example.com/profile.png",
 			),
 		)
 	}
@@ -55,8 +55,8 @@ class SocialLoginServiceTest {
 				providerId = "fake-apple-id",
 				email = "fake-apple@example.com",
 				name = null,
-				kakaoNickname = null,
-				kakaoProfileImageUrl = null,
+				socialNickname = null,
+				socialProfileImageUrl = null,
 			),
 		)
 	}

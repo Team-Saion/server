@@ -27,8 +27,8 @@ class SocialLoginService(
 				providerId = userInfo.providerId,
 				email = userInfo.email,
 				name = null,
-				kakaoNickname = userInfo.name,
-				kakaoProfileImageUrl = userInfo.profileImageUrl,
+				socialNickname = userInfo.name,
+				socialProfileImageUrl = userInfo.profileImageUrl,
 			),
 		)
 	}
@@ -42,8 +42,8 @@ class SocialLoginService(
 				providerId = userInfo.providerId,
 				email = userInfo.email,
 				name = null,
-				kakaoNickname = null,
-				kakaoProfileImageUrl = null,
+				socialNickname = null,
+				socialProfileImageUrl = null,
 			),
 		)
 	}

@@ -43,8 +43,8 @@ class MemberAuthServiceTest {
 			providerId = "kakao-123",
 			email = "new@example.com",
 			name = "신규유저",
-			kakaoNickname = "카카오닉네임",
-			kakaoProfileImageUrl = "https://example.com/profile.png",
+			socialNickname = "카카오닉네임",
+			socialProfileImageUrl = "https://example.com/profile.png",
 		)
 
 		val result = memberAuthService.login(command)
@@ -52,7 +52,7 @@ class MemberAuthServiceTest {
 		assertThat(result.tokenPair.accessToken).isNotBlank()
 		assertThat(result.tokenPair.refreshToken).isNotBlank()
 		assertThat(result.isNewMember).isTrue()
-		assertThat(memberOutPort.existsByEmail(Email("new@example.com"))).isTrue()
+		assertThat(memberOutPort.findByEmail(Email("new@example.com"))).isNotNull()
 		val member = memberOutPort.findByEmail(Email("new@example.com"))!!
 		assertThat(member.role).isEqualTo(Role.PENDING)
 		val socialAccount = socialAccountOutPort.findByProviderAndProviderId(SocialProvider.KAKAO, "kakao-123")
@@ -258,8 +258,6 @@ class MemberAuthServiceTest {
 
 		override fun findByEmail(email: Email): Member? =
 			store.values.firstOrNull { it.email == email }
-
-		override fun existsByEmail(email: Email): Boolean = findByEmail(email) != null
 
 		override fun findAllDeletedBefore(threshold: LocalDateTime): List<Member> =
 			store.values.filter { it.deletedAt != null && it.deletedAt!!.isBefore(threshold) }

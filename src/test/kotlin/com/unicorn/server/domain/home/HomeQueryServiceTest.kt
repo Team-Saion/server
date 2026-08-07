@@ -114,7 +114,7 @@ class HomeQueryServiceTest {
 				nickname = "nick-${memberId.take(4)}",
 				avatarColor = AvatarColor.TEAL_200,
 				profileImageKey = profileImageKey,
-				kakaoNickname = null,
+				socialNickname = null,
 				active = active,
 			)
 		}

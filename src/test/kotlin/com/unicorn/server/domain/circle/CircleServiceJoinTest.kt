@@ -272,7 +272,7 @@ class CircleServiceJoinTest {
 					nickname = it.nickname,
 					avatarColor = it.avatarColor,
 					profileImageKey = it.profileImageKey,
-					kakaoNickname = null,
+					socialNickname = null,
 					active = !it.isDeleted(),
 				)
 			}

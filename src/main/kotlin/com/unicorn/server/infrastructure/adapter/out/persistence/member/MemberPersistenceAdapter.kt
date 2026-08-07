@@ -36,11 +36,6 @@ class MemberPersistenceAdapter(
 	override fun findByEmail(email: Email): Member? =
 		memberJpaRepository.findByEmail(email.value)?.toDomain()
 
-	// 이메일 중복 여부를 조회한다.
-	@Transactional(readOnly = true)
-	override fun existsByEmail(email: Email): Boolean =
-		memberJpaRepository.existsByEmail(email.value)
-
 	// 탈퇴 상태이고 보관 기준 시각보다 오래된 멤버를 조회한다.
 	@Transactional(readOnly = true)
 	override fun findAllDeletedBefore(threshold: LocalDateTime): List<Member> =

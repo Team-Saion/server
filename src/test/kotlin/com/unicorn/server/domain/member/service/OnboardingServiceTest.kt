@@ -141,8 +141,6 @@ class OnboardingServiceTest {
 		override fun findByEmail(email: Email): Member? =
 			store.values.firstOrNull { it.email == email }
 
-		override fun existsByEmail(email: Email): Boolean = findByEmail(email) != null
-
 		override fun findAllDeletedBefore(threshold: LocalDateTime): List<Member> =
 			store.values.filter { it.deletedAt != null && it.deletedAt!!.isBefore(threshold) }
 	}
