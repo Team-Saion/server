@@ -24,10 +24,10 @@ class AppleAuthAdapter(
 		val jwt = try {
 			jwtDecoder.decode(idToken)
 		} catch (e: JwtException) {
-			throw InvalidSocialTokenException(e.message)
+			throw InvalidSocialTokenException("provider=apple, reason=${e.message ?: e::class.simpleName}")
 		}
 
-		val providerId = jwt.subject ?: throw InvalidSocialTokenException("Missing sub claim")
+		val providerId = jwt.subject ?: throw InvalidSocialTokenException("provider=apple, missing claim=sub")
 		val email = jwt.getClaimAsString("email")
 
 		return AppleUserInfo(providerId = providerId, email = email)

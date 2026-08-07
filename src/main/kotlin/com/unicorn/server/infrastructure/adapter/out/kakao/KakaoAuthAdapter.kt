@@ -24,10 +24,10 @@ class KakaoAuthAdapter(
 		val jwt = try {
 			jwtDecoder.decode(idToken)
 		} catch (e: JwtException) {
-			throw InvalidSocialTokenException(e.message)
+			throw InvalidSocialTokenException("provider=kakao, reason=${e.message ?: e::class.simpleName}")
 		}
 
-		val providerId = jwt.subject ?: throw InvalidSocialTokenException("Missing sub claim")
+		val providerId = jwt.subject ?: throw InvalidSocialTokenException("provider=kakao, missing claim=sub")
 		val email = jwt.getClaimAsString("email")
 		val name = jwt.getClaimAsString("nickname")
 		val profileImageUrl = jwt.getClaimAsString("picture")
