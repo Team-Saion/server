@@ -47,12 +47,12 @@ class SocialAccountEntity internal constructor() : AuditableJpaEntity() {
 	var email: String? = null
 		internal set
 
-	@Column(name = "kakao_nickname", nullable = true, length = 100)
-	var kakaoNickname: String? = null
+	@Column(name = "nickname", nullable = true, length = 100)
+	var nickname: String? = null
 		internal set
 
-	@Column(name = "kakao_profile_image_url", nullable = true, length = 512)
-	var kakaoProfileImageUrl: String? = null
+	@Column(name = "profile_image_url", nullable = true, length = 512)
+	var profileImageUrl: String? = null
 		internal set
 
 
