@@ -1,0 +1,8 @@
+package com.unicorn.server.domain.member.port.`in`
+
+import com.unicorn.server.domain.member.port.dto.SocialLoginResult
+
+// MemberAppleLoginInPort - 애플 ID Token 기반 로그인 유스케이스 진입점을 정의한다.
+interface MemberAppleLoginInPort {
+	fun appleLogin(idToken: String): SocialLoginResult
+}

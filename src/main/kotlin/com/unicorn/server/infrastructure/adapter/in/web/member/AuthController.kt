@@ -1,11 +1,13 @@
 package com.unicorn.server.infrastructure.adapter.`in`.web.member
 
+import com.unicorn.server.domain.member.port.`in`.MemberAppleLoginInPort
 import com.unicorn.server.domain.member.port.`in`.MemberKakaoLoginInPort
 import com.unicorn.server.domain.member.port.`in`.MemberTokenReissueInPort
 import com.unicorn.server.infrastructure.adapter.`in`.web.common.dto.ApiResponse
+import com.unicorn.server.infrastructure.adapter.`in`.web.member.dto.AppleLoginRequest
 import com.unicorn.server.infrastructure.adapter.`in`.web.member.dto.KakaoLoginRequest
-import com.unicorn.server.infrastructure.adapter.`in`.web.member.dto.KakaoLoginResponse
 import com.unicorn.server.infrastructure.adapter.`in`.web.member.dto.RefreshTokenRequest
+import com.unicorn.server.infrastructure.adapter.`in`.web.member.dto.SocialLoginResponse
 import com.unicorn.server.infrastructure.adapter.`in`.web.member.dto.TokenResponse
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.PostMapping
@@ -18,13 +20,20 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/v1/auth")
 class AuthController(
 	private val kakaoLoginInPort: MemberKakaoLoginInPort,
+	private val appleLoginInPort: MemberAppleLoginInPort,
 	private val reissueTokenInPort: MemberTokenReissueInPort,
 ) : AuthApiDoc {
 
 	@PostMapping("/kakao")
-	override fun kakaoLogin(@RequestBody @Valid request: KakaoLoginRequest): ApiResponse<KakaoLoginResponse> {
+	override fun kakaoLogin(@RequestBody @Valid request: KakaoLoginRequest): ApiResponse<SocialLoginResponse> {
 		val result = kakaoLoginInPort.kakaoLogin(request.idToken)
-		return ApiResponse.success(KakaoLoginResponse.from(result))
+		return ApiResponse.success(SocialLoginResponse.from(result))
+	}
+
+	@PostMapping("/apple")
+	override fun appleLogin(@RequestBody @Valid request: AppleLoginRequest): ApiResponse<SocialLoginResponse> {
+		val result = appleLoginInPort.appleLogin(request.idToken)
+		return ApiResponse.success(SocialLoginResponse.from(result))
 	}
 
 	@PostMapping("/refresh")
