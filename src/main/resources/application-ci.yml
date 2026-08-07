@@ -26,3 +26,5 @@ app:
     refresh-token-expiration: 2592000
   kakao:
     app-key: test-key
+  apple:
+    client-id: test-apple-client-id
