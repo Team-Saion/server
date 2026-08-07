@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.unicorn.server.domain.schedule.enums.ScheduleStatus
 import com.unicorn.server.domain.schedule.enums.UrgencyLevel
 import com.unicorn.server.domain.schedule.port.dto.ScheduleDetailResult
+import com.unicorn.server.domain.schedule.port.dto.TodoResult
 import io.swagger.v3.oas.annotations.media.Schema
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -124,9 +125,13 @@ data class ScheduleDetailResponse(
 
 	@field:Schema(description = "생성 일시 (ISO 8601)", example = "2024-07-01T10:00:00")
 	val createdAt: LocalDateTime,
+
+	val myTodos: List<TodoResponse>,
+
+	val allTodos: List<TodoResponse>,
 ) {
 	companion object {
-		fun from(result: ScheduleDetailResult) = ScheduleDetailResponse(
+		fun from(result: ScheduleDetailResult, todos: List<TodoResult>) = ScheduleDetailResponse(
 			scheduleId = result.scheduleId.value,
 			title = result.title,
 			startDate = result.startDate,
@@ -144,6 +149,8 @@ data class ScheduleDetailResponse(
 			myConfirmation = result.myConfirmation?.let { MyConfirmationResponse.from(it) },
 			createdBy = result.createdBy,
 			createdAt = result.createdAt,
+			myTodos = todos.filter { it.isMy }.map(TodoResponse::from),
+			allTodos = todos.map(TodoResponse::from),
 		)
 	}
 }
