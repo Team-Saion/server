@@ -5,7 +5,6 @@ import com.unicorn.server.domain.member.Member
 import com.unicorn.server.domain.member.SocialAccount
 import com.unicorn.server.domain.member.enums.Role
 import com.unicorn.server.domain.member.enums.SocialProvider
-import com.unicorn.server.domain.member.exception.DuplicateEmailException
 import com.unicorn.server.domain.member.exception.InvalidRefreshTokenException
 import com.unicorn.server.domain.member.exception.MemberNotFoundException
 import com.unicorn.server.domain.member.exception.WithdrawnMemberException
@@ -58,8 +57,8 @@ class MemberAuthServiceTest {
 		assertThat(member.role).isEqualTo(Role.PENDING)
 		val socialAccount = socialAccountOutPort.findByProviderAndProviderId(SocialProvider.KAKAO, "kakao-123")
 		assertThat(socialAccount).isNotNull()
-		assertThat(socialAccount!!.kakaoNickname).isEqualTo("카카오닉네임")
-		assertThat(socialAccount.kakaoProfileImageUrl).isEqualTo("https://example.com/profile.png")
+		assertThat(socialAccount!!.nickname).isEqualTo("카카오닉네임")
+		assertThat(socialAccount.profileImageUrl).isEqualTo("https://example.com/profile.png")
 		assertThat(tokenStore.findMemberIdByRefreshToken(result.tokenPair.refreshToken)).isNotNull()
 	}
 
@@ -164,13 +163,19 @@ class MemberAuthServiceTest {
 	}
 
 	@Test
-	@DisplayName("login 호출 시 다른 providerId로 동일 이메일 가입하면 DuplicateEmailException이 발생한다")
-	fun login_duplicateEmail_throwsDuplicateEmailException() {
-		memberOutPort.save(Member.create(Email("dup@example.com"), "기존유저", "기존"))
-		val command = SocialLoginCommand(SocialProvider.KAKAO, "kakao-new-id", "dup@example.com", "신규")
+	@DisplayName("login 호출 시 다른 providerId로 동일 이메일 가입해도 예외 없이 별개의 Member가 생성된다")
+	fun login_sameEmailDifferentProviderId_createsSeparateMembers() {
+		val existingMember = memberOutPort.save(Member.create(Email("shared@example.com"), "기존유저", "기존"))
+		val command = SocialLoginCommand(SocialProvider.KAKAO, "kakao-another-id", "shared@example.com", "신규")
 
-		assertThatThrownBy { memberAuthService.login(command) }
-			.isInstanceOf(DuplicateEmailException::class.java)
+		val result = memberAuthService.login(command)
+
+		assertThat(result.isNewMember).isTrue()
+		val newSocialAccount = socialAccountOutPort.findByProviderAndProviderId(SocialProvider.KAKAO, "kakao-another-id")!!
+		assertThat(newSocialAccount.memberId).isNotEqualTo(existingMember.id)
+		val newMember = memberOutPort.findById(newSocialAccount.memberId)!!
+		assertThat(newMember.email?.value).isEqualTo("shared@example.com")
+		assertThat(newMember.id).isNotEqualTo(existingMember.id)
 	}
 
 	@Test

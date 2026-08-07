@@ -38,8 +38,8 @@ class MemberSeedTest : BaseTest() {
                 provider = SocialProvider.KAKAO,
                 providerId = baseMember.providerId,
                 email = baseMember.email,
-                kakaoNickname = baseMember.nickname,
-                kakaoProfileImageUrl = null,
+                nickname = baseMember.nickname,
+                profileImageUrl = null,
             ),
         )
 
