@@ -35,6 +35,7 @@ import org.springframework.test.context.ActiveProfiles
 		"app.notification.fcm.enabled=false",
 		"app.jwt.secret=dev-profile-notification-test-secret-key",
 		"app.kakao.app-key=dev-profile-test-kakao-key",
+		"app.apple.client-id=dev-profile-test-apple-client-id",
 		"app.s3.bucket=dev-profile-test-bucket",
 	],
 )

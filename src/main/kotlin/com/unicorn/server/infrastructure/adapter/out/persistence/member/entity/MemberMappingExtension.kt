@@ -54,8 +54,8 @@ fun SocialAccount.toEntity(): SocialAccountEntity = SocialAccountEntity().apply 
 	provider = this@toEntity.provider
 	providerId = this@toEntity.providerId
 	email = this@toEntity.email
-	kakaoNickname = this@toEntity.kakaoNickname
-	kakaoProfileImageUrl = this@toEntity.kakaoProfileImageUrl
+	nickname = this@toEntity.nickname
+	profileImageUrl = this@toEntity.profileImageUrl
 	createdAt = this@toEntity.createdAt
 }
 
@@ -68,7 +68,7 @@ fun SocialAccountEntity.toDomain(): SocialAccount = SocialAccount(
 	provider = this.provider,
 	providerId = this.providerId,
 	email = this.email,
-	kakaoNickname = this.kakaoNickname,
-	kakaoProfileImageUrl = this.kakaoProfileImageUrl,
+	nickname = this.nickname,
+	profileImageUrl = this.profileImageUrl,
 	createdAt = requireNotNull(this.createdAt) { "createdAt must not be null" },
 )

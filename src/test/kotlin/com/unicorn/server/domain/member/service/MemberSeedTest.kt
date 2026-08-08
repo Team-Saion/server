@@ -38,8 +38,8 @@ class MemberSeedTest : BaseTest() {
                 provider = SocialProvider.KAKAO,
                 providerId = baseMember.providerId,
                 email = baseMember.email,
-                kakaoNickname = baseMember.nickname,
-                kakaoProfileImageUrl = null,
+                nickname = baseMember.nickname,
+                profileImageUrl = null,
             ),
         )
 
@@ -70,10 +70,8 @@ class MemberSeedTest : BaseTest() {
 
         override fun findById(memberId: MemberId): Member? = store[memberId]
 
-        override fun findByEmail(email: Email): Member? =
-            store.values.firstOrNull { it.email == email }
-
-        override fun existsByEmail(email: Email): Boolean = findByEmail(email) != null
+        override fun findAllByEmail(email: Email): List<Member> =
+            store.values.filter { it.email == email }
 
         override fun findAllDeletedBefore(threshold: LocalDateTime): List<Member> =
             store.values.filter { it.deletedAt != null && it.deletedAt!!.isBefore(threshold) }

@@ -7,6 +7,6 @@ data class MemberProfileDto(
 	val nickname: String,
 	val avatarColor: AvatarColor,
 	val profileImageKey: String?,
-	val kakaoNickname: String?,
+	val socialNickname: String?,
 	val active: Boolean,
 )
