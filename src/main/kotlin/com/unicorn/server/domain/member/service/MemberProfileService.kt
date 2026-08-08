@@ -50,7 +50,7 @@ class MemberProfileService(
 			nickname = member.nickname,
 			avatarColor = member.avatarColor,
 			profileImageKey = member.profileImageKey,
-			kakaoNickname = socialAccount?.kakaoNickname,
+			socialNickname = socialAccount?.nickname,
 			active = !member.isDeleted(),
 		)
 	}
@@ -60,8 +60,8 @@ class MemberProfileService(
 		val member = findMemberOrThrow(memberId)
 		val socialAccount = socialAccountOutPort.findByMemberId(member.id)
 		return OnboardingInfoResult(
-			socialNickname = socialAccount?.kakaoNickname,
-			socialProfileImageUrl = socialAccount?.kakaoProfileImageUrl,
+			socialNickname = socialAccount?.nickname,
+			socialProfileImageUrl = socialAccount?.profileImageUrl,
 			avatarColor = member.avatarColor,
 		)
 	}

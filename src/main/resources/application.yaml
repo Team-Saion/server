@@ -20,6 +20,9 @@ app:
   kakao:
     jwks-uri: ${KAKAO_JWKS_URI:https://kauth.kakao.com/.well-known/jwks.json}
     issuer: ${KAKAO_ISSUER:https://kauth.kakao.com}
+  apple:
+    jwks-uri: ${APPLE_JWKS_URI:https://appleid.apple.com/auth/keys}
+    issuer: ${APPLE_ISSUER:https://appleid.apple.com}
   s3:
     region: ${AWS_REGION:ap-northeast-2}
   discord:

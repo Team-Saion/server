@@ -17,7 +17,7 @@ import java.time.LocalDateTime
 @Entity
 @Table(
 	name = "member",
-	indexes = [Index(name = "idx_member_email", columnList = "email", unique = true)],
+	indexes = [Index(name = "idx_member_email", columnList = "email")],
 )
 class MemberEntity internal constructor() : AuditableJpaEntity() {
 

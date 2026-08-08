@@ -5,7 +5,6 @@ import com.unicorn.server.domain.member.Member
 import com.unicorn.server.domain.member.SocialAccount
 import com.unicorn.server.domain.member.enums.Role
 import com.unicorn.server.domain.member.enums.SocialProvider
-import com.unicorn.server.domain.member.exception.DuplicateEmailException
 import com.unicorn.server.domain.member.exception.InvalidRefreshTokenException
 import com.unicorn.server.domain.member.exception.MemberNotFoundException
 import com.unicorn.server.domain.member.exception.WithdrawnMemberException
@@ -44,8 +43,8 @@ class MemberAuthServiceTest {
 			providerId = "kakao-123",
 			email = "new@example.com",
 			name = "신규유저",
-			kakaoNickname = "카카오닉네임",
-			kakaoProfileImageUrl = "https://example.com/profile.png",
+			socialNickname = "카카오닉네임",
+			socialProfileImageUrl = "https://example.com/profile.png",
 		)
 
 		val result = memberAuthService.login(command)
@@ -53,13 +52,12 @@ class MemberAuthServiceTest {
 		assertThat(result.tokenPair.accessToken).isNotBlank()
 		assertThat(result.tokenPair.refreshToken).isNotBlank()
 		assertThat(result.isNewMember).isTrue()
-		assertThat(memberOutPort.existsByEmail(Email("new@example.com"))).isTrue()
-		val member = memberOutPort.findByEmail(Email("new@example.com"))!!
+		val member = memberOutPort.findAllByEmail(Email("new@example.com")).single()
 		assertThat(member.role).isEqualTo(Role.PENDING)
 		val socialAccount = socialAccountOutPort.findByProviderAndProviderId(SocialProvider.KAKAO, "kakao-123")
 		assertThat(socialAccount).isNotNull()
-		assertThat(socialAccount!!.kakaoNickname).isEqualTo("카카오닉네임")
-		assertThat(socialAccount.kakaoProfileImageUrl).isEqualTo("https://example.com/profile.png")
+		assertThat(socialAccount!!.nickname).isEqualTo("카카오닉네임")
+		assertThat(socialAccount.profileImageUrl).isEqualTo("https://example.com/profile.png")
 		assertThat(tokenStore.findMemberIdByRefreshToken(result.tokenPair.refreshToken)).isNotNull()
 	}
 
@@ -75,7 +73,7 @@ class MemberAuthServiceTest {
 
 		memberAuthService.login(command)
 
-		val member = memberOutPort.findByEmail(Email("short@example.com"))!!
+		val member = memberOutPort.findAllByEmail(Email("short@example.com")).single()
 		assertThat(member.nickname).isEqualTo("사용자")
 	}
 
@@ -111,7 +109,7 @@ class MemberAuthServiceTest {
 
 		memberAuthService.login(command)
 
-		val member = memberOutPort.findByEmail(Email("long@example.com"))!!
+		val member = memberOutPort.findAllByEmail(Email("long@example.com")).single()
 		assertThat(member.nickname).isEqualTo("가".repeat(10))
 	}
 
@@ -164,13 +162,19 @@ class MemberAuthServiceTest {
 	}
 
 	@Test
-	@DisplayName("login 호출 시 다른 providerId로 동일 이메일 가입하면 DuplicateEmailException이 발생한다")
-	fun login_duplicateEmail_throwsDuplicateEmailException() {
-		memberOutPort.save(Member.create(Email("dup@example.com"), "기존유저", "기존"))
-		val command = SocialLoginCommand(SocialProvider.KAKAO, "kakao-new-id", "dup@example.com", "신규")
+	@DisplayName("login 호출 시 다른 providerId로 동일 이메일 가입해도 예외 없이 별개의 Member가 생성된다")
+	fun login_sameEmailDifferentProviderId_createsSeparateMembers() {
+		val existingMember = memberOutPort.save(Member.create(Email("shared@example.com"), "기존유저", "기존"))
+		val command = SocialLoginCommand(SocialProvider.KAKAO, "kakao-another-id", "shared@example.com", "신규")
 
-		assertThatThrownBy { memberAuthService.login(command) }
-			.isInstanceOf(DuplicateEmailException::class.java)
+		val result = memberAuthService.login(command)
+
+		assertThat(result.isNewMember).isTrue()
+		val newSocialAccount = socialAccountOutPort.findByProviderAndProviderId(SocialProvider.KAKAO, "kakao-another-id")!!
+		assertThat(newSocialAccount.memberId).isNotEqualTo(existingMember.id)
+		val newMember = memberOutPort.findById(newSocialAccount.memberId)!!
+		assertThat(newMember.email?.value).isEqualTo("shared@example.com")
+		assertThat(newMember.id).isNotEqualTo(existingMember.id)
 	}
 
 	@Test
@@ -251,10 +255,8 @@ class MemberAuthServiceTest {
 
 		override fun findById(memberId: MemberId): Member? = store[memberId]
 
-		override fun findByEmail(email: Email): Member? =
-			store.values.firstOrNull { it.email == email }
-
-		override fun existsByEmail(email: Email): Boolean = findByEmail(email) != null
+		override fun findAllByEmail(email: Email): List<Member> =
+			store.values.filter { it.email == email }
 
 		override fun findAllDeletedBefore(threshold: LocalDateTime): List<Member> =
 			store.values.filter { it.deletedAt != null && it.deletedAt!!.isBefore(threshold) }

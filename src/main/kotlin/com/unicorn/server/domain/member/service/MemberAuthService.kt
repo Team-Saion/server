@@ -4,7 +4,6 @@ import com.unicorn.server.common.vo.Email
 import com.unicorn.server.domain.member.Member
 import com.unicorn.server.domain.member.SocialAccount
 import com.unicorn.server.domain.member.enums.Role
-import com.unicorn.server.domain.member.exception.DuplicateEmailException
 import com.unicorn.server.domain.member.exception.InvalidRefreshTokenException
 import com.unicorn.server.domain.member.exception.MemberNotFoundException
 import com.unicorn.server.domain.member.exception.WithdrawnMemberException
@@ -77,11 +76,7 @@ class MemberAuthService(
 			return findMemberOrThrow(existingSocialAccount.memberId.toString()) to false
 		}
 
-		// 이메일 중복 검증
 		val emailVo = command.email?.let { Email(it) }
-		if (emailVo != null && memberOutPort.existsByEmail(emailVo)) {
-			throw DuplicateEmailException(emailVo.value)
-		}
 
 		// 멤버 및 소셜 계정 생성
 		val newMember = memberOutPort.save(
@@ -99,8 +94,8 @@ class MemberAuthService(
 				provider = command.provider,
 				providerId = command.providerId,
 				email = command.email,
-				kakaoNickname = command.kakaoNickname,
-				kakaoProfileImageUrl = command.kakaoProfileImageUrl,
+				nickname = command.socialNickname,
+				profileImageUrl = command.socialProfileImageUrl,
 			),
 		)
 
