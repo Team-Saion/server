@@ -125,6 +125,29 @@ class ScheduleQueryServiceTest {
 			.isEqualTo(ScheduleErrorCode.SCHEDULE_NOT_FOUND)
 	}
 
+	@Test
+	@DisplayName("종료된 일정은 그림일기 생성용 정보를 반환한다")
+	fun getCompletedSchedule_withCompletedSchedule_returnsDiaryInfo() {
+		circleAccessOutPort.seedMember(CIRCLE_ID, MEMBER_ID)
+		scheduleOutPort.seed(schedule(id = SCHEDULE_ID_1, startDate = LocalDate.now().minusDays(2)))
+
+		val result = scheduleQueryService.getCompletedSchedule(SCHEDULE_ID_1, MEMBER_ID)
+
+		assertThat(result.title).isEqualTo("제주도 여행")
+	}
+
+	@Test
+	@DisplayName("종료되지 않은 일정은 그림일기 생성용 조회 시 SCHEDULE_NOT_COMPLETED 예외가 발생한다")
+	fun getCompletedSchedule_withOngoingSchedule_throwsScheduleNotCompleted() {
+		circleAccessOutPort.seedMember(CIRCLE_ID, MEMBER_ID)
+		scheduleOutPort.seed(schedule(id = SCHEDULE_ID_1, startDate = LocalDate.now().plusDays(1)))
+
+		assertThatThrownBy { scheduleQueryService.getCompletedSchedule(SCHEDULE_ID_1, MEMBER_ID) }
+			.isInstanceOf(BusinessException::class.java)
+			.extracting { (it as BusinessException).errorCode }
+			.isEqualTo(ScheduleErrorCode.SCHEDULE_NOT_COMPLETED)
+	}
+
 	private fun schedule(
 		id: ScheduleId,
 		startDate: LocalDate = LocalDate.now().plusDays(1),
