@@ -95,8 +95,8 @@ data class ScheduleDetailResponse(
 	)
 	val progressRate: Int,
 
-//	@field:Schema(description = "일정에 연결된 전체 할일 및 내가 담당자인 할일의 진행률")
-//	val todoProgressRate: TodoProgressRateResponse,
+	@field:Schema(description = "일정에 연결된 전체 할일 및 내가 담당자인 할일의 진행률")
+	val todoProgressRate: TodoProgressRateResponse,
 
 	@field:Schema(
 		description = "메모 (최대 500자). 등록된 메모가 없으면 null.",
@@ -147,7 +147,7 @@ data class ScheduleDetailResponse(
 			dDay = result.dDay,
 			urgencyLevel = result.urgencyLevel,
 			progressRate = result.progressRate,
-//			todoProgressRate = TodoProgressRateResponse.from(todos),
+			todoProgressRate = TodoProgressRateResponse.from(todos),
 			memo = result.memo,
 			confirmations = result.confirmations.map { ConfirmationCountResponse.from(it) },
 			myConfirmation = result.myConfirmation?.let { MyConfirmationResponse.from(it) },
