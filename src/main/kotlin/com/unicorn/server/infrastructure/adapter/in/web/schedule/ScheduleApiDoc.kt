@@ -225,6 +225,12 @@ interface ScheduleApiDoc {
 			- 종료 후: 100
 			- 진행 중: 전체 기간 대비 경과 시간 비율 (0~100 정수)
 
+			**todoProgressRate 계산**
+			- rate/doneCount/totalCount: 일정의 전체 할일 기준입니다.
+			- myRate/myDoneCount/myTotalCount: 호출자가 담당자인 할일 기준입니다.
+			- 할일은 담당자 전원이 체크한 경우 완료로 계산합니다.
+			- 대상 할일이 없으면 진행률은 0입니다.
+
 			**confirmations (확인하기 종류별 카운트)**
 			- needConfirm=true인 일정에서만 데이터가 채워집니다.
 			- needConfirm=false이면 빈 배열([])을 반환합니다.
