@@ -4,11 +4,14 @@ import com.unicorn.server.common.exception.BusinessException
 import com.unicorn.server.common.exception.CommonErrorCode
 import com.unicorn.server.domain.circle.vo.CircleId
 import com.unicorn.server.domain.schedule.Schedule
+import com.unicorn.server.domain.schedule.enums.ScheduleStatus
 import com.unicorn.server.domain.schedule.enums.UrgencyLevel
 import com.unicorn.server.domain.schedule.exception.ScheduleErrorCode
 import com.unicorn.server.domain.schedule.port.`in`.ScheduleQueryInPort
 import com.unicorn.server.domain.schedule.port.`in`.ScheduleForCircleInPort
+import com.unicorn.server.domain.schedule.port.`in`.ScheduleForDiaryInPort
 import com.unicorn.server.domain.schedule.port.dto.MyConfirmationInfo
+import com.unicorn.server.domain.schedule.port.dto.CompletedScheduleInfo
 import com.unicorn.server.domain.schedule.port.dto.ScheduleDetailResult
 import com.unicorn.server.domain.schedule.port.dto.ScheduleListResult
 import com.unicorn.server.domain.schedule.port.dto.SchedulePageCursor
@@ -29,7 +32,7 @@ class ScheduleQueryService(
 	private val scheduleOutPort: ScheduleOutPort,
 	private val scheduleConfirmationOutPort: ScheduleConfirmationOutPort,
 	private val circleAccessOutPort: CircleAccessOutPort,
-) : ScheduleQueryInPort, ScheduleForCircleInPort {
+) : ScheduleQueryInPort, ScheduleForCircleInPort, ScheduleForDiaryInPort {
 
 	override fun getList(
 		circleId: String,
@@ -99,6 +102,25 @@ class ScheduleQueryService(
 			myConfirmation = myConfirmation,
 			createdBy = schedule.createdBy,
 			createdAt = schedule.createdAt,
+		)
+	}
+
+	override fun getCompletedSchedule(
+		scheduleId: ScheduleId,
+		memberId: String,
+	): CompletedScheduleInfo {
+		val schedule = scheduleOutPort.findById(scheduleId)
+			?.takeUnless { it.isDeleted }
+			?: throw BusinessException(ScheduleErrorCode.SCHEDULE_NOT_FOUND)
+		if (!circleAccessOutPort.isMember(schedule.circleId, memberId)) {
+			throw BusinessException(ScheduleErrorCode.CIRCLE_ACCESS_DENIED)
+		}
+		if (schedule.computeStatus(nowDateTime()) != ScheduleStatus.COMPLETED) {
+			throw BusinessException(ScheduleErrorCode.SCHEDULE_NOT_COMPLETED)
+		}
+
+		return CompletedScheduleInfo(
+			title = schedule.title,
 		)
 	}
 
